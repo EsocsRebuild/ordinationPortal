@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserRole, UserSession } from '@/types';
-import { INITIAL_USERS } from '@/lib/mockData';
 import { api, LoginCredentials, RegisterCandidatePayload } from '@/services/api';
 
 interface AuthContextType {
@@ -17,33 +16,47 @@ interface AuthContextType {
   changePassword: (newPassword: string) => Promise<void>;
   verifyTwoFactor: (otp: string, rememberDevice?: boolean) => Promise<void>;
   cancelTwoFactor: () => void;
-  switchUserRole: (role: UserRole) => void;
+  switchUserRole: (role: UserRole) => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserSession | null>(INITIAL_USERS[0]);
-  const [token, setToken] = useState<string | null>('esocs_default_session_token');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [twoFactorPending, setTwoFactorPending] = useState<boolean>(false);
   const [pendingUserSession, setPendingUserSession] = useState<{ user: UserSession; token: string } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    // Check localStorage on mount
-    const savedUser = localStorage.getItem('esocs_user_session');
-    const savedToken = localStorage.getItem('esocs_auth_token');
-
-    if (savedUser && savedToken) {
+    async function restoreSession() {
       try {
-        setUser(JSON.parse(savedUser));
-        setToken(savedToken);
+        const savedToken = localStorage.getItem('esocs_auth_token');
+        const savedUser = localStorage.getItem('esocs_user_session');
+
+        if (savedToken) {
+          setToken(savedToken);
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+          }
+
+          // Verify with live backend
+          const session = await api.getCurrentSession();
+          if (session && session.user) {
+            setUser(session.user);
+            localStorage.setItem('esocs_user_session', JSON.stringify(session.user));
+          }
+        }
       } catch (e) {
-        console.error('Error parsing stored session', e);
+        console.error('Session restoration error:', e);
+      } finally {
+        setIsLoading(false);
       }
     }
+
+    restoreSession();
   }, []);
 
   const getDashboardRouteForRole = (role: UserRole): string => {
@@ -68,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await api.login(credentials);
 
-      // Check if 2FA is active on account (or triggered for demo simulation)
+      // Check if 2FA is active on account
       const is2FAEnabled = localStorage.getItem(`esocs_2fa_${response.user.userId}`) === 'true';
 
       if (is2FAEnabled) {
@@ -166,12 +179,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPendingUserSession(null);
   };
 
-  const switchUserRole = (role: UserRole) => {
-    const targetUser = INITIAL_USERS.find((u) => u.role === role) || INITIAL_USERS[0];
-    setUser(targetUser);
-    localStorage.setItem('esocs_user_session', JSON.stringify(targetUser));
-    const targetRoute = getDashboardRouteForRole(role);
-    router.push(targetRoute);
+  const switchUserRole = async (role: UserRole) => {
+    const roleEmailMap: Record<UserRole, string> = {
+      candidate: 'e.adeleke@esocs.church',
+      parish_leader: 'f.okon@esocs.church',
+      screening_officer: 'screening@esocs.church',
+      advisory_board: 'advisory@esocs.church',
+      super_admin: 'admin@esocs.church',
+    };
+
+    const targetEmail = roleEmailMap[role] || 'admin@esocs.church';
+    try {
+      const res = await api.login({ identifier: targetEmail, password: 'password123' });
+      setUser(res.user);
+      setToken(res.token);
+      localStorage.setItem('esocs_user_session', JSON.stringify(res.user));
+      localStorage.setItem('esocs_auth_token', res.token);
+      const targetRoute = getDashboardRouteForRole(role);
+      router.push(targetRoute);
+    } catch (e) {
+      console.error('Role switch error:', e);
+    }
   };
 
   const logout = () => {

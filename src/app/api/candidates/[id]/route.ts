@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,12 +13,24 @@ export async function GET(
     const candidate = db.candidates.getById(id);
 
     if (!candidate) {
-      return NextResponse.json({ success: false, message: 'Candidate not found in canonical ledger' }, { status: 404 });
+      return createErrorResponse(
+        `No candidate found with ecclesiastical identifier '${id}'.`,
+        ['CANDIDATE_NOT_FOUND'],
+        404
+      );
     }
 
-    return NextResponse.json({ success: true, candidate });
+    return createSuccessResponse(
+      { candidate },
+      'Candidate dossier retrieved successfully.',
+      200
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return createErrorResponse(
+      error.message || 'Error fetching candidate record.',
+      [error.message || 'Server error'],
+      500
+    );
   }
 }
 
@@ -29,13 +42,25 @@ export async function PATCH(
     const { id } = await params;
     const updates = await request.json();
 
-    const candidate = db.candidates.update(id, updates);
+    const candidate = db.candidates.update(id, updates, updates.actorName || 'Portal Official');
     if (!candidate) {
-      return NextResponse.json({ success: false, message: 'Candidate not found' }, { status: 404 });
+      return createErrorResponse(
+        `Candidate with identifier '${id}' not found for update.`,
+        ['CANDIDATE_NOT_FOUND'],
+        404
+      );
     }
 
-    return NextResponse.json({ success: true, candidate });
+    return createSuccessResponse(
+      { candidate },
+      'Candidate dossier updated successfully in canonical ledger.',
+      200
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+    return createErrorResponse(
+      error.message || 'Failed to update candidate dossier.',
+      [error.message || 'Update processing error'],
+      400
+    );
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CandidateProfile, UserSession, VettingTier } from '@/types';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -9,9 +9,11 @@ import { exportCandidatesToCSV } from '@/utils/export';
 import { generateCertificateHash } from '@/utils/certificate';
 import { formatCurrency, formatDate, calculateGrade } from '@/utils/formatters';
 import { getStageMeta } from '@/utils/workflow';
-import { validateRankProgression } from '@/utils/ranks';
+import { validateRankProgression, getRobingSpecifications } from '@/utils/ranks';
 import { CertificateModal } from '@/components/shared/CertificateModal';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
+import { LiveAccreditationDesk } from './LiveAccreditationDesk';
+import { api } from '@/services/api';
 import {
   Crown,
   Download,
@@ -38,6 +40,13 @@ import {
   ChevronRight,
   ShieldCheck,
   ArrowRight,
+  Zap,
+  DollarSign,
+  History,
+  CheckSquare,
+  Square,
+  Send,
+  SlidersHorizontal,
 } from 'lucide-react';
 
 interface SuperAdminDashboardProps {
@@ -47,7 +56,7 @@ interface SuperAdminDashboardProps {
   onBatchGenerateCerts: () => void;
 }
 
-type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier';
+type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs' | 'accreditation_live';
 
 export function SuperAdminDashboard({
   session,
@@ -60,10 +69,29 @@ export function SuperAdminDashboard({
   const [selectedProvince, setSelectedProvince] = useState<string>('all');
   const [selectedTier, setSelectedTier] = useState<string>('all');
   
-  // Inspection Modal State
+  // Batch Selection State
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+  const [batchSuccessMessage, setBatchSuccessMessage] = useState<string | null>(null);
+
+  // Inspection & Pass/Cert Modals
   const [inspectingCandidate, setInspectingCandidate] = useState<CandidateProfile | null>(null);
   const [activeModalCandidate, setActiveModalCandidate] = useState<CandidateProfile | null>(null);
   const [modalType, setModalType] = useState<'pass' | 'cert' | null>(null);
+
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'audit_logs') {
+      setIsLoadingLogs(true);
+      api.getAuditLogs()
+        .then((logs) => setAuditLogs(logs))
+        .catch(() => {})
+        .finally(() => setIsLoadingLogs(false));
+    }
+  }, [activeTab]);
 
   const filteredCandidates = candidates.filter((c) => {
     const matchesSearch =
@@ -75,7 +103,7 @@ export function SuperAdminDashboard({
 
     const matchesProvince = selectedProvince === 'all' || c.province === selectedProvince;
     const matchesTier =
-      activeTab === 'master'
+      activeTab === 'master' || activeTab === 'financials' || activeTab === 'audit_logs'
         ? selectedTier === 'all' || c.currentVettingTier === selectedTier
         : activeTab === 'branch_tier'
         ? c.currentVettingTier === 'branch' || c.stage === 'nominated'
@@ -90,44 +118,137 @@ export function SuperAdminDashboard({
     return matchesSearch && matchesProvince && matchesTier;
   });
 
+  // Financial Computations
   const totalDuesCollected = candidates.reduce((sum, c) => sum + (c.duesAmountPaid || 0), 0);
+  const totalPotentialLevies = candidates.reduce((sum, c) => sum + (c.levyBreakdown?.total || 80000), 0);
+  const outstandingLevies = Math.max(0, totalPotentialLevies - totalDuesCollected);
   const clearedCount = candidates.filter((c) => c.duesStatus === 'cleared').length;
   const certsReadyCount = candidates.filter((c) => !!c.certificateNumber).length;
   const ordainedCount = candidates.filter((c) => c.stage === 'ordained').length;
 
-  // Advance candidate through the 5 tiers
+  const totalBranchRevenue = candidates.reduce((sum, c) => sum + (c.duesStatus === 'cleared' ? (c.levyBreakdown?.branchLevy || 0) : 0), 0);
+  const totalDistrictRevenue = candidates.reduce((sum, c) => sum + (c.duesStatus === 'cleared' ? (c.levyBreakdown?.districtLevy || 0) : 0), 0);
+  const totalProvinceRevenue = candidates.reduce((sum, c) => sum + (c.duesStatus === 'cleared' ? (c.levyBreakdown?.provincialLevy || 0) : 0), 0);
+  const totalNationalRevenue = candidates.reduce((sum, c) => sum + (c.duesStatus === 'cleared' ? (c.levyBreakdown?.nationalFee || 0) : 0), 0);
+
+  // Checkbox selection handlers
+  const handleToggleSelectCandidate = (id: string) => {
+    setSelectedCandidateIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllFiltered = () => {
+    if (selectedCandidateIds.length === filteredCandidates.length) {
+      setSelectedCandidateIds([]);
+    } else {
+      setSelectedCandidateIds(filteredCandidates.map((c) => c.id));
+    }
+  };
+
+  // High-Efficiency Batch Actions
+  const handleBatchAdvanceTier = async (targetTier: VettingTier) => {
+    if (selectedCandidateIds.length === 0) return;
+    setIsProcessingBatch(true);
+    setBatchSuccessMessage(null);
+
+    try {
+      const res = await api.batchAction({
+        action: 'advance_tier',
+        candidateIds: selectedCandidateIds,
+        targetTier,
+        approverName: session.name,
+        approverRole: session.roleTitle,
+      });
+
+      for (const updated of res.candidates) {
+        onUpdateCandidate(updated);
+      }
+
+      setBatchSuccessMessage(`Successfully endorsed ${res.count} candidate(s) to ${targetTier.toUpperCase()} level!`);
+      setSelectedCandidateIds([]);
+    } catch (err: any) {
+      alert(err.message || 'Failed to process batch endorsement');
+    } finally {
+      setIsProcessingBatch(false);
+    }
+  };
+
+  const handleBatchClearDues = async () => {
+    if (selectedCandidateIds.length === 0) return;
+    setIsProcessingBatch(true);
+    setBatchSuccessMessage(null);
+
+    try {
+      const res = await api.batchAction({
+        action: 'clear_dues',
+        candidateIds: selectedCandidateIds,
+      });
+
+      for (const updated of res.candidates) {
+        onUpdateCandidate(updated);
+      }
+
+      setBatchSuccessMessage(`Successfully cleared & reconciled dues for ${res.count} candidate(s)!`);
+      setSelectedCandidateIds([]);
+    } catch (err: any) {
+      alert(err.message || 'Failed to clear dues');
+    } finally {
+      setIsProcessingBatch(false);
+    }
+  };
+
+  const handleBatchGenerateQRCerts = async () => {
+    if (selectedCandidateIds.length === 0) {
+      onBatchGenerateCerts();
+      return;
+    }
+    setIsProcessingBatch(true);
+    setBatchSuccessMessage(null);
+
+    try {
+      const res = await api.batchAction({
+        action: 'generate_certs',
+        candidateIds: selectedCandidateIds,
+      });
+
+      for (const updated of res.candidates) {
+        onUpdateCandidate(updated);
+      }
+
+      setBatchSuccessMessage(`Issued verified QR Certificates for ${res.count} candidate(s)!`);
+      setSelectedCandidateIds([]);
+    } catch (err: any) {
+      alert(err.message || 'Failed to generate certificates');
+    } finally {
+      setIsProcessingBatch(false);
+    }
+  };
+
+  // Single Candidate Actions
   const handleAdvanceTier = (cand: CandidateProfile, targetTier: VettingTier) => {
     const dateStr = new Date().toISOString().split('T')[0];
-    const approver = session.name;
-
     let nextStage: CandidateProfile['stage'] = cand.stage;
-    let nextTier: VettingTier = targetTier;
 
-    if (targetTier === 'district') {
-      nextStage = 'branch_approved';
-    } else if (targetTier === 'province') {
-      nextStage = 'district_approved';
-    } else if (targetTier === 'cmc') {
-      nextStage = 'province_approved';
-    } else if (targetTier === 'national') {
-      nextStage = 'cmc_approved';
-    }
-
-    const updatedApprovals = {
-      ...(cand.tierApprovals || {}),
-      [cand.currentVettingTier]: {
-        approved: true,
-        approverName: approver,
-        date: dateStr,
-        comments: `Approved and endorsed by Apex Directorate (${session.roleTitle}).`,
-      },
-    };
+    if (targetTier === 'district') nextStage = 'branch_approved';
+    else if (targetTier === 'province') nextStage = 'district_approved';
+    else if (targetTier === 'cmc') nextStage = 'province_approved';
+    else if (targetTier === 'national') nextStage = 'cmc_approved';
 
     const updated: CandidateProfile = {
       ...cand,
       stage: nextStage,
-      currentVettingTier: nextTier,
-      tierApprovals: updatedApprovals,
+      currentVettingTier: targetTier,
+      tierApprovals: {
+        ...(cand.tierApprovals || {}),
+        [cand.currentVettingTier]: {
+          approved: true,
+          approverName: session.name,
+          approverRole: session.roleTitle,
+          date: dateStr,
+          comments: `Approved and endorsed by Apex Directorate (${session.roleTitle}).`,
+        },
+      },
       lastUpdated: dateStr,
     };
 
@@ -139,7 +260,7 @@ export function SuperAdminDashboard({
 
   const handleToggleDues = (candidate: CandidateProfile) => {
     const isNowCleared = candidate.duesStatus !== 'cleared';
-    const totalFee = candidate.levyBreakdown?.total || 85000;
+    const totalFee = candidate.levyBreakdown?.total || 80000;
     const updated: CandidateProfile = {
       ...candidate,
       duesStatus: isNowCleared ? 'cleared' : 'pending',
@@ -175,80 +296,81 @@ export function SuperAdminDashboard({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Header Card */}
-      <div className="bg-church-950 text-white rounded-2xl p-6 sm:p-8 shadow-card border border-church-900 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
+      <div className="bg-gradient-to-r from-church-950 via-slate-900 to-church-950 text-white rounded-3xl p-6 sm:p-8 shadow-elevated border border-gold-500/20 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Badge variant="gold" size="sm" className="bg-gold-500/20 text-gold-300 border-gold-400/30">
               Admin Main Central Secretariat
             </Badge>
-            <span className="text-xs font-mono text-church-300">5-Tier Canonical Vetting Pipeline</span>
+            <span className="text-xs font-mono text-church-300">5-Tier Fast-Track Vetting Cockpit</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-serif">
             Apex Secretariat Master Management Portal
           </h1>
-          <p className="text-xs sm:text-sm text-church-300">
+          <p className="text-xs sm:text-sm text-church-200">
             {session.jurisdiction} • Total Active Registrations: <strong>{candidates.length} Candidates</strong>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
             icon={<FileSpreadsheet className="w-4 h-4" />}
             onClick={() => exportCandidatesToCSV(candidates)}
-            className="text-white border-church-800 hover:bg-church-900"
+            className="text-white border-church-700 hover:bg-church-850"
           >
-            Export Master CSV
+            Export CSV
           </Button>
 
           <Button
             variant="gold"
             size="sm"
             icon={<Award className="w-4 h-4" />}
-            onClick={onBatchGenerateCerts}
+            onClick={handleBatchGenerateQRCerts}
+            loading={isProcessingBatch}
           >
-            Batch Generate QR Certificates
+            Batch Generate QR Certs
           </Button>
         </div>
       </div>
 
       {/* Operational Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
           <span className="text-xs text-slate-500 font-medium">Reconciled Levies</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{formatCurrency(totalDuesCollected)}</p>
-          <span className="text-[11px] text-emerald-600 font-medium">{clearedCount} of {candidates.length} Cleared</span>
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalDuesCollected)}</p>
+          <span className="text-[11px] text-emerald-600 font-semibold">{clearedCount} of {candidates.length} Cleared</span>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
           <span className="text-xs text-slate-500 font-medium">QR Credentials Issued</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">{certsReadyCount}</p>
-          <span className="text-[11px] text-church-600 dark:text-gold-400">Cryptographically signed</span>
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">{certsReadyCount}</p>
+          <span className="text-[11px] text-church-600 dark:text-gold-400 font-semibold">Cryptographically signed</span>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <span className="text-xs text-slate-500 font-medium">Seating & Pews Allocated</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+          <span className="text-xs text-slate-500 font-medium">Cathedral Pews Assigned</span>
+          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">
             {candidates.filter((c) => c.seatNumber).length}
           </p>
-          <span className="text-[11px] text-slate-500">Chancel & Nave zones</span>
+          <span className="text-[11px] text-slate-500 font-medium">Chancel & Nave rows</span>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
           <span className="text-xs text-slate-500 font-medium">Conferred & Ordained</span>
-          <p className="text-2xl font-bold text-emerald-600 mt-1">{ordainedCount}</p>
-          <span className="text-[11px] text-emerald-600">Holy Synod Gazetted</span>
+          <p className="text-2xl font-bold text-emerald-600 font-mono">{ordainedCount}</p>
+          <span className="text-[11px] text-emerald-600 font-semibold">Holy Synod Gazetted</span>
         </div>
       </div>
 
-      {/* 5-Tier Canonical Vetting Navigation Tabs */}
+      {/* Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto text-xs">
         <button
           onClick={() => setActiveTab('master')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'master'
               ? 'bg-church-900 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -259,18 +381,18 @@ export function SuperAdminDashboard({
 
         <button
           onClick={() => setActiveTab('branch_tier')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'branch_tier'
               ? 'bg-church-900 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
-          <Building className="w-3.5 h-3.5" /> Tier 1: Branch / Parish ({candidates.filter((c) => c.currentVettingTier === 'branch').length})
+          <Building className="w-3.5 h-3.5" /> Tier 1: Branch ({candidates.filter((c) => c.currentVettingTier === 'branch').length})
         </button>
 
         <button
           onClick={() => setActiveTab('district_tier')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'district_tier'
               ? 'bg-church-900 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -281,7 +403,7 @@ export function SuperAdminDashboard({
 
         <button
           onClick={() => setActiveTab('province_tier')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'province_tier'
               ? 'bg-church-900 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -292,181 +414,425 @@ export function SuperAdminDashboard({
 
         <button
           onClick={() => setActiveTab('cmc_tier')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'cmc_tier'
               ? 'bg-church-900 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
-          <FileCheck className="w-3.5 h-3.5" /> Tier 4: CMC Exam Screening ({candidates.filter((c) => c.currentVettingTier === 'cmc').length})
+          <FileCheck className="w-3.5 h-3.5" /> Tier 4: CMC Exam ({candidates.filter((c) => c.currentVettingTier === 'cmc').length})
         </button>
 
         <button
           onClick={() => setActiveTab('synod_tier')}
-          className={`px-4 py-2 rounded-lg font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'synod_tier'
               ? 'bg-church-900 text-white shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
-          <Crown className="w-3.5 h-3.5" /> Tier 5: Holy Synod Ratified ({candidates.filter((c) => c.currentVettingTier === 'national').length})
+          <Crown className="w-3.5 h-3.5" /> Tier 5: Holy Synod ({candidates.filter((c) => c.currentVettingTier === 'national').length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('financials')}
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'financials'
+              ? 'bg-church-900 text-white shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <CreditCard className="w-3.5 h-3.5" /> Financial Ledger
+        </button>
+
+        <button
+          onClick={() => setActiveTab('audit_logs')}
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'audit_logs'
+              ? 'bg-church-900 text-white shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+          }`}
+        >
+          <History className="w-3.5 h-3.5" /> System Audit Trail
+        </button>
+
+        <button
+          onClick={() => setActiveTab('accreditation_live')}
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'accreditation_live'
+              ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+              : 'text-amber-400 hover:bg-amber-500/10'
+          }`}
+        >
+          <Zap className="w-3.5 h-3.5" /> ⚡ Gate Accreditation Desk
         </button>
       </div>
 
-      {/* Main Ledger Table */}
-      <Card>
-        <CardHeader
-          title="Canonical Candidates Ledger & Vetting Cockpit"
-          subtitle="Real-time multi-diocese tracking with strict sequential rank validation and financial audit"
-          action={
-            <div className="flex items-center gap-3">
-              <div className="relative w-64">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Filter name, reg code, rank, province..."
-                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-church-500"
-                />
-              </div>
+      {/* Batch Success Banner */}
+      {batchSuccessMessage && (
+        <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 rounded-2xl flex items-center justify-between text-xs animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span className="font-bold">{batchSuccessMessage}</span>
+          </div>
+          <button onClick={() => setBatchSuccessMessage(null)} className="text-emerald-600 hover:text-emerald-800">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Fast-Track Batch Action Toolbar */}
+      {selectedCandidateIds.length > 0 && (
+        <div className="p-4 bg-church-950 text-white rounded-2xl border border-gold-500/30 flex flex-wrap items-center justify-between gap-3 shadow-lg animate-in slide-in-from-top duration-200 text-xs">
+          <div className="flex items-center gap-3">
+            <span className="font-bold text-gold-300">
+              ⚡ {selectedCandidateIds.length} candidate(s) selected
+            </span>
+            <button
+              onClick={() => setSelectedCandidateIds([])}
+              className="text-slate-400 hover:text-white underline text-[11px]"
+            >
+              Clear selection
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {activeTab === 'branch_tier' && (
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => handleBatchAdvanceTier('district')}
+                loading={isProcessingBatch}
+                icon={<ChevronRight className="w-3.5 h-3.5" />}
+              >
+                Batch Endorse to District (Tier 2)
+              </Button>
+            )}
+
+            {activeTab === 'district_tier' && (
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => handleBatchAdvanceTier('province')}
+                loading={isProcessingBatch}
+                icon={<ChevronRight className="w-3.5 h-3.5" />}
+              >
+                Batch Endorse to Province (Tier 3)
+              </Button>
+            )}
+
+            {activeTab === 'province_tier' && (
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => handleBatchAdvanceTier('cmc')}
+                loading={isProcessingBatch}
+                icon={<ChevronRight className="w-3.5 h-3.5" />}
+              >
+                Batch Forward to CMC Exams (Tier 4)
+              </Button>
+            )}
+
+            {activeTab === 'cmc_tier' && (
+              <Button
+                variant="gold"
+                size="sm"
+                onClick={() => handleBatchAdvanceTier('national')}
+                loading={isProcessingBatch}
+                icon={<Crown className="w-3.5 h-3.5" />}
+              >
+                Batch Recommend for Synod (Tier 5)
+              </Button>
+            )}
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleBatchClearDues}
+              loading={isProcessingBatch}
+              icon={<CreditCard className="w-3.5 h-3.5" />}
+            >
+              Batch Clear Dues
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBatchGenerateQRCerts}
+              loading={isProcessingBatch}
+              icon={<Award className="w-3.5 h-3.5" />}
+              className="text-white border-church-700 hover:bg-church-800"
+            >
+              Issue QR Certificates
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Financial Treasury Desk */}
+      {activeTab === 'financials' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+              <span className="text-xs text-slate-500 font-medium">1. Branch Retention Share</span>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalBranchRevenue)}</p>
+              <span className="text-[11px] text-slate-400">Local parish altar care</span>
             </div>
-          }
-        />
-        <CardBody className="p-0 overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="px-4 py-3">Candidate Ordinand</th>
-                <th className="px-4 py-3">Current → Target Rank</th>
-                <th className="px-4 py-3">Jurisdiction</th>
-                <th className="px-4 py-3">Vetting Tier</th>
-                <th className="px-4 py-3">Financial Levies</th>
-                <th className="px-4 py-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-              {filteredCandidates.map((c) => {
-                const stageMeta = getStageMeta(c.stage);
-                const rankVal = validateRankProgression(c.currentRank, c.targetRankName, c.gender, c.currentRankYear);
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+              <span className="text-xs text-slate-500 font-medium">2. District Assessment Share</span>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalDistrictRevenue)}</p>
+              <span className="text-[11px] text-slate-400">Zonal administration fund</span>
+            </div>
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+              <span className="text-xs text-slate-500 font-medium">3. Provincial Secretariat Share</span>
+              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalProvinceRevenue)}</p>
+              <span className="text-[11px] text-slate-400">Diocese operations</span>
+            </div>
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+              <span className="text-xs text-slate-500 font-medium">4. Apex National / Regalia</span>
+              <p className="text-xl font-bold text-gold-600 dark:text-gold-400 font-mono">{formatCurrency(totalNationalRevenue)}</p>
+              <span className="text-[11px] text-emerald-600 font-semibold">Central ordination fund</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-                return (
-                  <tr key={c.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-4 py-3.5">
-                      <p className="font-bold text-slate-900 dark:text-slate-100">{c.fullName}</p>
-                      <span className="font-mono text-[11px] text-slate-400">{c.regNumber}</span>
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-slate-500">{c.currentRank}</span>
-                        <ArrowRight className="w-3 h-3 text-slate-400" />
-                        <span className="font-bold text-church-900 dark:text-gold-300 font-serif">
-                          {c.targetRankName}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] text-slate-400 font-mono">
-                          Since {c.currentRankYear} ({c.tenureYears || 2026 - c.currentRankYear} yrs)
-                        </span>
-                        {rankVal.isValid ? (
-                          <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded font-semibold">
-                            Sequential
-                          </span>
-                        ) : (
-                          <span className="text-[9px] px-1.5 py-0.2 bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 rounded font-semibold">
-                            Order Flag
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <p className="font-medium text-slate-800 dark:text-slate-200">{c.parish}</p>
-                      <span className="text-[11px] text-slate-500">{c.province}</span>
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${stageMeta.badgeBg} ${stageMeta.badgeText}`}>
-                        {stageMeta.label}
-                      </span>
-                      <span className="block text-[10px] text-slate-400 font-mono mt-0.5">
-                        Tier: {c.currentVettingTier.toUpperCase()}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleToggleDues(c)}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            c.duesStatus === 'cleared'
-                              ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
-                              : 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
-                          }`}
-                        >
-                          {c.duesStatus === 'cleared' ? 'Cleared' : 'Pending'}
-                        </button>
-                        <span className="font-mono text-[11px]">
-                          {formatCurrency(c.duesAmountPaid || 0)}
-                        </span>
-                      </div>
-                      {c.levyBreakdown && (
-                        <span className="text-[10px] text-slate-400 block">
-                          Total: {formatCurrency(c.levyBreakdown.total)}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          icon={<Eye className="w-3.5 h-3.5" />}
-                          onClick={() => setInspectingCandidate(c)}
-                        >
-                          Inspect & Vet
-                        </Button>
-
-                        {c.stage === 'investiture_assigned' && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            icon={<QrCode className="w-3.5 h-3.5" />}
-                            onClick={() => {
-                              setActiveModalCandidate(c);
-                              setModalType('pass');
-                            }}
-                          >
-                            Pass
-                          </Button>
-                        )}
-
-                        {c.stage === 'ordained' && (
-                          <Button
-                            variant="gold"
-                            size="sm"
-                            icon={<Award className="w-3.5 h-3.5" />}
-                            onClick={() => {
-                              setActiveModalCandidate(c);
-                              setModalType('cert');
-                            }}
-                          >
-                            Certificate
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+      {/* Tab: System Audit Trail Logs */}
+      {activeTab === 'audit_logs' && (
+        <Card>
+          <CardHeader
+            title="Sovereign Audit Trail & Canonical Event Stream"
+            subtitle="Immutable activity logs tracking all user logins, tier advancements, password resets and reconciliations"
+          />
+          <CardBody className="p-0 overflow-x-auto">
+            {isLoadingLogs ? (
+              <div className="p-8 text-center text-slate-400 text-xs">Loading audit events...</div>
+            ) : auditLogs.length === 0 ? (
+              <div className="p-8 text-center text-slate-400 text-xs">No audit events recorded yet.</div>
+            ) : (
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+                  <tr>
+                    <th className="px-5 py-3">Timestamp</th>
+                    <th className="px-5 py-3">Actor / Performed By</th>
+                    <th className="px-5 py-3">Action Type</th>
+                    <th className="px-5 py-3">Event Details</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </CardBody>
-      </Card>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                  {auditLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                      <td className="px-5 py-3 font-mono text-[11px] text-slate-400">{formatDate(log.timestamp)}</td>
+                      <td className="px-5 py-3 font-bold text-slate-900 dark:text-slate-100">{log.performedBy}</td>
+                      <td className="px-5 py-3">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-slate-800 text-church-800 dark:text-gold-300">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 dark:text-slate-400">{log.details}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </CardBody>
+        </Card>
+      )}
 
-      {/* Comprehensive Candidate Multi-Tier Vetting & Financial Clearance Modal */}
+      {/* Main Candidate Table (For All Tier Queues) */}
+      {activeTab !== 'audit_logs' && activeTab !== 'accreditation_live' && (
+        <Card>
+          <CardHeader
+            title={
+              activeTab === 'branch_tier'
+                ? 'Tier 1: Branch / Parish Verification Queue'
+                : activeTab === 'district_tier'
+                ? 'Tier 2: District Quota Review Queue'
+                : activeTab === 'province_tier'
+                ? 'Tier 3: Provincial Secretariat Approval Queue'
+                : activeTab === 'cmc_tier'
+                ? 'Tier 4: CMC National Doctrinal Exam & Scoring Deck'
+                : activeTab === 'synod_tier'
+                ? 'Tier 5: Holy Synod Ratification & Apex Consecration Deck'
+                : 'Canonical Candidates Ledger & Vetting Cockpit'
+            }
+            subtitle="Select multiple candidates for 1-click batch endorsements, levy reconciliations, and certificate issuance"
+            action={
+              <div className="flex items-center gap-3">
+                <div className="relative w-64">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Filter name, reg code, rank, province..."
+                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-church-500"
+                  />
+                </div>
+              </div>
+            }
+          />
+          <CardBody className="p-0 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th className="px-4 py-3 w-10">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllFiltered}
+                      className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    >
+                      {selectedCandidateIds.length > 0 && selectedCandidateIds.length === filteredCandidates.length ? (
+                        <CheckSquare className="w-4 h-4 text-gold-500" />
+                      ) : (
+                        <Square className="w-4 h-4" />
+                      )}
+                    </button>
+                  </th>
+                  <th className="px-4 py-3">Candidate Ordinand</th>
+                  <th className="px-4 py-3">Current → Target Rank</th>
+                  <th className="px-4 py-3">Jurisdiction</th>
+                  <th className="px-4 py-3">Vetting Tier</th>
+                  <th className="px-4 py-3">Financial Levies</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                {filteredCandidates.map((c) => {
+                  const stageMeta = getStageMeta(c.stage);
+                  const isSelected = selectedCandidateIds.includes(c.id);
+
+                  return (
+                    <tr key={c.id} className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors ${isSelected ? 'bg-gold-50/40 dark:bg-gold-950/20' : ''}`}>
+                      <td className="px-4 py-3.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSelectCandidate(c.id)}
+                          className="text-slate-400 hover:text-gold-500"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="w-4 h-4 text-gold-500" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <p className="font-bold text-slate-900 dark:text-slate-100">{c.fullName}</p>
+                        <span className="font-mono text-[11px] text-slate-400">{c.regNumber}</span>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-500">{c.currentRank}</span>
+                          <ArrowRight className="w-3 h-3 text-slate-400" />
+                          <span className="font-bold text-church-900 dark:text-gold-300 font-serif">
+                            {c.targetRankName}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            Since {c.currentRankYear} ({c.tenureYears || 2026 - c.currentRankYear} yrs)
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded font-semibold">
+                            Sequential ✓
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <p className="font-medium text-slate-800 dark:text-slate-200">{c.parish}</p>
+                        <span className="text-[11px] text-slate-500">{c.province}</span>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${stageMeta.badgeBg} ${stageMeta.badgeText}`}>
+                          {stageMeta.label}
+                        </span>
+                        <span className="block text-[10px] text-slate-400 font-mono mt-0.5">
+                          Tier: {c.currentVettingTier.toUpperCase()}
+                        </span>
+                      </td>
+
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleToggleDues(c)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              c.duesStatus === 'cleared'
+                                ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300'
+                            }`}
+                          >
+                            {c.duesStatus === 'cleared' ? 'Cleared' : 'Pending'}
+                          </button>
+                          <span className="font-mono text-[11px]">
+                            {formatCurrency(c.duesAmountPaid || 0)}
+                          </span>
+                        </div>
+                        {c.levyBreakdown && (
+                          <span className="text-[10px] text-slate-400 block">
+                            Total: {formatCurrency(c.levyBreakdown.total)}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            icon={<Eye className="w-3.5 h-3.5" />}
+                            onClick={() => setInspectingCandidate(c)}
+                          >
+                            Inspect & Vet
+                          </Button>
+
+                          {c.stage === 'investiture_assigned' && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              icon={<QrCode className="w-3.5 h-3.5" />}
+                              onClick={() => {
+                                setActiveModalCandidate(c);
+                                setModalType('pass');
+                              }}
+                            >
+                              Pass
+                            </Button>
+                          )}
+
+                          {c.stage === 'ordained' && (
+                            <Button
+                              variant="gold"
+                              size="sm"
+                              icon={<Award className="w-3.5 h-3.5" />}
+                              onClick={() => {
+                                setActiveModalCandidate(c);
+                                setModalType('cert');
+                              }}
+                            >
+                              Certificate
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Live Ordination Day Accreditation Desk */}
+      {activeTab === 'accreditation_live' && (
+        <LiveAccreditationDesk officerName={session.name} />
+      )}
+
+      {/* Candidate Dossier & Multi-Tier Inspection Drawer */}
       {inspectingCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
           <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-premium overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6">
@@ -503,31 +869,26 @@ export function SuperAdminDashboard({
                 </span>
 
                 <div className="grid grid-cols-5 gap-1.5 pt-2 text-center text-[10px]">
-                  {/* Tier 1: Branch */}
                   <div className={`p-2 rounded-xl border ${inspectingCandidate.tierApprovals?.branch?.approved ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-800 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500'}`}>
                     <span className="font-bold block">1. Branch</span>
                     <span>{inspectingCandidate.tierApprovals?.branch?.approved ? '✓ Approved' : 'Pending'}</span>
                   </div>
 
-                  {/* Tier 2: District */}
                   <div className={`p-2 rounded-xl border ${inspectingCandidate.tierApprovals?.district?.approved ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-800 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500'}`}>
                     <span className="font-bold block">2. District</span>
                     <span>{inspectingCandidate.tierApprovals?.district?.approved ? '✓ Approved' : 'Pending'}</span>
                   </div>
 
-                  {/* Tier 3: Province */}
                   <div className={`p-2 rounded-xl border ${inspectingCandidate.tierApprovals?.province?.approved ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-800 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500'}`}>
                     <span className="font-bold block">3. Province</span>
                     <span>{inspectingCandidate.tierApprovals?.province?.approved ? '✓ Approved' : 'Pending'}</span>
                   </div>
 
-                  {/* Tier 4: CMC Exam */}
                   <div className={`p-2 rounded-xl border ${inspectingCandidate.theologyScore && inspectingCandidate.theologyScore >= 70 ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 text-emerald-800 dark:text-emerald-300' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500'}`}>
                     <span className="font-bold block">4. CMC Exam</span>
                     <span>{inspectingCandidate.theologyScore ? `${inspectingCandidate.theologyScore}% ✓` : 'Pending'}</span>
                   </div>
 
-                  {/* Tier 5: Holy Synod */}
                   <div className={`p-2 rounded-xl border ${['cmc_approved', 'board_approved', 'investiture_assigned', 'ordained'].includes(inspectingCandidate.stage) ? 'bg-purple-50 dark:bg-purple-950/40 border-purple-300 text-purple-800 dark:text-purple-300' : 'bg-slate-100 dark:bg-slate-800 border-slate-200 text-slate-500'}`}>
                     <span className="font-bold block">5. Synod</span>
                     <span>{inspectingCandidate.stage === 'ordained' ? 'Conferred' : inspectingCandidate.stage === 'board_approved' ? 'Ratified' : 'Awaiting'}</span>
@@ -535,7 +896,7 @@ export function SuperAdminDashboard({
                 </div>
               </div>
 
-              {/* Rank Progression & Tenure Breakdown */}
+              {/* Rank Progression */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
                 <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs">
                   <Sparkles className="w-4 h-4 text-gold-500" />
@@ -563,7 +924,7 @@ export function SuperAdminDashboard({
                 </div>
               </div>
 
-              {/* Financial Levies & 4-Part Structure */}
+              {/* Mandatory Levies & Clearance Schedule */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs">
@@ -606,7 +967,7 @@ export function SuperAdminDashboard({
                 </div>
               </div>
 
-              {/* Tier Advancement Action Controls */}
+              {/* Fast-Track Tier Advancement Controls */}
               <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   {inspectingCandidate.currentVettingTier === 'branch' && (

@@ -110,7 +110,7 @@ export interface CandidateProfile {
   flaggedIssues?: string[];
   
   // Clearance & Fees
-  duesStatus: 'cleared' | 'pending' | 'exempted';
+  duesStatus: 'cleared' | 'pending' | 'partial' | 'exempted';
   duesAmountPaid: number;
   receiptNumber?: string;
   levyBreakdown?: MandatoryLevyBreakdown;
@@ -119,11 +119,22 @@ export interface CandidateProfile {
   investitureSession?: string;
   seatNumber?: string;
   robingOfficer?: string;
+  ordinationDate?: string;
+  ordinationTime?: string;
+  ordinationVenue?: string;
+  emailDispatchDate?: string;
+  passportPhotoUrl?: string;
   
   // Certificate & Anti-forgery
   certificateNumber?: string;
   verificationHash?: string;
   dateOrdained?: string;
+
+  // Live Ordination Day Accreditation & Attendance
+  isCheckedIn?: boolean;
+  checkInTimestamp?: string;
+  accreditedBy?: string;
+  accreditationNotes?: string;
 }
 
 export interface NominationRequest {
@@ -184,4 +195,16 @@ export interface UserSession {
   roleTitle: string;
   jurisdiction: string; // e.g. "Mount Zion Cathedral, Lagos Central Province"
   candidateId?: string; // If candidate role
+}
+
+export interface InAppMessage {
+  id: string;
+  candidateId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: UserRole;
+  content: string;
+  timestamp: string;
+  isRead: boolean;
+  category?: 'general' | 'screening' | 'robing' | 'secretariat';
 }

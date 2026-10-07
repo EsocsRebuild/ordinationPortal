@@ -6,55 +6,65 @@ import { DashboardLayout } from '@/components/shared/DashboardLayout';
 import { SuperAdminDashboard } from '@/components/sections/SuperAdminDashboard';
 import { useAuth } from '@/context/AuthContext';
 import { CandidateProfile } from '@/types';
-import { MOCK_CANDIDATES } from '@/lib/mockData';
 import { api } from '@/services/api';
-import { generateCertificateHash } from '@/utils/certificate';
+import { AppLoader } from '@/components/ui/AppLoader';
 
 export default function SuperAdminDashboardPage() {
   const { user } = useAuth();
-  const [candidates, setCandidates] = useState<CandidateProfile[]>(MOCK_CANDIDATES);
+  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadData = async () => {
+    try {
+      const data = await api.getCandidates();
+      setCandidates(data || []);
+    } catch (err) {
+      console.error('Failed to load admin candidate roster:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await api.getCandidates();
-        if (data && data.length > 0) setCandidates(data);
-      } catch {
-        // Fallback
-      }
-    }
     loadData();
   }, []);
 
   const handleUpdateCandidate = async (updated: CandidateProfile) => {
     setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     try {
-      await api.updateCandidate(updated.id, updated);
+      await api.updateCandidate(updated.id, updated, user?.name);
     } catch (e) {
-      console.error(e);
+      console.error('Update candidate error:', e);
     }
   };
 
-  const handleBatchGenerateCerts = () => {
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (['board_approved', 'investiture_assigned', 'ordained'].includes(c.stage)) {
-          const hash = c.verificationHash || generateCertificateHash(c.regNumber, c.fullName, c.targetRankName, 2026);
-          const certNo = c.certificateNumber || `CERT-2026-${c.targetRankId.replace('rank_', '').toUpperCase()}-${c.regNumber.split('/').pop()}`;
+  const handleBatchGenerateCerts = async () => {
+    const eligibleIds = candidates
+      .filter((c) => ['board_approved', 'investiture_assigned', 'ordained'].includes(c.stage))
+      .map((c) => c.id);
 
-          const updated = {
-            ...c,
-            certificateNumber: certNo,
-            verificationHash: hash,
-            lastUpdated: new Date().toISOString().split('T')[0],
-          };
-          api.updateCandidate(c.id, updated).catch(console.error);
-          return updated;
-        }
-        return c;
-      })
-    );
+    if (eligibleIds.length === 0) return;
+
+    try {
+      await api.batchAction({
+        action: 'generate_certs',
+        candidateIds: eligibleIds,
+        approverName: user?.name || 'Apex Sovereign Admin',
+        approverRole: 'Super Admin',
+      });
+      await loadData();
+    } catch (e) {
+      console.error('Batch cert generation error:', e);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <AppLoader message="Loading Central Secretariat Sovereign Master Cockpit..." />
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -71,4 +81,3 @@ export default function SuperAdminDashboardPage() {
     </AuthGuard>
   );
 }
-

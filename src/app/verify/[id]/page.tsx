@@ -1,25 +1,13 @@
 'use client';
 
-import React, { use } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MOCK_CANDIDATES } from '@/lib/mockData';
-import { Card, CardHeader, CardBody } from '@/components/ui/Card';
+import { api } from '@/services/api';
+import { CandidateProfile } from '@/types';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { formatDate } from '@/utils/formatters';
-import { getRobingSpecifications } from '@/utils/ranks';
 import { QrCodeSvg } from '@/components/ui/QrCodeSvg';
-import {
-  Shield,
-  CheckCircle2,
-  AlertCircle,
-  Award,
-  ArrowLeft,
-  Calendar,
-  MapPin,
-  User,
-  Church,
-} from 'lucide-react';
+import { AppLoader } from '@/components/ui/AppLoader';
+import { CheckCircle2, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface VerifyPageProps {
   params: Promise<{ id: string }>;
@@ -29,22 +17,67 @@ export default function VerifyPage({ params }: VerifyPageProps) {
   const resolvedParams = use(params);
   const candidateId = resolvedParams.id;
 
-  const candidate = MOCK_CANDIDATES.find(
-    (c) => c.id === candidateId || c.regNumber.replace(/[^A-Za-z0-9]/g, '') === candidateId
-  ) || MOCK_CANDIDATES[0];
+  const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const robing = getRobingSpecifications(candidate.targetRankId);
-  const isOrdainedOrAssigned =
-    candidate.stage === 'ordained' || candidate.stage === 'investiture_assigned';
+  useEffect(() => {
+    async function verify() {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const data = await api.getCandidateById(candidateId);
+        if (data) {
+          setCandidate(data);
+        } else {
+          setErrorMessage('Canonical record not found in the Holy Order Sovereign Ledger.');
+        }
+      } catch (err: any) {
+        setErrorMessage(err.message || 'Verification failed. Record could not be confirmed.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    verify();
+  }, [candidateId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+        <AppLoader message="Connecting to ESOCS Central Ledger Verification Engine..." />
+      </div>
+    );
+  }
+
+  if (errorMessage || !candidate) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-6">
+        <div className="max-w-md w-full bg-slate-900/80 border border-red-900/50 rounded-2xl p-8 text-center space-y-4">
+          <div className="w-14 h-14 bg-red-500/10 text-red-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+            <AlertCircle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Credential Verification Failed</h2>
+          <p className="text-slate-400 text-sm">{errorMessage || 'Invalid registration number or cryptographic certificate key.'}</p>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors pt-4"
+          >
+            <ArrowLeft className="w-4 h-4" /> Return to Ordination Portal
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between p-4 sm:p-6 md:p-10">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 md:p-10">
       <div className="max-w-3xl w-full mx-auto space-y-6">
         {/* Top Branding */}
         <div className="flex items-center justify-between">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Portal Dashboard
           </Link>
@@ -55,7 +88,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         </div>
 
         {/* Verification Status Card */}
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 relative overflow-hidden">
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 relative overflow-hidden">
           {/* Status Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
             <div className="flex items-center gap-3">
@@ -78,7 +111,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
 
           {/* Ordinand Profile Record */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center">
-            <div className="flex flex-col items-center justify-center p-4 bg-slate-900/80 rounded-xl border border-slate-800">
+            <div className="flex flex-col items-center justify-center p-4 bg-slate-950/80 rounded-xl border border-slate-800">
               <QrCodeSvg value={`https://ordination.esocs.church/verify/${candidate.id}`} size={130} />
               <p className="text-[10px] font-mono text-slate-400 mt-2 text-center">
                 Digital Cryptographic Seal
@@ -90,7 +123,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                 <span className="text-slate-400 uppercase tracking-wider text-[10px] font-bold">
                   Ordinand Full Legal Name
                 </span>
-                <h2 className="text-xl font-serif font-bold text-gold-300 mt-0.5">
+                <h2 className="text-xl font-serif font-bold text-amber-300 mt-0.5">
                   {candidate.fullName}
                 </h2>
               </div>
@@ -102,7 +135,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                 </div>
                 <div>
                   <span className="text-slate-400">Canonical Registration:</span>
-                  <p className="font-mono font-bold text-gold-400 text-sm">{candidate.regNumber}</p>
+                  <p className="font-mono font-bold text-amber-400 text-sm">{candidate.regNumber}</p>
                 </div>
                 <div>
                   <span className="text-slate-400">Province / Diocese:</span>
@@ -117,7 +150,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
           </div>
 
           {/* Seating & Investiture Verification */}
-          <div className="p-4 bg-slate-900/60 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+          <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
               <span className="text-slate-400 block mb-0.5">Assigned Investiture Pew</span>
               <span className="font-bold text-white text-sm">{candidate.seatNumber || 'Zone A - Chancel'}</span>
@@ -133,12 +166,12 @@ export default function VerifyPage({ params }: VerifyPageProps) {
           </div>
 
           {/* Cryptographic Hash Security Seal */}
-          <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+          <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-400 font-medium">Tamper-Proof Verification Hash:</span>
               <span className="text-emerald-400 font-mono text-[10px] font-bold">SHA-256 HMAC VERIFIED</span>
             </div>
-            <p className="font-mono text-xs text-gold-300 break-all p-2 bg-slate-950 rounded border border-slate-800/80">
+            <p className="font-mono text-xs text-amber-300 break-all p-2 bg-slate-900 rounded border border-slate-800">
               {candidate.verificationHash || 'ESOCS-AUTH-2026-B83F4190-2A1B'}
             </p>
           </div>
@@ -151,4 +184,3 @@ export default function VerifyPage({ params }: VerifyPageProps) {
     </div>
   );
 }
-

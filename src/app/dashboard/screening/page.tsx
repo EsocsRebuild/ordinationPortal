@@ -6,20 +6,24 @@ import { DashboardLayout } from '@/components/shared/DashboardLayout';
 import { ScreeningDashboard } from '@/components/sections/ScreeningDashboard';
 import { useAuth } from '@/context/AuthContext';
 import { CandidateProfile } from '@/types';
-import { MOCK_CANDIDATES } from '@/lib/mockData';
 import { api } from '@/services/api';
+import { AppLoader } from '@/components/ui/AppLoader';
 
 export default function ScreeningDashboardPage() {
   const { user } = useAuth();
-  const [candidates, setCandidates] = useState<CandidateProfile[]>(MOCK_CANDIDATES);
+  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      setIsLoading(true);
       try {
         const data = await api.getCandidates();
-        if (data && data.length > 0) setCandidates(data);
-      } catch {
-        // Fallback
+        setCandidates(data || []);
+      } catch (err) {
+        console.error('Failed to load screening candidates:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadData();
@@ -28,11 +32,19 @@ export default function ScreeningDashboardPage() {
   const handleUpdateCandidate = async (updated: CandidateProfile) => {
     setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     try {
-      await api.updateCandidate(updated.id, updated);
+      await api.updateCandidate(updated.id, updated, user?.name);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to save screening update:', e);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <AppLoader message="Loading CMC Screening & Theological Exam Roster..." />
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -48,4 +60,3 @@ export default function ScreeningDashboardPage() {
     </AuthGuard>
   );
 }
-
