@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { VettingTier } from '@/types';
+import { validateBatchActionInput } from '@/lib/server/validators';
+import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action, candidateIds, targetTier, approverName, approverRole } = body;
+    const validation = validateBatchActionInput(body);
 
-    if (!candidateIds || !Array.isArray(candidateIds) || candidateIds.length === 0) {
-      return NextResponse.json({ success: false, message: 'No candidates selected for batch action' }, { status: 400 });
+    if (!validation.isValid || !validation.sanitizedData) {
+      return createErrorResponse('Batch operation validation failed.', validation.errors, 400);
     }
+
+    const { action, candidateIds } = validation.sanitizedData;
+    const { targetTier, approverName, approverRole } = body;
 
     const updatedCandidates = [];
     const dateStr = new Date().toISOString().split('T')[0];
@@ -24,7 +29,7 @@ export async function POST(request: Request) {
         let nextStage = cand.stage;
         if (targetTier === 'district') nextStage = 'branch_approved';
         else if (targetTier === 'province') nextStage = 'district_approved';
-        else if (targetTier === 'cmc') nextStage = 'province_approved';
+        else if (targetTier === 'screening_exam' || targetTier === 'cmc') nextStage = 'province_approved';
         else if (targetTier === 'national') nextStage = 'cmc_approved';
 
         const updated = db.candidates.update(id, {
@@ -40,7 +45,7 @@ export async function POST(request: Request) {
               comments: `Batch approved and forwarded to ${targetTier.toUpperCase()} level.`,
             },
           },
-        });
+        }, approverName || 'Super Admin');
         if (updated) updatedCandidates.push(updated);
       }
     } else if (action === 'clear_dues') {
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
           duesStatus: 'cleared',
           duesAmountPaid: total,
           receiptNumber: `REC-2026-ESOCS-${Math.floor(1000 + Math.random() * 9000)}`,
-        });
+        }, approverName || 'Treasury Officer');
         if (updated) updatedCandidates.push(updated);
       }
     } else if (action === 'generate_certs') {
@@ -63,19 +68,30 @@ export async function POST(request: Request) {
         const updated = db.candidates.update(id, {
           certificateNumber: certNo,
           stage: cand.stage === 'board_approved' || cand.stage === 'investiture_assigned' ? 'investiture_assigned' : cand.stage,
-        });
+        }, approverName || 'Secretariat Registrar');
         if (updated) updatedCandidates.push(updated);
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      count: updatedCandidates.length,
-      candidates: updatedCandidates,
-      message: `Batch operation "${action}" successfully applied to ${updatedCandidates.length} candidate(s).`,
+    db.auditLogs.add({
+      performedBy: approverName || 'Super Admin',
+      action: `BATCH_${action.toUpperCase()}`,
+      details: `Batch action "${action}" executed on ${updatedCandidates.length} candidate(s).`,
     });
+
+    return createSuccessResponse(
+      {
+        count: updatedCandidates.length,
+        candidates: updatedCandidates,
+      },
+      `Batch operation "${action}" successfully applied to ${updatedCandidates.length} candidate(s).`,
+      200
+    );
   } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+    return createErrorResponse(
+      error.message || 'Batch operation failed.',
+      [error.message || 'Batch processing exception'],
+      500
+    );
   }
 }
-

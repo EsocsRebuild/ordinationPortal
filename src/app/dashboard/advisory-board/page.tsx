@@ -6,20 +6,24 @@ import { DashboardLayout } from '@/components/shared/DashboardLayout';
 import { AdvisoryBoardDashboard } from '@/components/sections/AdvisoryBoardDashboard';
 import { useAuth } from '@/context/AuthContext';
 import { CandidateProfile } from '@/types';
-import { MOCK_CANDIDATES } from '@/lib/mockData';
 import { api } from '@/services/api';
+import { AppLoader } from '@/components/ui/AppLoader';
 
 export default function AdvisoryBoardDashboardPage() {
   const { user } = useAuth();
-  const [candidates, setCandidates] = useState<CandidateProfile[]>(MOCK_CANDIDATES);
+  const [candidates, setCandidates] = useState<CandidateProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
+      setIsLoading(true);
       try {
         const data = await api.getCandidates();
-        if (data && data.length > 0) setCandidates(data);
-      } catch {
-        // Fallback
+        setCandidates(data || []);
+      } catch (err) {
+        console.error('Failed to load synod candidates:', err);
+      } finally {
+        setIsLoading(false);
       }
     }
     loadData();
@@ -28,32 +32,35 @@ export default function AdvisoryBoardDashboardPage() {
   const handleUpdateCandidate = async (updated: CandidateProfile) => {
     setCandidates((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     try {
-      await api.updateCandidate(updated.id, updated);
+      await api.updateCandidate(updated.id, updated, user?.name);
     } catch (e) {
-      console.error(e);
+      console.error('Failed to save update:', e);
     }
   };
 
-  const handleBatchApprove = (ids: string[]) => {
-    setCandidates((prev) =>
-      prev.map((c) => {
-        if (ids.includes(c.id)) {
-          const updated = {
-            ...c,
-            stage: 'board_approved' as CandidateProfile['stage'],
-            lastUpdated: new Date().toISOString().split('T')[0],
-            screeningNotes: [
-              ...(c.screeningNotes || []),
-              `Decreed and formally ratified by Holy Order Advisory Board & Council of Elders on ${new Date().toLocaleDateString()}.`,
-            ],
-          };
-          api.updateCandidate(c.id, updated).catch(console.error);
-          return updated;
-        }
-        return c;
-      })
-    );
+  const handleBatchApprove = async (ids: string[]) => {
+    try {
+      await api.batchAction({
+        action: 'advance_tier',
+        candidateIds: ids,
+        targetTier: 'national',
+        approverName: user?.name || 'Holy Synod Council of Elders',
+        approverRole: 'Advisory Board',
+      });
+      const data = await api.getCandidates();
+      setCandidates(data || []);
+    } catch (err) {
+      console.error('Batch ratification error:', err);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <AppLoader message="Loading Holy Synod Elevation Ratification Deck..." />
+      </div>
+    );
+  }
 
   if (!user) return null;
 
@@ -70,4 +77,3 @@ export default function AdvisoryBoardDashboardPage() {
     </AuthGuard>
   );
 }
-

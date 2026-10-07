@@ -110,7 +110,7 @@ export interface CandidateProfile {
   flaggedIssues?: string[];
   
   // Clearance & Fees
-  duesStatus: 'cleared' | 'pending' | 'exempted';
+  duesStatus: 'cleared' | 'pending' | 'partial' | 'exempted';
   duesAmountPaid: number;
   receiptNumber?: string;
   levyBreakdown?: MandatoryLevyBreakdown;

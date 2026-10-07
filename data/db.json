@@ -1,0 +1,477 @@
+{
+  "candidates": [
+    {
+      "id": "cand-001",
+      "regNumber": "ESOCS/ORD/2026/0481",
+      "fullName": "Emmanuel Olusola Adeleke",
+      "email": "e.adeleke@esocs.church",
+      "phone": "+234 803 456 7890",
+      "gender": "male",
+      "dateOfBirth": "1978-04-12",
+      "occupation": "Principal Architect & Civil Consultant",
+      "maritalStatus": "married",
+      "dateJoinedChurch": "1996-08-15",
+      "baptismDate": "1997-01-20",
+      "currentRank": "Senior Apostle (Yellow)",
+      "currentRankYear": 2020,
+      "targetRankId": "rank_special_senior_apostle_blue",
+      "targetRankName": "Special Senior Apostle (Blue)",
+      "province": "Lagos Central Province",
+      "district": "Surulere District",
+      "parish": "Mount Zion Cathedral Branch",
+      "branchPriestName": "Senior Apostle Festus N. Okon",
+      "stage": "investiture_assigned",
+      "currentVettingTier": "national",
+      "submissionDate": "2026-03-10",
+      "lastUpdated": "2026-09-28",
+      "tenureYears": 6,
+      "tenureValid": true,
+      "theologyScore": 92,
+      "interviewScore": 88,
+      "attendanceRecordPercentage": 96,
+      "conductRating": "exemplary",
+      "screeningNotes": [
+        "Comprehensive doctrinal exam passed with distinction in Liturgical Governance.",
+        "Parish standing certified spotless by Lagos Central Provincial Secretary."
+      ],
+      "duesStatus": "cleared",
+      "duesAmountPaid": 410000,
+      "receiptNumber": "REC-2026-ESOCS-8841",
+      "levyBreakdown": {
+        "branchLevy": 32000,
+        "districtLevy": 32000,
+        "provincialLevy": 40000,
+        "nationalFee": 250000,
+        "total": 354000
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": true,
+          "approverName": "Senior Apostle Festus Okon",
+          "date": "2026-03-15",
+          "comments": "Parish standing confirmed spotless."
+        },
+        "district": {
+          "approved": true,
+          "approverName": "Senior Apostle Jude Chukwu",
+          "date": "2026-04-02",
+          "comments": "District quota endorsed."
+        },
+        "province": {
+          "approved": true,
+          "approverName": "Special Senior Apostle B. Bakare",
+          "date": "2026-05-10",
+          "comments": "Provincial credential check verified."
+        },
+        "cmc": {
+          "approved": true,
+          "approverName": "Dr. Godwin Bassey (CMC)",
+          "date": "2026-07-18",
+          "comments": "Exam score 92/100, Interview 88/100."
+        },
+        "national": {
+          "approved": true,
+          "approverName": "Apostle General J. K. Coker",
+          "date": "2026-09-20",
+          "comments": "Holy Synod Ratified."
+        }
+      },
+      "investitureSession": "Saturday Morning Session (09:00 AM)",
+      "seatNumber": "Zone A - Pew 14 (Chancel Wing)",
+      "robingOfficer": "Apostle General J. K. Coker",
+      "certificateNumber": "CERT-2026-SSA_BLUE-0481",
+      "verificationHash": "ESOCS-AUTH-2026-7578EDA0-D9EB",
+      "dateOrdained": "November 14, 2026"
+    },
+    {
+      "id": "cand-002",
+      "regNumber": "ESOCS/ORD/2026/0219",
+      "fullName": "Lady Leader Grace Folashade Williams",
+      "email": "g.williams@esocs.church",
+      "phone": "+234 802 334 9911",
+      "gender": "female",
+      "dateOfBirth": "1982-11-03",
+      "occupation": "Chartered Accountant & Hospital Director",
+      "maritalStatus": "married",
+      "dateJoinedChurch": "2004-05-10",
+      "baptismDate": "2005-02-14",
+      "currentRank": "Prophetess",
+      "currentRankYear": 2021,
+      "targetRankId": "rank_mother_in_israel",
+      "targetRankName": "Mother in Israel",
+      "province": "Lagos Western Province",
+      "district": "Ikeja District",
+      "parish": "Grace & Glory Cathedral",
+      "branchPriestName": "Special Senior Apostle M. O. Adebayo",
+      "stage": "cmc_approved",
+      "currentVettingTier": "national",
+      "submissionDate": "2026-03-12",
+      "lastUpdated": "2026-09-15",
+      "tenureYears": 5,
+      "tenureValid": true,
+      "theologyScore": 89,
+      "interviewScore": 92,
+      "attendanceRecordPercentage": 98,
+      "conductRating": "exemplary",
+      "screeningNotes": [
+        "Passed CMC Vetting with high commendation in Women Fellowship Leadership & Liturgical Conduct."
+      ],
+      "duesStatus": "cleared",
+      "duesAmountPaid": 263000,
+      "receiptNumber": "REC-2026-ESOCS-7120",
+      "levyBreakdown": {
+        "branchLevy": 24000,
+        "districtLevy": 24000,
+        "provincialLevy": 30000,
+        "nationalFee": 185000,
+        "total": 263000
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": true,
+          "approverName": "Senior Apostle Adebayo",
+          "date": "2026-03-20",
+          "comments": "Endorsed by Branch Women Guild."
+        },
+        "district": {
+          "approved": true,
+          "approverName": "Leader S. Ogundimu",
+          "date": "2026-04-12",
+          "comments": "District Council of Elders approved."
+        },
+        "province": {
+          "approved": true,
+          "approverName": "Special Senior Apostle T. Balogun",
+          "date": "2026-05-22",
+          "comments": "Provincial Quota cleared."
+        },
+        "cmc": {
+          "approved": true,
+          "approverName": "Dr. Godwin Bassey (CMC)",
+          "date": "2026-08-04",
+          "comments": "Oral & Written Exam Passed (89%)."
+        },
+        "national": {
+          "approved": false
+        }
+      },
+      "certificateNumber": "CERT-2026-MOTHER_IN_ISRAEL-0219",
+      "verificationHash": "ESOCS-AUTH-2026-1AD00E3F-C4F4"
+    },
+    {
+      "id": "cand-003",
+      "regNumber": "ESOCS/ORD/2026/0304",
+      "fullName": "Pastor Daniel Kelechi Nwachukwu",
+      "email": "d.nwachukwu@esocs.church",
+      "phone": "+234 803 771 2233",
+      "gender": "male",
+      "dateOfBirth": "1985-09-19",
+      "occupation": "Secondary School Principal",
+      "maritalStatus": "married",
+      "dateJoinedChurch": "2008-03-12",
+      "baptismDate": "2008-08-20",
+      "currentRank": "Pastor",
+      "currentRankYear": 2022,
+      "targetRankId": "rank_evangelist",
+      "targetRankName": "Evangelist",
+      "province": "Eastern Province",
+      "district": "Enugu Central District",
+      "parish": "Holy Ghost Sanctuary",
+      "branchPriestName": "Senior Apostle Chukwuma",
+      "stage": "theology_assessed",
+      "currentVettingTier": "cmc",
+      "submissionDate": "2026-03-15",
+      "lastUpdated": "2026-09-10",
+      "tenureYears": 4,
+      "tenureValid": true,
+      "theologyScore": 84,
+      "interviewScore": 80,
+      "attendanceRecordPercentage": 92,
+      "conductRating": "exemplary",
+      "screeningNotes": [
+        "Theological written test completed. Awaiting National Screening Board ratification."
+      ],
+      "duesStatus": "cleared",
+      "duesAmountPaid": 154000,
+      "receiptNumber": "REC-2026-ESOCS-5502",
+      "levyBreakdown": {
+        "branchLevy": 14000,
+        "districtLevy": 14000,
+        "provincialLevy": 17500,
+        "nationalFee": 110000,
+        "total": 155500
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": true,
+          "approverName": "Senior Apostle Chukwuma",
+          "date": "2026-03-22",
+          "comments": "Parish cleared."
+        },
+        "district": {
+          "approved": true,
+          "approverName": "Leader I. Eze",
+          "date": "2026-04-18",
+          "comments": "District vetted."
+        },
+        "province": {
+          "approved": true,
+          "approverName": "Special Senior Apostle O. Kalu",
+          "date": "2026-06-05",
+          "comments": "Provincial verified."
+        },
+        "cmc": {
+          "approved": false
+        },
+        "national": {
+          "approved": false
+        }
+      }
+    },
+    {
+      "id": "cand-004",
+      "regNumber": "ESOCS/ORD/2026/0115",
+      "fullName": "Aladura Samuel Ayomide Jegede",
+      "email": "s.jegede@esocs.church",
+      "phone": "+234 809 112 3344",
+      "gender": "male",
+      "dateOfBirth": "1992-02-14",
+      "occupation": "Software Engineer",
+      "maritalStatus": "single",
+      "dateJoinedChurch": "2016-07-22",
+      "baptismDate": "2017-01-10",
+      "currentRank": "Aladura",
+      "currentRankYear": 2023,
+      "targetRankId": "rank_leader",
+      "targetRankName": "Leader",
+      "province": "Northern Province",
+      "district": "Abuja Metropolitan District",
+      "parish": "Cathedral of Redemption",
+      "branchPriestName": "Special Senior Apostle Dan-Jumbo",
+      "stage": "branch_approved",
+      "currentVettingTier": "district",
+      "submissionDate": "2026-03-20",
+      "lastUpdated": "2026-04-05",
+      "tenureYears": 3,
+      "tenureValid": true,
+      "attendanceRecordPercentage": 94,
+      "conductRating": "exemplary",
+      "screeningNotes": [
+        "Parish chairman approved. Forwarded to District Vetting Committee."
+      ],
+      "duesStatus": "partial",
+      "duesAmountPaid": 40000,
+      "receiptNumber": "REC-2026-ESOCS-3391",
+      "levyBreakdown": {
+        "branchLevy": 7000,
+        "districtLevy": 7000,
+        "provincialLevy": 8750,
+        "nationalFee": 55000,
+        "total": 77750
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": true,
+          "approverName": "Senior Apostle Okon",
+          "date": "2026-04-01",
+          "comments": "Active choir member and altar server."
+        },
+        "district": {
+          "approved": false
+        },
+        "province": {
+          "approved": false
+        },
+        "cmc": {
+          "approved": false
+        },
+        "national": {
+          "approved": false
+        }
+      }
+    },
+    {
+      "id": "cand-005",
+      "regNumber": "ESOCS/ORD/2026/0992",
+      "fullName": "Special Senior Apostle Victor E. Dan-Jumbo",
+      "email": "v.danjumbo@esocs.church",
+      "phone": "+234 803 999 8811",
+      "gender": "male",
+      "dateOfBirth": "1968-01-25",
+      "occupation": "Managing Director & Legal Counsel",
+      "maritalStatus": "married",
+      "dateJoinedChurch": "1989-10-14",
+      "baptismDate": "1990-03-18",
+      "currentRank": "Special Senior Apostle (Blue)",
+      "currentRankYear": 2018,
+      "targetRankId": "rank_apostle_general_green",
+      "targetRankName": "Apostle General (Green)",
+      "province": "Niger Delta Province",
+      "district": "Port Harcourt District",
+      "parish": "Bethel Central Cathedral",
+      "branchPriestName": "Apostle General J. K. Coker",
+      "stage": "board_approved",
+      "currentVettingTier": "national",
+      "submissionDate": "2026-03-25",
+      "lastUpdated": "2026-09-22",
+      "tenureYears": 8,
+      "tenureValid": true,
+      "theologyScore": 95,
+      "interviewScore": 96,
+      "attendanceRecordPercentage": 99,
+      "conductRating": "exemplary",
+      "screeningNotes": [
+        "Holy Synod Advisory Board unanimously ratified appointment to Apostle General."
+      ],
+      "duesStatus": "cleared",
+      "duesAmountPaid": 450000,
+      "receiptNumber": "REC-2026-ESOCS-9901",
+      "levyBreakdown": {
+        "branchLevy": 40000,
+        "districtLevy": 40000,
+        "provincialLevy": 50000,
+        "nationalFee": 320000,
+        "total": 450000
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": true,
+          "approverName": "Apostle General Coker",
+          "date": "2026-04-05",
+          "comments": "Unanimous parish backing."
+        },
+        "district": {
+          "approved": true,
+          "approverName": "Senior Apostle Briggs",
+          "date": "2026-04-20",
+          "comments": "District ratified."
+        },
+        "province": {
+          "approved": true,
+          "approverName": "Special Senior Apostle Jack",
+          "date": "2026-05-30",
+          "comments": "Provincial verified."
+        },
+        "cmc": {
+          "approved": true,
+          "approverName": "Dr. Godwin Bassey (CMC)",
+          "date": "2026-08-12",
+          "comments": "Executive viva-voce distinction."
+        },
+        "national": {
+          "approved": true,
+          "approverName": "Apostle General J. K. Coker",
+          "date": "2026-09-22",
+          "comments": "Holy Synod Approved."
+        }
+      },
+      "investitureSession": "Saturday Morning Session (09:00 AM)",
+      "seatNumber": "Zone A - Chancel Apex Pew 01",
+      "robingOfficer": "Supervising Apostle General Prof. David A. Oladele",
+      "certificateNumber": "CERT-2026-APOSTLE_GENERAL-0992",
+      "verificationHash": "ESOCS-AUTH-2026-412C6CAD-5821"
+    }
+  ],
+  "users": [
+    {
+      "userId": "user-cand-01",
+      "name": "Senior Apostle Emmanuel O. Adeleke",
+      "email": "e.adeleke@esocs.church",
+      "role": "candidate",
+      "roleTitle": "Ordinand Candidate (Ascending to SSA Blue)",
+      "jurisdiction": "Mount Zion Cathedral, Lagos Central Province",
+      "candidateId": "cand-001",
+      "passwordHash": "password123",
+      "registeredAt": "2026-03-10"
+    },
+    {
+      "userId": "user-cand-02",
+      "name": "Lady Leader Grace Folashade Williams",
+      "email": "g.williams@esocs.church",
+      "role": "candidate",
+      "roleTitle": "Ordinand Candidate (Ascending to Mother in Israel)",
+      "jurisdiction": "Grace & Glory Cathedral, Lagos Western Province",
+      "candidateId": "cand-002",
+      "passwordHash": "password123",
+      "registeredAt": "2026-03-12"
+    },
+    {
+      "userId": "user-cand-03",
+      "name": "Pastor Daniel Kelechi Nwachukwu",
+      "email": "d.nwachukwu@esocs.church",
+      "role": "candidate",
+      "roleTitle": "Ordinand Candidate (Ascending to Evangelist)",
+      "jurisdiction": "Holy Ghost Sanctuary, Eastern Province",
+      "candidateId": "cand-003",
+      "passwordHash": "password123",
+      "registeredAt": "2026-03-15"
+    },
+    {
+      "userId": "user-cand-04",
+      "name": "Aladura Samuel Ayomide Jegede",
+      "email": "s.jegede@esocs.church",
+      "role": "candidate",
+      "roleTitle": "Ordinand Candidate (Ascending to Leader)",
+      "jurisdiction": "Cathedral of Redemption, Northern Province",
+      "candidateId": "cand-004",
+      "passwordHash": "password123",
+      "registeredAt": "2026-03-20"
+    },
+    {
+      "userId": "user-cand-05",
+      "name": "Special Senior Apostle Victor E. Dan-Jumbo",
+      "email": "v.danjumbo@esocs.church",
+      "role": "candidate",
+      "roleTitle": "Ordinand Candidate (Ascending to Apostle General)",
+      "jurisdiction": "Bethel Central Cathedral, Niger Delta Province",
+      "candidateId": "cand-005",
+      "passwordHash": "password123",
+      "registeredAt": "2026-03-25"
+    },
+    {
+      "userId": "user-admin-main",
+      "name": "Supervising Apostle General Prof. David A. Oladele",
+      "email": "admin@esocs.church",
+      "role": "super_admin",
+      "roleTitle": "Secretary General & Sovereign Apex Admin",
+      "jurisdiction": "Central Secretariat, Mount Zion Worldwide",
+      "passwordHash": "password123"
+    },
+    {
+      "userId": "user-leader-01",
+      "name": "Senior Apostle Festus N. Okon",
+      "email": "f.okon@esocs.church",
+      "role": "parish_leader",
+      "roleTitle": "Parish Chairman & Branch Leader",
+      "jurisdiction": "Holy Sanctuary Parish, Victoria Island Branch",
+      "passwordHash": "password123"
+    },
+    {
+      "userId": "user-screen-01",
+      "name": "Special Senior Apostle Dr. Godwin I. Bassey",
+      "email": "screening@esocs.church",
+      "role": "screening_officer",
+      "roleTitle": "National Screening Board Chairman",
+      "jurisdiction": "National Screening Directorate",
+      "passwordHash": "password123"
+    },
+    {
+      "userId": "user-board-01",
+      "name": "His Eminence, Apostle General J. K. Coker",
+      "email": "advisory@esocs.church",
+      "role": "advisory_board",
+      "roleTitle": "Advisory Board Member & Council of Elders",
+      "jurisdiction": "Holy Synod Council of Elders",
+      "passwordHash": "password123"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "log-001",
+      "timestamp": "2026-09-28T14:32:00Z",
+      "performedBy": "Supervising Apostle General Prof. David A. Oladele",
+      "action": "SYSTEM_INITIALIZATION",
+      "details": "Sovereign database initialized for General Conference 2026 Ordination Cohort."
+    }
+  ]
+}

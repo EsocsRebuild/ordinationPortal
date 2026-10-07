@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types';
-import { INITIAL_USERS } from '@/lib/mockData';
 import { ROLE_CONFIGS } from '@/utils/security';
 import { Button } from '@/components/ui/Button';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
@@ -106,9 +105,14 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg(null);
 
+    if (!identifier.trim()) {
+      setErrorMsg('Please enter your canonical email address or ordination registration code.');
+      return;
+    }
+
     try {
       await login({
-        identifier: identifier || INITIAL_USERS.find((u) => u.role === selectedRole)?.email || '',
+        identifier: identifier.trim(),
         password,
         role: selectedRole,
       });

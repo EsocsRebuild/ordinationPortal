@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { UserRole, UserSession } from '@/types';
-import { INITIAL_USERS } from '@/lib/mockData';
 import { ROLE_CONFIGS } from '@/utils/security';
 import { Shield, User, Users, FileCheck, Award, Crown, Check } from 'lucide-react';
 
@@ -10,6 +9,50 @@ interface RoleSwitcherProps {
   currentSession: UserSession;
   onSelectRole: (session: UserSession) => void;
 }
+
+const AVAILABLE_ROLE_PERSONAS: UserSession[] = [
+  {
+    userId: 'user-cand-01',
+    name: 'Senior Apostle Emmanuel O. Adeleke',
+    email: 'e.adeleke@esocs.church',
+    role: 'candidate',
+    roleTitle: 'Ordinand Candidate (Ascending to SSA Blue)',
+    jurisdiction: 'Mount Zion Cathedral, Lagos Central Province',
+    candidateId: 'cand-001',
+  },
+  {
+    userId: 'user-leader-01',
+    name: 'Senior Apostle Festus N. Okon',
+    email: 'f.okon@esocs.church',
+    role: 'parish_leader',
+    roleTitle: 'Parish Chairman & Branch Leader',
+    jurisdiction: 'Holy Sanctuary Parish, Victoria Island Branch',
+  },
+  {
+    userId: 'user-screen-01',
+    name: 'Special Senior Apostle Dr. Godwin I. Bassey',
+    email: 'screening@esocs.church',
+    role: 'screening_officer',
+    roleTitle: 'National Screening Board Chairman',
+    jurisdiction: 'National Screening Directorate',
+  },
+  {
+    userId: 'user-board-01',
+    name: 'His Eminence, Apostle General J. K. Coker',
+    email: 'advisory@esocs.church',
+    role: 'advisory_board',
+    roleTitle: 'Advisory Board Member & Council of Elders',
+    jurisdiction: 'Holy Synod Council of Elders',
+  },
+  {
+    userId: 'user-admin-main',
+    name: 'Supervising Apostle General Prof. David A. Oladele',
+    email: 'admin@esocs.church',
+    role: 'super_admin',
+    roleTitle: 'Secretary General & Sovereign Apex Admin',
+    jurisdiction: 'Central Secretariat, Mount Zion Worldwide',
+  },
+];
 
 export function RoleSwitcher({ currentSession, onSelectRole }: RoleSwitcherProps) {
   const getRoleIcon = (role: UserRole) => {
@@ -38,7 +81,7 @@ export function RoleSwitcher({ currentSession, onSelectRole }: RoleSwitcherProps
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-        {INITIAL_USERS.map((user) => {
+        {AVAILABLE_ROLE_PERSONAS.map((user) => {
           const isActive = user.role === currentSession.role;
           const config = ROLE_CONFIGS[user.role];
 
@@ -73,4 +116,3 @@ export function RoleSwitcher({ currentSession, onSelectRole }: RoleSwitcherProps
     </div>
   );
 }
-

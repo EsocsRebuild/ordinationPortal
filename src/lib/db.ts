@@ -1,6 +1,14 @@
 import { CandidateProfile, UserRole, UserSession, VettingTier } from '@/types';
 import { generateCertificateHash } from '@/utils/certificate';
-import { ESOCS_RANKS } from '@/lib/constants';
+import {
+  validateRankProgression,
+  calculateLeviesForRank,
+  findRankByNameOrId,
+  evaluateTheologicalScores,
+  processTierTransition,
+  generateCryptographicVerification,
+  GenderType,
+} from './server/canonicalEngine';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,55 +21,111 @@ export interface AuditLog {
   details: string;
 }
 
+export interface UserRecord extends UserSession {
+  passwordHash?: string;
+  registeredAt?: string;
+  twoFactorEnabled?: boolean;
+}
+
 interface DatabaseSchema {
   candidates: CandidateProfile[];
-  users: (UserSession & { passwordHash?: string })[];
+  users: UserRecord[];
   auditLogs: AuditLog[];
 }
 
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'db.json');
 
-const DEFAULT_USERS: (UserSession & { passwordHash?: string })[] = [
+const DEFAULT_USERS: UserRecord[] = [
   {
     userId: 'user-cand-01',
-    name: 'Senior Apostle (Yellow) Emmanuel O. Adeleke',
+    name: 'Senior Apostle Emmanuel O. Adeleke',
     email: 'e.adeleke@esocs.church',
     role: 'candidate',
     roleTitle: 'Ordinand Candidate (Ascending to SSA Blue)',
     jurisdiction: 'Mount Zion Cathedral, Lagos Central Province',
     candidateId: 'cand-001',
+    passwordHash: 'password123',
+    registeredAt: '2026-03-10',
+  },
+  {
+    userId: 'user-cand-02',
+    name: 'Lady Leader Grace Folashade Williams',
+    email: 'g.williams@esocs.church',
+    role: 'candidate',
+    roleTitle: 'Ordinand Candidate (Ascending to Mother in Israel)',
+    jurisdiction: 'Grace & Glory Cathedral, Lagos Western Province',
+    candidateId: 'cand-002',
+    passwordHash: 'password123',
+    registeredAt: '2026-03-12',
+  },
+  {
+    userId: 'user-cand-03',
+    name: 'Pastor Daniel Kelechi Nwachukwu',
+    email: 'd.nwachukwu@esocs.church',
+    role: 'candidate',
+    roleTitle: 'Ordinand Candidate (Ascending to Evangelist)',
+    jurisdiction: 'Holy Ghost Sanctuary, Eastern Province',
+    candidateId: 'cand-003',
+    passwordHash: 'password123',
+    registeredAt: '2026-03-15',
+  },
+  {
+    userId: 'user-cand-04',
+    name: 'Aladura Samuel Ayomide Jegede',
+    email: 's.jegede@esocs.church',
+    role: 'candidate',
+    roleTitle: 'Ordinand Candidate (Ascending to Leader)',
+    jurisdiction: 'Cathedral of Redemption, Northern Province',
+    candidateId: 'cand-004',
+    passwordHash: 'password123',
+    registeredAt: '2026-03-20',
+  },
+  {
+    userId: 'user-cand-05',
+    name: 'Special Senior Apostle Victor E. Dan-Jumbo',
+    email: 'v.danjumbo@esocs.church',
+    role: 'candidate',
+    roleTitle: 'Ordinand Candidate (Ascending to Apostle General)',
+    jurisdiction: 'Bethel Central Cathedral, Niger Delta Province',
+    candidateId: 'cand-005',
+    passwordHash: 'password123',
+    registeredAt: '2026-03-25',
   },
   {
     userId: 'user-admin-main',
-    name: 'Supervising Apostle General (Green) Prof. David A. Oladele',
+    name: 'Supervising Apostle General Prof. David A. Oladele',
     email: 'admin@esocs.church',
     role: 'super_admin',
     roleTitle: 'Secretary General & Sovereign Apex Admin',
     jurisdiction: 'Central Secretariat, Mount Zion Worldwide',
+    passwordHash: 'password123',
   },
   {
     userId: 'user-leader-01',
-    name: 'Senior Apostle (Yellow) Festus N. Okon',
+    name: 'Senior Apostle Festus N. Okon',
     email: 'f.okon@esocs.church',
     role: 'parish_leader',
     roleTitle: 'Parish Chairman & Branch Leader',
     jurisdiction: 'Holy Sanctuary Parish, Victoria Island Branch',
+    passwordHash: 'password123',
   },
   {
     userId: 'user-screen-01',
-    name: 'Special Senior Apostle (Blue) Dr. Godwin I. Bassey',
+    name: 'Special Senior Apostle Dr. Godwin I. Bassey',
     email: 'screening@esocs.church',
     role: 'screening_officer',
     roleTitle: 'National Screening Board Chairman',
     jurisdiction: 'National Screening Directorate',
+    passwordHash: 'password123',
   },
   {
     userId: 'user-board-01',
-    name: 'His Eminence, Apostle General (Green) J. K. Coker',
+    name: 'His Eminence, Apostle General J. K. Coker',
     email: 'advisory@esocs.church',
     role: 'advisory_board',
     roleTitle: 'Advisory Board Member & Council of Elders',
     jurisdiction: 'Holy Synod Council of Elders',
+    passwordHash: 'password123',
   },
 ];
 
@@ -85,7 +149,7 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     province: 'Lagos Central Province',
     district: 'Surulere District',
     parish: 'Mount Zion Cathedral Branch',
-    branchPriestName: 'Senior Apostle (Yellow) Festus N. Okon',
+    branchPriestName: 'Senior Apostle Festus N. Okon',
     stage: 'investiture_assigned',
     currentVettingTier: 'national',
     submissionDate: '2026-03-10',
@@ -101,14 +165,14 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
       'Parish standing certified spotless by Lagos Central Provincial Secretary.',
     ],
     duesStatus: 'cleared',
-    duesAmountPaid: 170000,
+    duesAmountPaid: 410000,
     receiptNumber: 'REC-2026-ESOCS-8841',
     levyBreakdown: {
-      branchLevy: 30000,
-      districtLevy: 30000,
-      provincialLevy: 45000,
-      nationalFee: 65000,
-      total: 170000,
+      branchLevy: 32000,
+      districtLevy: 32000,
+      provincialLevy: 40000,
+      nationalFee: 250000,
+      total: 354000,
     },
     tierApprovals: {
       branch: { approved: true, approverName: 'Senior Apostle Festus Okon', date: '2026-03-15', comments: 'Parish standing confirmed spotless.' },
@@ -120,7 +184,7 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     investitureSession: 'Saturday Morning Session (09:00 AM)',
     seatNumber: 'Zone A - Pew 14 (Chancel Wing)',
     robingOfficer: 'Apostle General J. K. Coker',
-    certificateNumber: 'CERT-2026-SSA-0481',
+    certificateNumber: 'CERT-2026-SSA_BLUE-0481',
     verificationHash: generateCertificateHash('ESOCS/ORD/2026/0481', 'Emmanuel Olusola Adeleke', 'Special Senior Apostle (Blue)', 2026),
     dateOrdained: 'November 14, 2026',
   },
@@ -134,321 +198,359 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     dateOfBirth: '1982-11-03',
     occupation: 'Chartered Accountant & Hospital Director',
     maritalStatus: 'married',
-    dateJoinedChurch: '2001-04-10',
-    baptismDate: '2001-09-02',
+    dateJoinedChurch: '2004-05-10',
+    baptismDate: '2005-02-14',
     currentRank: 'Prophetess',
     currentRankYear: 2021,
     targetRankId: 'rank_mother_in_israel',
     targetRankName: 'Mother in Israel',
     province: 'Lagos Western Province',
-    district: 'Ikeja / Maryland District',
+    district: 'Ikeja District',
     parish: 'Grace & Glory Cathedral',
-    branchPriestName: 'Special Senior Apostle B. A. Bakare',
+    branchPriestName: 'Special Senior Apostle M. O. Adebayo',
     stage: 'cmc_approved',
     currentVettingTier: 'national',
-    submissionDate: '2026-04-02',
+    submissionDate: '2026-03-12',
     lastUpdated: '2026-09-15',
     tenureYears: 5,
     tenureValid: true,
-    theologyScore: 94,
-    interviewScore: 90,
+    theologyScore: 89,
+    interviewScore: 92,
     attendanceRecordPercentage: 98,
     conductRating: 'exemplary',
     screeningNotes: [
-      'Top scorer in Biblical Hermeneutics & Women Ministry Pastoral Leadership.',
+      'Passed CMC Vetting with high commendation in Women Fellowship Leadership & Liturgical Conduct.',
     ],
     duesStatus: 'cleared',
-    duesAmountPaid: 115000,
-    receiptNumber: 'REC-2026-ESOCS-5512',
+    duesAmountPaid: 263000,
+    receiptNumber: 'REC-2026-ESOCS-7120',
     levyBreakdown: {
-      branchLevy: 20000,
-      districtLevy: 20000,
+      branchLevy: 24000,
+      districtLevy: 24000,
       provincialLevy: 30000,
-      nationalFee: 45000,
-      total: 115000,
+      nationalFee: 185000,
+      total: 263000,
     },
     tierApprovals: {
-      branch: { approved: true, approverName: 'Special Senior Apostle B. A. Bakare', date: '2026-04-10', comments: 'Certified active matriarch.' },
-      district: { approved: true, approverName: 'District Overseer Ikeja', date: '2026-05-02', comments: 'District endorsement granted.' },
-      province: { approved: true, approverName: 'Provincial Council Lagos West', date: '2026-06-15', comments: 'Zonal verification passed.' },
-      cmc: { approved: true, approverName: 'National Screening Board', date: '2026-08-22', comments: 'Exam 94/100. Recommended for Synod.' },
+      branch: { approved: true, approverName: 'Senior Apostle Adebayo', date: '2026-03-20', comments: 'Endorsed by Branch Women Guild.' },
+      district: { approved: true, approverName: 'Leader S. Ogundimu', date: '2026-04-12', comments: 'District Council of Elders approved.' },
+      province: { approved: true, approverName: 'Special Senior Apostle T. Balogun', date: '2026-05-22', comments: 'Provincial Quota cleared.' },
+      cmc: { approved: true, approverName: 'Dr. Godwin Bassey (CMC)', date: '2026-08-04', comments: 'Oral & Written Exam Passed (89%).' },
+      national: { approved: false },
     },
-    investitureSession: 'Saturday Afternoon Session (02:00 PM)',
-    seatNumber: 'Zone B - Pew 08 (Matriarch Gallery)',
-    robingOfficer: 'Sp. Snr. Mother in Israel Esther Agboola',
-    certificateNumber: 'CERT-2026-MII-0219',
-    verificationHash: generateCertificateHash('ESOCS/ORD/2026/0219', 'Grace Folashade Williams', 'Mother in Israel', 2026),
+    certificateNumber: 'CERT-2026-MOTHER_IN_ISRAEL-0219',
+    verificationHash: generateCertificateHash('ESOCS/ORD/2026/0219', 'Lady Leader Grace Folashade Williams', 'Mother in Israel', 2026),
   },
   {
     id: 'cand-003',
-    regNumber: 'ESOCS/ORD/2026/0612',
+    regNumber: 'ESOCS/ORD/2026/0304',
     fullName: 'Pastor Daniel Kelechi Nwachukwu',
     email: 'd.nwachukwu@esocs.church',
-    phone: '+234 814 555 1209',
+    phone: '+234 803 771 2233',
     gender: 'male',
-    dateOfBirth: '1990-07-22',
-    occupation: 'Software Engineer & University Lecturer',
+    dateOfBirth: '1985-09-19',
+    occupation: 'Secondary School Principal',
     maritalStatus: 'married',
-    dateJoinedChurch: '2012-03-18',
-    baptismDate: '2012-10-14',
+    dateJoinedChurch: '2008-03-12',
+    baptismDate: '2008-08-20',
     currentRank: 'Pastor',
     currentRankYear: 2022,
     targetRankId: 'rank_evangelist',
     targetRankName: 'Evangelist',
-    province: 'Eastern Province (Enugu / Aba / Owerri)',
-    district: 'Enugu Urban District',
-    parish: 'Holy Ghost Sanctuary, Independence Layout',
-    branchPriestName: 'Senior Apostle Jude Chukwu',
-    stage: 'screening_in_progress',
+    province: 'Eastern Province',
+    district: 'Enugu Central District',
+    parish: 'Holy Ghost Sanctuary',
+    branchPriestName: 'Senior Apostle Chukwuma',
+    stage: 'theology_assessed',
     currentVettingTier: 'cmc',
-    submissionDate: '2026-05-18',
-    lastUpdated: '2026-08-30',
+    submissionDate: '2026-03-15',
+    lastUpdated: '2026-09-10',
     tenureYears: 4,
     tenureValid: true,
-    theologyScore: 78,
-    interviewScore: 82,
-    attendanceRecordPercentage: 89,
-    conductRating: 'good',
+    theologyScore: 84,
+    interviewScore: 80,
+    attendanceRecordPercentage: 92,
+    conductRating: 'exemplary',
     screeningNotes: [
-      'Theology score passed cutoff. Sequential rank Pastor → Evangelist confirmed.',
+      'Theological written test completed. Awaiting National Screening Board ratification.',
     ],
-    duesStatus: 'pending',
-    duesAmountPaid: 0,
+    duesStatus: 'cleared',
+    duesAmountPaid: 154000,
+    receiptNumber: 'REC-2026-ESOCS-5502',
     levyBreakdown: {
-      branchLevy: 15000,
-      districtLevy: 15000,
-      provincialLevy: 20000,
-      nationalFee: 30000,
-      total: 80000,
+      branchLevy: 14000,
+      districtLevy: 14000,
+      provincialLevy: 17500,
+      nationalFee: 110000,
+      total: 155500,
     },
     tierApprovals: {
-      branch: { approved: true, approverName: 'Senior Apostle Jude Chukwu', date: '2026-05-25', comments: 'Parish priest attested.' },
-      district: { approved: true, approverName: 'District Committee Enugu', date: '2026-06-18', comments: 'District clearance signed.' },
-      province: { approved: true, approverName: 'Eastern Provincial Secretariat', date: '2026-07-20', comments: 'Transferred to CMC for testing.' },
+      branch: { approved: true, approverName: 'Senior Apostle Chukwuma', date: '2026-03-22', comments: 'Parish cleared.' },
+      district: { approved: true, approverName: 'Leader I. Eze', date: '2026-04-18', comments: 'District vetted.' },
+      province: { approved: true, approverName: 'Special Senior Apostle O. Kalu', date: '2026-06-05', comments: 'Provincial verified.' },
+      cmc: { approved: false },
+      national: { approved: false },
     },
   },
   {
     id: 'cand-004',
-    regNumber: 'ESOCS/ORD/2026/0890',
+    regNumber: 'ESOCS/ORD/2026/0115',
     fullName: 'Aladura Samuel Ayomide Jegede',
     email: 's.jegede@esocs.church',
-    phone: '+234 701 987 6543',
+    phone: '+234 809 112 3344',
     gender: 'male',
-    dateOfBirth: '1995-02-14',
-    occupation: 'Bio-medical Lab Scientist',
+    dateOfBirth: '1992-02-14',
+    occupation: 'Software Engineer',
     maritalStatus: 'single',
-    dateJoinedChurch: '2018-06-20',
-    baptismDate: '2018-12-09',
+    dateJoinedChurch: '2016-07-22',
+    baptismDate: '2017-01-10',
     currentRank: 'Aladura',
     currentRankYear: 2023,
-    targetRankId: 'rank_leader_male',
+    targetRankId: 'rank_leader',
     targetRankName: 'Leader',
-    province: 'Northern Province (Abuja / Kaduna / Kano)',
+    province: 'Northern Province',
     district: 'Abuja Metropolitan District',
-    parish: 'Cathedral of Redemption, Garki',
-    branchPriestName: 'Special Senior Apostle C. N. Ibrahim',
+    parish: 'Cathedral of Redemption',
+    branchPriestName: 'Special Senior Apostle Dan-Jumbo',
     stage: 'branch_approved',
     currentVettingTier: 'district',
-    submissionDate: '2026-06-01',
-    lastUpdated: '2026-07-22',
+    submissionDate: '2026-03-20',
+    lastUpdated: '2026-04-05',
     tenureYears: 3,
     tenureValid: true,
-    attendanceRecordPercentage: 92,
+    attendanceRecordPercentage: 94,
     conductRating: 'exemplary',
-    duesStatus: 'pending',
-    duesAmountPaid: 0,
+    screeningNotes: [
+      'Parish chairman approved. Forwarded to District Vetting Committee.',
+    ],
+    duesStatus: 'partial',
+    duesAmountPaid: 40000,
+    receiptNumber: 'REC-2026-ESOCS-3391',
     levyBreakdown: {
-      branchLevy: 9000,
-      districtLevy: 9000,
-      provincialLevy: 12000,
-      nationalFee: 15000,
-      total: 45000,
+      branchLevy: 7000,
+      districtLevy: 7000,
+      provincialLevy: 8750,
+      nationalFee: 55000,
+      total: 77750,
     },
     tierApprovals: {
-      branch: { approved: true, approverName: 'Special Senior Apostle C. N. Ibrahim', date: '2026-06-05', comments: 'Parish endorsement forwarded to District.' },
+      branch: { approved: true, approverName: 'Senior Apostle Okon', date: '2026-04-01', comments: 'Active choir member and altar server.' },
+      district: { approved: false },
+      province: { approved: false },
+      cmc: { approved: false },
+      national: { approved: false },
     },
   },
   {
     id: 'cand-005',
-    regNumber: 'ESOCS/ORD/2026/0105',
-    fullName: 'Special Senior Apostle (Blue) Victor E. Dan-Jumbo',
+    regNumber: 'ESOCS/ORD/2026/0992',
+    fullName: 'Special Senior Apostle Victor E. Dan-Jumbo',
     email: 'v.danjumbo@esocs.church',
-    phone: '+234 809 111 2233',
+    phone: '+234 803 999 8811',
     gender: 'male',
-    dateOfBirth: '1965-09-19',
-    occupation: 'Maritime Law Arbitrator & Senior Advocate',
+    dateOfBirth: '1968-01-25',
+    occupation: 'Managing Director & Legal Counsel',
     maritalStatus: 'married',
-    dateJoinedChurch: '1985-02-10',
-    baptismDate: '1985-07-07',
+    dateJoinedChurch: '1989-10-14',
+    baptismDate: '1990-03-18',
     currentRank: 'Special Senior Apostle (Blue)',
     currentRankYear: 2018,
     targetRankId: 'rank_apostle_general_green',
     targetRankName: 'Apostle General (Green)',
-    province: 'Niger Delta Province (Port Harcourt / Bayelsa)',
-    district: 'Port Harcourt Apex District',
+    province: 'Niger Delta Province',
+    district: 'Port Harcourt District',
     parish: 'Bethel Central Cathedral',
-    branchPriestName: 'Supervising Apostle General (Green) T. A. Briggs',
+    branchPriestName: 'Apostle General J. K. Coker',
     stage: 'board_approved',
     currentVettingTier: 'national',
-    submissionDate: '2026-02-14',
-    lastUpdated: '2026-09-30',
+    submissionDate: '2026-03-25',
+    lastUpdated: '2026-09-22',
     tenureYears: 8,
     tenureValid: true,
-    theologyScore: 98,
-    interviewScore: 97,
-    attendanceRecordPercentage: 100,
+    theologyScore: 95,
+    interviewScore: 96,
+    attendanceRecordPercentage: 99,
     conductRating: 'exemplary',
     screeningNotes: [
-      'Unanimous recommendation by the Niger Delta Synod.',
+      'Holy Synod Advisory Board unanimously ratified appointment to Apostle General.',
     ],
     duesStatus: 'cleared',
-    duesAmountPaid: 200000,
-    receiptNumber: 'REC-2026-ESOCS-0012',
+    duesAmountPaid: 450000,
+    receiptNumber: 'REC-2026-ESOCS-9901',
     levyBreakdown: {
-      branchLevy: 35000,
-      districtLevy: 35000,
+      branchLevy: 40000,
+      districtLevy: 40000,
       provincialLevy: 50000,
-      nationalFee: 80000,
-      total: 200000,
+      nationalFee: 320000,
+      total: 450000,
     },
     tierApprovals: {
-      branch: { approved: true, approverName: 'Supervising Apostle General T. A. Briggs', date: '2026-02-20', comments: 'High recommendation.' },
-      district: { approved: true, approverName: 'Port Harcourt Apex District Council', date: '2026-03-12', comments: 'Approved.' },
-      province: { approved: true, approverName: 'Niger Delta Provincial Synod', date: '2026-04-15', comments: 'Unanimous provincial endorsement.' },
-      cmc: { approved: true, approverName: 'National Screening Directorate', date: '2026-06-10', comments: 'Score: 98/100.' },
-      national: { approved: true, approverName: 'His Most Eminence & Holy Synod', date: '2026-09-30', comments: 'Decreed for High Altar investiture.' },
+      branch: { approved: true, approverName: 'Apostle General Coker', date: '2026-04-05', comments: 'Unanimous parish backing.' },
+      district: { approved: true, approverName: 'Senior Apostle Briggs', date: '2026-04-20', comments: 'District ratified.' },
+      province: { approved: true, approverName: 'Special Senior Apostle Jack', date: '2026-05-30', comments: 'Provincial verified.' },
+      cmc: { approved: true, approverName: 'Dr. Godwin Bassey (CMC)', date: '2026-08-12', comments: 'Executive viva-voce distinction.' },
+      national: { approved: true, approverName: 'Apostle General J. K. Coker', date: '2026-09-22', comments: 'Holy Synod Approved.' },
     },
-    seatNumber: 'High Altar - Chancel Row 1',
-    robingOfficer: 'His Most Eminence, Baba Aladura (Prelate)',
-    certificateNumber: 'CERT-2026-AG-0105',
-    verificationHash: generateCertificateHash('ESOCS/ORD/2026/0105', 'Victor E. Dan-Jumbo', 'Apostle General (Green)', 2026),
+    investitureSession: 'Saturday Morning Session (09:00 AM)',
+    seatNumber: 'Zone A - Chancel Apex Pew 01',
+    robingOfficer: 'Supervising Apostle General Prof. David A. Oladele',
+    certificateNumber: 'CERT-2026-APOSTLE_GENERAL-0992',
+    verificationHash: generateCertificateHash('ESOCS/ORD/2026/0992', 'Special Senior Apostle Victor E. Dan-Jumbo', 'Apostle General (Green)', 2026),
   },
 ];
 
-let memoryStore: DatabaseSchema = {
+let memoryDb: DatabaseSchema = {
   candidates: [...INITIAL_SEED_CANDIDATES],
   users: [...DEFAULT_USERS],
   auditLogs: [
     {
       id: 'log-001',
-      timestamp: new Date().toISOString(),
-      performedBy: 'System Bootstrapper',
-      action: 'INITIALIZE_DATABASE',
-      details: 'Ecclesiastical database initialized with Cohort 2026 records & 5-tier vetting pipeline.',
+      timestamp: '2026-09-28T14:32:00Z',
+      performedBy: 'Supervising Apostle General Prof. David A. Oladele',
+      action: 'SYSTEM_INITIALIZATION',
+      details: 'Sovereign database initialized for General Conference 2026 Ordination Cohort.',
     },
   ],
 };
 
-function readDb(): DatabaseSchema {
+function ensureDataDirectory() {
   try {
-    if (fs.existsSync(DB_FILE_PATH)) {
-      const data = fs.readFileSync(DB_FILE_PATH, 'utf-8');
-      return JSON.parse(data);
+    const dataDir = path.dirname(DB_FILE_PATH);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
     }
-  } catch (err) {
-    // Fall back to memoryStore
+  } catch (e) {
+    // Memory fallback
   }
-  return memoryStore;
 }
 
-function writeDb(data: DatabaseSchema): void {
-  memoryStore = data;
+function readDb(): DatabaseSchema {
   try {
-    const dir = path.dirname(DB_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    ensureDataDirectory();
+    if (fs.existsSync(DB_FILE_PATH)) {
+      const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.candidates) && Array.isArray(parsed.users)) {
+        return parsed;
+      }
     }
-    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    // Non-fatal, memoryStore holds data
+  } catch (e) {
+    // Memory fallback
   }
+  return memoryDb;
+}
+
+function writeDb(data: DatabaseSchema): boolean {
+  memoryDb = data;
+  try {
+    ensureDataDirectory();
+    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// Initialize on boot
+try {
+  ensureDataDirectory();
+  if (!fs.existsSync(DB_FILE_PATH)) {
+    writeDb(memoryDb);
+  }
+} catch (e) {
+  // Ignored
 }
 
 export const db = {
   candidates: {
-    getAll: (params?: { province?: string; stage?: string; tier?: string; search?: string }): CandidateProfile[] => {
+    getAll: (filters?: { province?: string; stage?: string; tier?: string; search?: string }): CandidateProfile[] => {
       const data = readDb();
-      let list = [...data.candidates];
+      let result = [...data.candidates];
 
-      if (params?.province && params.province !== 'all') {
-        list = list.filter((c) => c.province === params.province);
+      if (filters?.province && filters.province !== 'all') {
+        result = result.filter((c) => c.province.toLowerCase() === filters.province?.toLowerCase());
       }
-      if (params?.stage && params.stage !== 'all') {
-        list = list.filter((c) => c.stage === params.stage);
+      if (filters?.stage && filters.stage !== 'all') {
+        result = result.filter((c) => c.stage === filters.stage);
       }
-      if (params?.tier && params.tier !== 'all') {
-        list = list.filter((c) => c.currentVettingTier === params.tier);
+      if (filters?.tier && filters.tier !== 'all') {
+        result = result.filter((c) => c.currentVettingTier === filters.tier);
       }
-      if (params?.search) {
-        const q = params.search.toLowerCase();
-        list = list.filter(
+      if (filters?.search) {
+        const query = filters.search.toLowerCase().trim();
+        result = result.filter(
           (c) =>
-            c.fullName.toLowerCase().includes(q) ||
-            c.regNumber.toLowerCase().includes(q) ||
-            c.targetRankName.toLowerCase().includes(q) ||
-            c.currentRank.toLowerCase().includes(q)
+            c.fullName.toLowerCase().includes(query) ||
+            c.regNumber.toLowerCase().includes(query) ||
+            c.email.toLowerCase().includes(query) ||
+            c.targetRankName.toLowerCase().includes(query) ||
+            c.parish.toLowerCase().includes(query)
         );
       }
-      return list;
+
+      return result;
     },
 
     getById: (id: string): CandidateProfile | null => {
       const data = readDb();
-      return (
-        data.candidates.find(
-          (c) =>
-            c.id === id ||
-            c.regNumber.replace(/[^A-Za-z0-9]/g, '') === id.replace(/[^A-Za-z0-9]/g, '') ||
-            c.email.toLowerCase() === id.toLowerCase()
-        ) || null
+      const trimmed = id.trim().toLowerCase();
+      const cand = data.candidates.find(
+        (c) =>
+          c.id.toLowerCase() === trimmed ||
+          c.regNumber.toLowerCase() === trimmed ||
+          c.email.toLowerCase() === trimmed
       );
+      return cand || null;
     },
 
     create: (candidateData: Partial<CandidateProfile>): CandidateProfile => {
       const data = readDb();
       const id = `cand-${String(data.candidates.length + 1).padStart(3, '0')}`;
-      const regNumber = `ESOCS/ORD/2026/${String(Math.floor(100 + Math.random() * 900)).padStart(4, '0')}`;
+      const randomDigits = Math.floor(1000 + Math.random() * 9000);
+      const regNumber = candidateData.regNumber || `ESOCS/ORD/2026/${randomDigits}`;
 
-      const matchedRank = ESOCS_RANKS.find((r) => r.name.toLowerCase() === (candidateData.targetRankName || '').toLowerCase());
-      const rankYear = candidateData.currentRankYear || 2022;
-      const tenure = 2026 - rankYear;
+      const gender = (candidateData.gender || 'male') as GenderType;
+      const targetRankDef = findRankByNameOrId(gender, candidateData.targetRankName || 'Leader');
+      const calculatedLevies = targetRankDef
+        ? calculateLeviesForRank(targetRankDef)
+        : { branchLevy: 15000, districtLevy: 15000, provincialQuota: 20000, nationalOrdinationFee: 30000, totalDue: 80000 };
 
       const newRecord: CandidateProfile = {
         id,
         regNumber,
-        fullName: candidateData.fullName || 'New Ordinand',
-        email: candidateData.email || 'candidate@esocs.church',
+        fullName: candidateData.fullName || 'Candidate Ordinand',
+        email: candidateData.email || `candidate-${id}@esocs.church`,
         phone: candidateData.phone || '+234 800 000 0000',
-        gender: candidateData.gender || 'male',
+        gender: gender,
         dateOfBirth: candidateData.dateOfBirth || '1985-05-15',
-        occupation: candidateData.occupation || 'Civil Servant & Church Worker',
+        occupation: candidateData.occupation || 'Ecclesiastical Worker',
         maritalStatus: candidateData.maritalStatus || 'married',
-        dateJoinedChurch: candidateData.dateJoinedChurch || '2005-06-12',
-        baptismDate: candidateData.baptismDate || '2005-11-20',
-        currentRank: candidateData.currentRank || 'Pastor',
-        currentRankYear: rankYear,
-        tenureYears: tenure,
-        tenureValid: tenure >= (matchedRank?.minimumYearsInCurrentRank || 3),
-        targetRankId: candidateData.targetRankId || matchedRank?.id || 'rank_evangelist',
-        targetRankName: candidateData.targetRankName || 'Evangelist',
+        dateJoinedChurch: candidateData.dateJoinedChurch || '2005-01-01',
+        baptismDate: candidateData.baptismDate || '2005-06-01',
+        currentRank: candidateData.currentRank || 'Member',
+        currentRankYear: candidateData.currentRankYear || 2022,
+        tenureYears: candidateData.tenureYears || 4,
+        tenureValid: candidateData.tenureValid ?? true,
+        targetRankId: targetRankDef?.id || 'rank_leader',
+        targetRankName: targetRankDef?.name || candidateData.targetRankName || 'Leader',
         province: candidateData.province || 'Lagos Central Province',
-        district: candidateData.district || 'Surulere District',
-        parish: candidateData.parish || 'Mount Zion Cathedral Branch',
-        branchPriestName: candidateData.branchPriestName || 'Senior Apostle Festus Okon',
+        district: candidateData.district || 'General District',
+        parish: candidateData.parish || 'Main Parish Branch',
+        branchPriestName: candidateData.branchPriestName || 'Branch Presiding Officer',
         stage: 'nominated',
         currentVettingTier: 'branch',
         submissionDate: new Date().toISOString().split('T')[0],
         lastUpdated: new Date().toISOString().split('T')[0],
-        attendanceRecordPercentage: 94,
-        conductRating: 'exemplary',
+        attendanceRecordPercentage: candidateData.attendanceRecordPercentage || 95,
+        conductRating: candidateData.conductRating || 'exemplary',
         duesStatus: 'pending',
         duesAmountPaid: 0,
-        levyBreakdown: matchedRank?.levyBreakdown || {
-          branchLevy: 15000,
-          districtLevy: 15000,
-          provincialLevy: 20000,
-          nationalFee: 30000,
-          total: 80000,
+        levyBreakdown: {
+          branchLevy: calculatedLevies.branchLevy,
+          districtLevy: calculatedLevies.districtLevy,
+          provincialLevy: calculatedLevies.provincialQuota,
+          nationalFee: calculatedLevies.nationalOrdinationFee,
+          total: calculatedLevies.totalDue,
         },
         tierApprovals: {
           branch: { approved: false },
@@ -457,14 +559,14 @@ export const db = {
           cmc: { approved: false },
           national: { approved: false },
         },
-        screeningNotes: candidateData.screeningNotes || ['Nomination created in portal.'],
+        screeningNotes: candidateData.screeningNotes || ['Nomination registered in portal canonical ledger.'],
       };
 
       data.candidates.unshift(newRecord);
       data.auditLogs.unshift({
         id: `log-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        performedBy: 'Parish Leader / System',
+        performedBy: 'System / Parish Leader',
         action: 'CREATE_NOMINATION',
         candidateId: id,
         details: `Nomination created for ${newRecord.fullName} (${newRecord.regNumber}) for rank: ${newRecord.targetRankName}.`,
@@ -474,51 +576,76 @@ export const db = {
       return newRecord;
     },
 
-    update: (id: string, updates: Partial<CandidateProfile>): CandidateProfile | null => {
+    update: (id: string, updates: Partial<CandidateProfile>, actorName: string = 'Portal Administrator'): CandidateProfile | null => {
       const data = readDb();
-      const index = data.candidates.findIndex((c) => c.id === id);
+      const index = data.candidates.findIndex((c) => c.id === id || c.regNumber === id);
       if (index === -1) return null;
 
-      data.candidates[index] = {
-        ...data.candidates[index],
+      const previous = data.candidates[index];
+      const merged: CandidateProfile = {
+        ...previous,
         ...updates,
         lastUpdated: new Date().toISOString().split('T')[0],
       };
 
+      // Auto-compute scores if exam scores were updated
+      if (updates.theologyScore !== undefined || updates.interviewScore !== undefined) {
+        const examEval = evaluateTheologicalScores(
+          merged.theologyScore || 0,
+          85,
+          merged.interviewScore || 75
+        );
+        merged.theologyScore = examEval.theologyScore;
+        merged.interviewScore = examEval.interviewScore;
+      }
+
+      // Auto-compute crypto hash if approved
+      if (['board_approved', 'investiture_assigned', 'ordained'].includes(merged.stage) && !merged.verificationHash) {
+        const cryptoData = generateCryptographicVerification(
+          merged.regNumber,
+          merged.fullName,
+          merged.targetRankName,
+          2026
+        );
+        merged.verificationHash = cryptoData.certHash;
+        merged.certificateNumber = merged.certificateNumber || cryptoData.certNumber;
+      }
+
+      data.candidates[index] = merged;
       data.auditLogs.unshift({
         id: `log-${Date.now()}`,
         timestamp: new Date().toISOString(),
-        performedBy: 'Portal Administrator',
+        performedBy: actorName,
         action: 'UPDATE_CANDIDATE',
-        candidateId: id,
-        details: `Updated stage to ${data.candidates[index].stage} / tier: ${data.candidates[index].currentVettingTier}`,
+        candidateId: merged.id,
+        details: `Candidate record updated: stage=${merged.stage}, tier=${merged.currentVettingTier}, dues=${merged.duesStatus}.`,
       });
 
       writeDb(data);
-      return data.candidates[index];
+      return merged;
     },
   },
 
   users: {
-    authenticate: (identifier: string, section?: 'candidate' | 'admin', password?: string): (UserSession & { requires2FA?: boolean }) | null => {
+    authenticate: (identifier: string, password?: string): (UserSession & { candidate?: CandidateProfile }) | null => {
       const data = readDb();
       const trimmed = (identifier || '').trim().toLowerCase();
 
-      // Find user by email or candidateId or regNumber
+      if (!trimmed) return null;
+
+      // Find user by email or userId
       let user = data.users.find(
         (u) =>
           u.email.toLowerCase() === trimmed ||
-          u.userId === trimmed ||
-          (u.candidateId && trimmed.includes('ord'))
+          u.userId.toLowerCase() === trimmed
       );
 
+      // If not directly in users, check if a candidate with this email or regNumber exists
       if (!user) {
-        // Match candidate record if exists
         const cand = data.candidates.find(
           (c) =>
             c.email.toLowerCase() === trimmed ||
-            c.regNumber.toLowerCase() === trimmed ||
-            c.id.toLowerCase() === trimmed
+            c.regNumber.toLowerCase() === trimmed
         );
 
         if (cand) {
@@ -530,26 +657,58 @@ export const db = {
             roleTitle: 'Ordinand Candidate',
             jurisdiction: `${cand.parish}, ${cand.province}`,
             candidateId: cand.id,
+            passwordHash: 'password123',
           };
           data.users.push(user);
           writeDb(data);
-        } else if (section === 'admin') {
-          user = data.users.find((u) => u.role === 'super_admin') || data.users[1];
-        } else {
-          user = data.users.find((u) => u.role === 'candidate') || data.users[0];
         }
       }
 
-      return user ? { ...user } : null;
+      if (!user) {
+        return null;
+      }
+
+      // Strict password check if user has a passwordHash and password is provided
+      if (password && user.passwordHash) {
+        if (user.passwordHash !== password) {
+          return null;
+        }
+      }
+
+      // Fetch linked candidate record if candidate
+      let candidateProfile: CandidateProfile | undefined;
+      if (user.candidateId || user.role === 'candidate') {
+        const cand = data.candidates.find(
+          (c) =>
+            (user?.candidateId && c.id === user.candidateId) ||
+            c.email.toLowerCase() === user?.email.toLowerCase()
+        );
+        if (cand) {
+          candidateProfile = cand;
+          user.candidateId = cand.id;
+        }
+      }
+
+      return {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        roleTitle: user.roleTitle,
+        jurisdiction: user.jurisdiction,
+        candidateId: user.candidateId,
+        candidate: candidateProfile,
+      };
     },
 
     register: (params: {
       fullName: string;
       email: string;
       phone: string;
-      gender: 'male' | 'female';
+      gender: GenderType;
       currentRank: string;
       targetRankName: string;
+      currentRankYear?: number;
       province: string;
       district?: string;
       parish: string;
@@ -561,7 +720,14 @@ export const db = {
       const randomDigits = Math.floor(1000 + Math.random() * 9000);
       const regNumber = `ESOCS/ORD/2026/${randomDigits}`;
 
-      const matchedRank = ESOCS_RANKS.find((r) => r.name.toLowerCase() === params.targetRankName.toLowerCase());
+      const targetRankDef = findRankByNameOrId(params.gender, params.targetRankName);
+      const calculatedLevies = targetRankDef
+        ? calculateLeviesForRank(targetRankDef)
+        : { branchLevy: 15000, districtLevy: 15000, provincialQuota: 20000, nationalOrdinationFee: 30000, totalDue: 80000 };
+
+      const currentYear = new Date().getFullYear();
+      const rankYear = params.currentRankYear && params.currentRankYear > 1950 ? params.currentRankYear : currentYear - 3;
+      const tenureYears = currentYear - rankYear;
 
       const candidate: CandidateProfile = {
         id: candidateId,
@@ -570,35 +736,35 @@ export const db = {
         email: params.email,
         phone: params.phone,
         gender: params.gender,
-        dateOfBirth: '1988-06-15',
-        occupation: 'Ecclesiastical Worker / Member',
+        dateOfBirth: '1990-01-01',
+        occupation: 'Ecclesiastical Member / Worker',
         maritalStatus: 'married',
-        dateJoinedChurch: '2010-04-12',
-        baptismDate: '2010-09-18',
+        dateJoinedChurch: '2012-05-10',
+        baptismDate: '2012-10-15',
         currentRank: params.currentRank,
-        currentRankYear: 2022,
-        tenureYears: 4,
-        tenureValid: true,
-        targetRankId: matchedRank?.id || `rank_${params.targetRankName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
-        targetRankName: params.targetRankName,
+        currentRankYear: rankYear,
+        tenureYears,
+        tenureValid: tenureYears >= (targetRankDef?.minYearsInRank || 2),
+        targetRankId: targetRankDef?.id || `rank_${params.targetRankName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+        targetRankName: targetRankDef?.name || params.targetRankName,
         province: params.province,
-        district: params.district || 'General District',
+        district: params.district || `${params.province} Central District`,
         parish: params.parish,
         branchPriestName: 'Parish Presiding Officer',
         stage: 'nominated',
         currentVettingTier: 'branch',
         submissionDate: new Date().toISOString().split('T')[0],
         lastUpdated: new Date().toISOString().split('T')[0],
-        attendanceRecordPercentage: 95,
+        attendanceRecordPercentage: 96,
         conductRating: 'exemplary',
         duesStatus: 'pending',
         duesAmountPaid: 0,
-        levyBreakdown: matchedRank?.levyBreakdown || {
-          branchLevy: 15000,
-          districtLevy: 15000,
-          provincialLevy: 20000,
-          nationalFee: 30000,
-          total: 80000,
+        levyBreakdown: {
+          branchLevy: calculatedLevies.branchLevy,
+          districtLevy: calculatedLevies.districtLevy,
+          provincialLevy: calculatedLevies.provincialQuota,
+          nationalFee: calculatedLevies.nationalOrdinationFee,
+          total: calculatedLevies.totalDue,
         },
         tierApprovals: {
           branch: { approved: false },
@@ -607,18 +773,22 @@ export const db = {
           cmc: { approved: false },
           national: { approved: false },
         },
-        screeningNotes: ['Self-registered through ESOCS Ordination Portal. Queued for Branch / Parish Leader initial review.'],
+        screeningNotes: [
+          `Self-registered via ESOCS Canonical Portal. Current Rank: ${params.currentRank} (${rankYear}). Target Rank: ${params.targetRankName}.`,
+        ],
       };
 
-      const user: UserSession & { passwordHash?: string } = {
+      const user: UserRecord = {
         userId: `user-${candidateId}`,
         name: params.fullName,
         email: params.email,
         role: 'candidate',
-        roleTitle: 'Ordinand Candidate',
+        roleTitle: `Ordinand Candidate (Ascending to ${params.targetRankName})`,
         jurisdiction: `${params.parish}, ${params.province}`,
         candidateId: candidateId,
         passwordHash: params.password,
+        registeredAt: new Date().toISOString(),
+        twoFactorEnabled: !!params.enable2FA,
       };
 
       data.candidates.unshift(candidate);
@@ -629,7 +799,7 @@ export const db = {
         performedBy: params.fullName,
         action: 'SELF_REGISTRATION',
         candidateId,
-        details: `Candidate self-registered with Reg Number ${regNumber} for ordination rank: ${params.targetRankName}.`,
+        details: `Candidate self-registered (${regNumber}) for rank ${params.targetRankName}. Strict canonical progression validated.`,
       });
 
       writeDb(data);
@@ -653,7 +823,7 @@ export const db = {
           timestamp: new Date().toISOString(),
           performedBy: user.name,
           action: 'PASSWORD_RESET',
-          details: `Password reset successfully for ${user.email}.`,
+          details: `Password reset successfully for account ${user.email}.`,
         });
         writeDb(data);
         return true;
@@ -663,7 +833,7 @@ export const db = {
 
     changePassword: (userId: string, newPassword: string): boolean => {
       const data = readDb();
-      const user = data.users.find((u) => u.userId === userId);
+      const user = data.users.find((u) => u.userId === userId || u.email.toLowerCase() === userId.toLowerCase());
       if (user) {
         user.passwordHash = newPassword;
         data.auditLogs.unshift({
@@ -679,8 +849,13 @@ export const db = {
       return false;
     },
 
+    getById: (userId: string): UserRecord | null => {
+      const data = readDb();
+      return data.users.find((u) => u.userId === userId || u.email.toLowerCase() === userId.toLowerCase()) || null;
+    },
+
     getAll: (): UserSession[] => {
-      return readDb().users;
+      return readDb().users.map(({ passwordHash, ...u }) => u);
     },
   },
 
@@ -691,8 +866,12 @@ export const db = {
       const totalDues = data.candidates.reduce((sum, c) => sum + (c.duesAmountPaid || 0), 0);
       const cleared = data.candidates.filter((c) => c.duesStatus === 'cleared').length;
       const ordained = data.candidates.filter((c) => c.stage === 'ordained').length;
-      const pendingScreening = data.candidates.filter((c) => ['nominated', 'branch_approved', 'district_approved', 'province_approved', 'screening_in_progress'].includes(c.stage)).length;
-      const approvedByBoard = data.candidates.filter((c) => ['theology_assessed', 'cmc_approved', 'board_approved', 'investiture_assigned'].includes(c.stage)).length;
+      const pendingScreening = data.candidates.filter((c) =>
+        ['nominated', 'branch_approved', 'district_approved', 'province_approved', 'screening_in_progress'].includes(c.stage)
+      ).length;
+      const approvedByBoard = data.candidates.filter((c) =>
+        ['theology_assessed', 'cmc_approved', 'board_approved', 'investiture_assigned'].includes(c.stage)
+      ).length;
 
       return {
         total,
@@ -707,5 +886,16 @@ export const db = {
 
   auditLogs: {
     getAll: () => readDb().auditLogs,
+    add: (entry: { performedBy: string; action: string; candidateId?: string; details: string }) => {
+      const data = readDb();
+      const newLog: AuditLog = {
+        id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        timestamp: new Date().toISOString(),
+        ...entry,
+      };
+      data.auditLogs.unshift(newLog);
+      writeDb(data);
+      return newLog;
+    },
   },
 };

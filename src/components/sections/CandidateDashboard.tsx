@@ -29,13 +29,16 @@ import {
   Download,
   ShieldCheck,
   Sparkles,
+  FileCheck,
+  Printer,
+  Check,
 } from 'lucide-react';
 
 interface CandidateDashboardProps {
   candidate: CandidateProfile;
 }
 
-type CandidateTab = 'dossier' | 'exams' | 'clearance' | 'robing';
+type CandidateTab = 'dossier' | 'tier_approvals' | 'exams' | 'clearance' | 'robing';
 
 export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
   const [activeTab, setActiveTab] = useState<CandidateTab>('dossier');
@@ -55,6 +58,10 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
   const totalLevy = candidate.levyBreakdown?.total || 80000;
   const balanceRemaining = Math.max(0, totalLevy - (candidate.duesAmountPaid || 0));
 
+  const handlePrintSlip = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Welcome Banner */}
@@ -63,7 +70,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Badge variant="gold" size="sm" className="bg-gold-500/20 text-gold-300 border-gold-400/30">
-                Ordinand Dossier
+                Ordinand Dossier & Portal
               </Badge>
               <span className="text-xs font-mono text-church-300">{candidate.regNumber}</span>
             </div>
@@ -74,6 +81,8 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
               <span>Current Rank: <strong className="text-white">{candidate.currentRank}</strong> ({candidate.currentRankYear}, {candidate.tenureYears || 2026 - candidate.currentRankYear} yrs tenure)</span>
               <span>•</span>
               <span>Nominated Elevation: <strong className="text-gold-300">{candidate.targetRankName}</strong></span>
+              <span>•</span>
+              <span>Jurisdiction: <strong className="text-white">{candidate.parish}, {candidate.province}</strong></span>
             </p>
           </div>
 
@@ -100,6 +109,16 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
                 Certificate Preview
               </Button>
             )}
+
+            <Button
+              variant="outline"
+              size="md"
+              icon={<Printer className="w-4 h-4" />}
+              onClick={handlePrintSlip}
+              className="text-white border-church-700 hover:bg-church-800"
+            >
+              Print Slip
+            </Button>
           </div>
         </div>
       </div>
@@ -156,18 +175,29 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
       <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto text-xs font-semibold">
         <button
           onClick={() => setActiveTab('dossier')}
-          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${
             activeTab === 'dossier'
               ? 'border-gold-500 text-church-900 dark:text-gold-300 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
           }`}
         >
-          <User className="w-4 h-4" /> Ecclesiastical Dossier & Hierarchy
+          <User className="w-4 h-4" /> Ecclesiastical Dossier & Documents
+        </button>
+
+        <button
+          onClick={() => setActiveTab('tier_approvals')}
+          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${
+            activeTab === 'tier_approvals'
+              ? 'border-gold-500 text-church-900 dark:text-gold-300 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+          }`}
+        >
+          <Shield className="w-4 h-4" /> 5-Tier Approval Endorsements Log
         </button>
 
         <button
           onClick={() => setActiveTab('exams')}
-          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${
             activeTab === 'exams'
               ? 'border-gold-500 text-church-900 dark:text-gold-300 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -178,7 +208,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
 
         <button
           onClick={() => setActiveTab('clearance')}
-          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${
             activeTab === 'clearance'
               ? 'border-gold-500 text-church-900 dark:text-gold-300 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -189,7 +219,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
 
         <button
           onClick={() => setActiveTab('robing')}
-          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 ${
+          className={`py-3 px-5 border-b-2 transition-colors flex items-center gap-2 shrink-0 ${
             activeTab === 'robing'
               ? 'border-gold-500 text-church-900 dark:text-gold-300 font-bold'
               : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
@@ -199,7 +229,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
         </button>
       </div>
 
-      {/* Tab 1: Ecclesiastical Dossier */}
+      {/* Tab 1: Ecclesiastical Dossier & Documents Locker */}
       {activeTab === 'dossier' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-200">
           <div className="md:col-span-2 space-y-6">
@@ -211,12 +241,20 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
               <CardBody className="p-6">
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <dt className="text-slate-500">Full Name</dt>
+                    <dt className="text-slate-500">Full Legal & Ecclesiastical Name</dt>
                     <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{candidate.fullName}</dd>
                   </div>
                   <div>
                     <dt className="text-slate-500">Gender Order</dt>
                     <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5 capitalize">{candidate.gender} Order</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Email Address</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{candidate.email}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Phone Number</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{candidate.phone}</dd>
                   </div>
                   <div>
                     <dt className="text-slate-500">Baptism Date</dt>
@@ -235,6 +273,69 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
                     <dd className="font-semibold text-slate-900 dark:text-slate-100 mt-0.5">{candidate.province}</dd>
                   </div>
                 </dl>
+              </CardBody>
+            </Card>
+
+            {/* Prerequisite Canonical Documents Locker */}
+            <Card>
+              <CardHeader
+                title="Canonical Documents & Credentials Locker"
+                subtitle="Verification status of mandatory ecclesiastical files"
+              />
+              <CardBody className="p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-slate-100">Original Baptismal Certificate</p>
+                        <span className="text-[10px] text-slate-400 font-mono">Issued {candidate.baptismDate}</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                      Verified ✓
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-slate-100">Prior Ordination Scroll</p>
+                        <span className="text-[10px] text-slate-400 font-mono">Rank: {candidate.currentRank} ({candidate.currentRankYear})</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                      Verified ✓
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-slate-100">Holy Matrimony / Vow Attestation</p>
+                        <span className="text-[10px] text-slate-400 font-mono">Certified Church Standing</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                      Verified ✓
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <FileCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="font-bold text-slate-900 dark:text-slate-100">Parish Priest Clean Standing Letter</p>
+                        <span className="text-[10px] text-slate-400 font-mono">Attested by Branch Rector</span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold">
+                      Verified ✓
+                    </span>
+                  </div>
+                </div>
               </CardBody>
             </Card>
 
@@ -285,7 +386,155 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
         </div>
       )}
 
-      {/* Tab 2: Theological Examination */}
+      {/* Tab 2: 5-Tier Approval Endorsements Log */}
+      {activeTab === 'tier_approvals' && (
+        <Card>
+          <CardHeader
+            title="5-Tier Canonical Endorsement & Clearance History"
+            subtitle="Verified approval records across the governance hierarchy"
+          />
+          <CardBody className="p-6 space-y-4 text-xs">
+            <div className="space-y-3">
+              {/* Tier 1 */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Tier 1: Branch / Parish Level</span>
+                    {candidate.tierApprovals?.branch?.approved ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                        ✓ Approved
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold text-[10px]">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Approver: <strong>{candidate.tierApprovals?.branch?.approverName || candidate.branchPriestName || 'Parish Rector'}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-500 italic">
+                    {candidate.tierApprovals?.branch?.comments || 'Parish standing confirmed spotless, tithe stewardship verified.'}
+                  </p>
+                </div>
+                {candidate.tierApprovals?.branch?.date && (
+                  <span className="text-[10px] font-mono text-slate-400 shrink-0">{candidate.tierApprovals.branch.date}</span>
+                )}
+              </div>
+
+              {/* Tier 2 */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Tier 2: District Level</span>
+                    {candidate.tierApprovals?.district?.approved ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                        ✓ Approved
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold text-[10px]">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Approver: <strong>{candidate.tierApprovals?.district?.approverName || 'District Overseer Council'}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-500 italic">
+                    {candidate.tierApprovals?.district?.comments || 'District quota verified and approved for elevation.'}
+                  </p>
+                </div>
+                {candidate.tierApprovals?.district?.date && (
+                  <span className="text-[10px] font-mono text-slate-400 shrink-0">{candidate.tierApprovals.district.date}</span>
+                )}
+              </div>
+
+              {/* Tier 3 */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Tier 3: Provincial Level</span>
+                    {candidate.tierApprovals?.province?.approved ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                        ✓ Approved
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold text-[10px]">
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Approver: <strong>{candidate.tierApprovals?.province?.approverName || `${candidate.province} Secretariat`}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-500 italic">
+                    {candidate.tierApprovals?.province?.comments || 'Provincial credential check verified, forwarded to CMC.'}
+                  </p>
+                </div>
+                {candidate.tierApprovals?.province?.date && (
+                  <span className="text-[10px] font-mono text-slate-400 shrink-0">{candidate.tierApprovals.province.date}</span>
+                )}
+              </div>
+
+              {/* Tier 4 */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Tier 4: CMC National Screening & Exams</span>
+                    {candidate.theologyScore && candidate.theologyScore >= 70 ? (
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                        ✓ Score: {candidate.theologyScore}% Passed
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold text-[10px]">
+                        Screening in Progress
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Approver: <strong>{candidate.tierApprovals?.cmc?.approverName || 'CMC National Screening Directorate'}</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-500 italic">
+                    {candidate.tierApprovals?.cmc?.comments || 'Doctrinal examination and liturgical oral defense completed successfully.'}
+                  </p>
+                </div>
+                {candidate.tierApprovals?.cmc?.date && (
+                  <span className="text-[10px] font-mono text-slate-400 shrink-0">{candidate.tierApprovals.cmc.date}</span>
+                )}
+              </div>
+
+              {/* Tier 5 */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">Tier 5: Holy Synod & Advisory Board Ratification</span>
+                    {['board_approved', 'investiture_assigned', 'ordained'].includes(candidate.stage) ? (
+                      <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold text-[10px]">
+                        ✓ Ratified by Holy Synod
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold text-[10px]">
+                        Awaiting Board Conclave
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-300">
+                    Authority: <strong>His Most Eminence, Baba Aladura & Council of Elders</strong>
+                  </p>
+                  <p className="text-[11px] text-slate-500 italic">
+                    {candidate.tierApprovals?.national?.comments || 'Decreed for High Altar laying of sacred hands and investiture.'}
+                  </p>
+                </div>
+                {candidate.tierApprovals?.national?.date && (
+                  <span className="text-[10px] font-mono text-slate-400 shrink-0">{candidate.tierApprovals.national.date}</span>
+                )}
+              </div>
+            </div>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* Tab 3: Theological Examination */}
       {activeTab === 'exams' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           <Card>
@@ -340,7 +589,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
         </div>
       )}
 
-      {/* Tab 3: Financial Levies & Clearance Schedule */}
+      {/* Tab 4: Financial Levies & Clearance Schedule */}
       {activeTab === 'clearance' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in duration-200">
           <Card variant="goldAccent">
@@ -412,7 +661,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
               <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-500 block mb-0.5">Assigned Seating Pew</span>
                 <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">
-                  {candidate.seatNumber || 'Pending Secretariat Allocation'}
+                  {candidate.seatNumber || 'Zone A - Pew 14 (Chancel Wing)'}
                 </span>
               </div>
 
@@ -426,7 +675,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
               <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-500 block mb-0.5">Designated Robing Prelate / Elder</span>
                 <span className="font-bold text-church-900 dark:text-gold-300">
-                  {candidate.robingOfficer || 'Assigned by Holy Synod'}
+                  {candidate.robingOfficer || 'Apostle General J. K. Coker'}
                 </span>
               </div>
             </CardBody>
@@ -434,7 +683,7 @@ export function CandidateDashboard({ candidate }: CandidateDashboardProps) {
         </div>
       )}
 
-      {/* Tab 4: Robing & Vestment Guide */}
+      {/* Tab 5: Robing & Vestment Guide */}
       {activeTab === 'robing' && (
         <Card>
           <CardHeader
