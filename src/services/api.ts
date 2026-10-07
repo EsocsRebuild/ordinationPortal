@@ -199,6 +199,38 @@ class ApiService {
     const data = await res.json();
     return data.candidate;
   }
+
+  // Batch Operations (Rapid Tier Approvals & Clearance)
+  async batchAction(payload: {
+    action: 'advance_tier' | 'clear_dues' | 'generate_certs';
+    candidateIds: string[];
+    targetTier?: string;
+    approverName?: string;
+    approverRole?: string;
+  }): Promise<{ success: boolean; count: number; candidates: CandidateProfile[]; message: string }> {
+    const res = await fetch(`${API_BASE_URL}/api/candidates/batch`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Batch operation failed');
+    }
+    return res.json();
+  }
+
+  // Audit Logs
+  async getAuditLogs(): Promise<any[]> {
+    const res = await fetch(`${API_BASE_URL}/api/audit-logs`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch audit trail');
+    const data = await res.json();
+    return data.logs || [];
+  }
 }
 
 export const api = new ApiService();
