@@ -1,4 +1,4 @@
-import { CandidateProfile, UserRole, UserSession, VettingTier } from '@/types';
+import { CandidateProfile, InAppMessage, UserRole, UserSession, VettingTier } from '@/types';
 import { generateCertificateHash } from '@/utils/certificate';
 import {
   validateRankProgression,
@@ -31,6 +31,7 @@ interface DatabaseSchema {
   candidates: CandidateProfile[];
   users: UserRecord[];
   auditLogs: AuditLog[];
+  messages: InAppMessage[];
 }
 
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'db.json');
@@ -184,6 +185,10 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     investitureSession: 'Saturday Morning Session (09:00 AM)',
     seatNumber: 'Zone A - Pew 14 (Chancel Wing)',
     robingOfficer: 'Apostle General J. K. Coker',
+    ordinationDate: 'Saturday, November 14, 2026',
+    ordinationTime: '09:00 AM (West Africa Time)',
+    ordinationVenue: 'Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State',
+    emailDispatchDate: 'Friday, November 6, 2026',
     certificateNumber: 'CERT-2026-SSA_BLUE-0481',
     verificationHash: generateCertificateHash('ESOCS/ORD/2026/0481', 'Emmanuel Olusola Adeleke', 'Special Senior Apostle (Blue)', 2026),
     dateOrdained: 'November 14, 2026',
@@ -218,6 +223,10 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     interviewScore: 92,
     attendanceRecordPercentage: 98,
     conductRating: 'exemplary',
+    ordinationDate: 'Saturday, November 14, 2026',
+    ordinationTime: '09:00 AM (West Africa Time)',
+    ordinationVenue: 'Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State',
+    emailDispatchDate: 'Friday, November 6, 2026',
     screeningNotes: [
       'Passed CMC Vetting with high commendation in Women Fellowship Leadership & Liturgical Conduct.',
     ],
@@ -271,6 +280,10 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     interviewScore: 80,
     attendanceRecordPercentage: 92,
     conductRating: 'exemplary',
+    ordinationDate: 'Saturday, November 14, 2026',
+    ordinationTime: '09:00 AM (West Africa Time)',
+    ordinationVenue: 'Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State',
+    emailDispatchDate: 'Friday, November 6, 2026',
     screeningNotes: [
       'Theological written test completed. Awaiting National Screening Board ratification.',
     ],
@@ -320,6 +333,10 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     tenureValid: true,
     attendanceRecordPercentage: 94,
     conductRating: 'exemplary',
+    ordinationDate: 'Saturday, November 14, 2026',
+    ordinationTime: '09:00 AM (West Africa Time)',
+    ordinationVenue: 'Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State',
+    emailDispatchDate: 'Friday, November 6, 2026',
     screeningNotes: [
       'Parish chairman approved. Forwarded to District Vetting Committee.',
     ],
@@ -371,6 +388,10 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
     interviewScore: 96,
     attendanceRecordPercentage: 99,
     conductRating: 'exemplary',
+    ordinationDate: 'Saturday, November 14, 2026',
+    ordinationTime: '09:00 AM (West Africa Time)',
+    ordinationVenue: 'Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State',
+    emailDispatchDate: 'Friday, November 6, 2026',
     screeningNotes: [
       'Holy Synod Advisory Board unanimously ratified appointment to Apostle General.',
     ],
@@ -399,6 +420,42 @@ const INITIAL_SEED_CANDIDATES: CandidateProfile[] = [
   },
 ];
 
+const INITIAL_MESSAGES: InAppMessage[] = [
+  {
+    id: 'msg-001',
+    candidateId: 'cand-001',
+    senderId: 'user-admin-main',
+    senderName: 'Central Secretariat Desk',
+    senderRole: 'super_admin',
+    content: 'Grace and Peace, Senior Apostle Adeleke. Your canonical elevation to Special Senior Apostle (Blue) has passed all 5 vetting tiers and is ratified for investiture at the 2026 General Conference.',
+    timestamp: '2026-09-28T10:00:00Z',
+    isRead: true,
+    category: 'secretariat',
+  },
+  {
+    id: 'msg-002',
+    candidateId: 'cand-001',
+    senderId: 'user-screen-01',
+    senderName: 'Dr. Godwin Bassey (CMC)',
+    senderRole: 'screening_officer',
+    content: 'Congratulations on scoring 92% in the Doctrinal & Liturgical Governance assessment. Your distinction certificate is queued for robing.',
+    timestamp: '2026-09-28T11:30:00Z',
+    isRead: true,
+    category: 'screening',
+  },
+  {
+    id: 'msg-003',
+    candidateId: 'cand-002',
+    senderId: 'user-leader-01',
+    senderName: 'Senior Apostle Festus Okon',
+    senderRole: 'parish_leader',
+    content: 'Beloved Lady Leader Grace, your nomination to Mother in Israel has been certified by the Parish and Provincial Women Guild.',
+    timestamp: '2026-09-29T09:15:00Z',
+    isRead: false,
+    category: 'general',
+  },
+];
+
 let memoryDb: DatabaseSchema = {
   candidates: [...INITIAL_SEED_CANDIDATES],
   users: [...DEFAULT_USERS],
@@ -411,6 +468,7 @@ let memoryDb: DatabaseSchema = {
       details: 'Sovereign database initialized for General Conference 2026 Ordination Cohort.',
     },
   ],
+  messages: [...INITIAL_MESSAGES],
 };
 
 function ensureDataDirectory() {
@@ -896,6 +954,37 @@ export const db = {
       data.auditLogs.unshift(newLog);
       writeDb(data);
       return newLog;
+    },
+  },
+
+  messages: {
+    getAll: (candidateId?: string): InAppMessage[] => {
+      const data = readDb();
+      if (candidateId) {
+        return (data.messages || []).filter((m) => m.candidateId === candidateId);
+      }
+      return data.messages || [];
+    },
+    send: (entry: {
+      candidateId: string;
+      senderId: string;
+      senderName: string;
+      senderRole: UserRole;
+      content: string;
+      category?: 'general' | 'screening' | 'robing' | 'secretariat';
+    }): InAppMessage => {
+      const data = readDb();
+      const newMsg: InAppMessage = {
+        id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        category: entry.category || 'general',
+        ...entry,
+      };
+      if (!data.messages) data.messages = [];
+      data.messages.push(newMsg);
+      writeDb(data);
+      return newMsg;
     },
   },
 };

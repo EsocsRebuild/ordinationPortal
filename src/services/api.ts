@@ -244,16 +244,74 @@ class ApiService {
     return data.data?.logs || data.logs || [];
   }
 
-  // Public Verification
-  async verifyCredential(id: string): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/api/verify/${id}`, {
-      headers: { 'Content-Type': 'application/json' },
+  // In-App Messaging
+  async getMessages(candidateId?: string): Promise<any[]> {
+    const query = candidateId ? `?candidateId=${candidateId}` : '';
+    const res = await fetch(`${API_BASE_URL}/api/messages${query}`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch in-app messages');
+    const data = await res.json();
+    return data.data?.messages || data.messages || [];
+  }
+
+  async sendMessage(payload: {
+    candidateId: string;
+    senderId: string;
+    senderName: string;
+    senderRole: string;
+    content: string;
+    category?: string;
+  }): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/api/messages`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
     if (!res.ok || !data.success) {
-      throw new Error(data.message || 'Verification record not found');
+      throw new Error(data.message || 'Failed to send message');
     }
+    return data.data?.message || data.message;
+  }
+
+  // Live Ordination Accreditation & Attendance
+  async checkInCandidate(payload: {
+    identifier: string;
+    officerName?: string;
+    notes?: string;
+    action?: 'check_in' | 'undo_check_in';
+  }): Promise<{ candidate: CandidateProfile }> {
+    const res = await fetch(`${API_BASE_URL}/api/candidates/check-in`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Check-in accreditation failed');
+    }
+    return data.data || data;
+  }
+
+  async getAttendanceMetrics(): Promise<{
+    totalEligible: number;
+    checkedInCount: number;
+    pendingCount: number;
+    attendancePercentage: number;
+    rankBreakdown: { rankName: string; total: number; checkedIn: number }[];
+    provinceBreakdown: { province: string; total: number; checkedIn: number }[];
+    recentArrivals: any[];
+  }> {
+    const res = await fetch(`${API_BASE_URL}/api/candidates/attendance`, {
+      headers: this.getHeaders(),
+    });
+
+    if (!res.ok) throw new Error('Failed to fetch attendance metrics');
+    const data = await res.json();
     return data.data || data;
   }
 }

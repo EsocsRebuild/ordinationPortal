@@ -74,11 +74,16 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
             </div>
           </div>
 
-          {/* Candidate Profile Details with QR code */}
+          {/* Candidate Profile Details with QR code and Passport Photo */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-50 dark:bg-slate-800/50 p-5 rounded-xl border border-slate-200 dark:border-slate-700/80">
-            <div className="flex flex-col items-center justify-center md:border-r border-slate-200 dark:border-slate-700 pr-0 md:pr-4">
-              <QrCodeSvg value={verifyUrl} size={140} />
-              <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 mt-2 text-center">
+            <div className="flex flex-col items-center justify-center md:border-r border-slate-200 dark:border-slate-700 pr-0 md:pr-4 gap-2">
+              {candidate.passportPhotoUrl ? (
+                <div className="w-20 h-20 rounded-xl overflow-hidden border border-amber-500/50 shadow-md mb-1">
+                  <img src={candidate.passportPhotoUrl} alt={candidate.fullName} className="w-full h-full object-cover" />
+                </div>
+              ) : null}
+              <QrCodeSvg value={verifyUrl} size={candidate.passportPhotoUrl ? 110 : 140} />
+              <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400 text-center">
                 Scan to Authenticate Entry
               </p>
             </div>

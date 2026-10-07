@@ -467,6 +467,36 @@
   ],
   "auditLogs": [
     {
+      "id": "log-1791396812235-808",
+      "timestamp": "2026-10-07T18:13:32.235Z",
+      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-001",
+      "details": "Successful login by candidate (e.adeleke@esocs.church)."
+    },
+    {
+      "id": "log-1791396804191-679",
+      "timestamp": "2026-10-07T18:13:24.191Z",
+      "performedBy": "Special Senior Apostle Dr. Godwin I. Bassey",
+      "action": "USER_LOGIN",
+      "details": "Successful login by screening_officer (screening@esocs.church)."
+    },
+    {
+      "id": "log-1791396793086-137",
+      "timestamp": "2026-10-07T18:13:13.086Z",
+      "performedBy": "Senior Apostle Festus N. Okon",
+      "action": "USER_LOGIN",
+      "details": "Successful login by parish_leader (f.okon@esocs.church)."
+    },
+    {
+      "id": "log-1791396723779-46",
+      "timestamp": "2026-10-07T18:12:03.779Z",
+      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-001",
+      "details": "Successful login by candidate (e.adeleke@esocs.church)."
+    },
+    {
       "id": "log-001",
       "timestamp": "2026-09-28T14:32:00Z",
       "performedBy": "Supervising Apostle General Prof. David A. Oladele",

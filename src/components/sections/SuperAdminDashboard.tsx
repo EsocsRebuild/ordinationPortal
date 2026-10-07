@@ -12,6 +12,7 @@ import { getStageMeta } from '@/utils/workflow';
 import { validateRankProgression, getRobingSpecifications } from '@/utils/ranks';
 import { CertificateModal } from '@/components/shared/CertificateModal';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
+import { LiveAccreditationDesk } from './LiveAccreditationDesk';
 import { api } from '@/services/api';
 import {
   Crown,
@@ -55,7 +56,7 @@ interface SuperAdminDashboardProps {
   onBatchGenerateCerts: () => void;
 }
 
-type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs';
+type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs' | 'accreditation_live';
 
 export function SuperAdminDashboard({
   session,
@@ -454,6 +455,17 @@ export function SuperAdminDashboard({
         >
           <History className="w-3.5 h-3.5" /> System Audit Trail
         </button>
+
+        <button
+          onClick={() => setActiveTab('accreditation_live')}
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'accreditation_live'
+              ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+              : 'text-amber-400 hover:bg-amber-500/10'
+          }`}
+        >
+          <Zap className="w-3.5 h-3.5" /> ⚡ Gate Accreditation Desk
+        </button>
       </div>
 
       {/* Batch Success Banner */}
@@ -628,7 +640,7 @@ export function SuperAdminDashboard({
       )}
 
       {/* Main Candidate Table (For All Tier Queues) */}
-      {activeTab !== 'audit_logs' && (
+      {activeTab !== 'audit_logs' && activeTab !== 'accreditation_live' && (
         <Card>
           <CardHeader
             title={
@@ -813,6 +825,11 @@ export function SuperAdminDashboard({
             </table>
           </CardBody>
         </Card>
+      )}
+
+      {/* Live Ordination Day Accreditation Desk */}
+      {activeTab === 'accreditation_live' && (
+        <LiveAccreditationDesk officerName={session.name} />
       )}
 
       {/* Candidate Dossier & Multi-Tier Inspection Drawer */}
