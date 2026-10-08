@@ -93,34 +93,36 @@ export function InactivityTimer({
   if (!showWarning || !user) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-2xl shadow-2xl p-6 text-center space-y-5">
-        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20">
-          <Clock className="w-6 h-6 animate-pulse" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 text-center space-y-6 text-slate-900 dark:text-slate-100 my-6">
+        <div className="w-16 h-16 rounded-3xl bg-amber-500/10 dark:bg-amber-400/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto border border-amber-500/20 shadow-inner">
+          <Clock className="w-8 h-8 animate-pulse" />
         </div>
 
-        <div className="space-y-1.5">
-          <h3 className="text-lg font-bold text-white tracking-tight">Canonical Session Inactivity</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            For canonical security and data protection, your session will automatically terminate in:
+        <div className="space-y-2">
+          <h3 className="text-xl font-bold font-serif text-slate-900 dark:text-white tracking-tight">
+            Session Inactivity Warning
+          </h3>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-xs mx-auto">
+            For ecclesiastical data protection and canonical security, your session will automatically terminate in:
           </p>
-          <div className="text-3xl font-mono font-extrabold text-amber-400 py-1">
+          <div className="text-4xl font-mono font-extrabold text-amber-600 dark:text-amber-400 py-2 tracking-widest">
             00:{secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
           <button
             onClick={triggerLogout}
-            className="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5"
+            className="w-full sm:flex-1 py-3.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-2xl text-xs transition-colors flex items-center justify-center gap-2"
           >
-            <LogOut className="w-3.5 h-3.5" /> Sign Out Now
+            <LogOut className="w-4 h-4" /> Sign Out Now
           </button>
           <button
             onClick={handleResetActivity}
-            className="flex-1 py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors shadow-lg shadow-amber-500/20"
+            className="w-full sm:flex-1 py-3.5 px-4 bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold rounded-2xl text-xs transition-all shadow-lg shadow-amber-500/20"
           >
-            Stay Logged In
+            Extend Session
           </button>
         </div>
       </div>

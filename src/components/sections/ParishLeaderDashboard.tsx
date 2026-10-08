@@ -20,6 +20,10 @@ import {
   Clock,
   Send,
   Building,
+  Shield,
+  ArrowRight,
+  Sparkles,
+  UserCheck,
 } from 'lucide-react';
 
 interface ParishLeaderDashboardProps {
@@ -36,6 +40,7 @@ export function ParishLeaderDashboard({
   onAddNewNomination,
 }: ParishLeaderDashboardProps) {
   const [showNominateModal, setShowNominateModal] = useState(false);
+  const [nominateStep, setNominateStep] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
 
   // New nomination form state
@@ -322,154 +327,288 @@ export function ParishLeaderDashboard({
 
       {/* Nomination Form Modal */}
       {showNominateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full p-6 sm:p-8 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  Initiate Ecclesiastical Nomination
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Submit candidate profile for National Screening & Advisory Board review
-                </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden my-6 text-slate-900 dark:text-slate-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
+              <div className="flex items-center gap-3.5">
+                <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                    Initiate Ecclesiastical Nomination
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Submit candidate profile for 5-tier canonical vetting & Directorate clearance
+                  </p>
+                </div>
               </div>
               <button
-                onClick={() => setShowNominateModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                onClick={() => {
+                  setShowNominateModal(false);
+                  setNominateStep(1);
+                }}
+                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateNomination} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Candidate Full Name (As on Baptismal Cert)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    placeholder="e.g. Bro. Joshua T. Martins"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Gender Order
-                  </label>
-                  <select
-                    value={formData.gender}
-                    onChange={(e) => handleGenderChange(e.target.value as 'male' | 'female')}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-medium"
-                  >
-                    <option value="male">Brethren (Male Order)</option>
-                    <option value="female">Sisters (Female Order)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="joshua@example.com"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+234 800 000 0000"
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Current Holy Order
-                  </label>
-                  <select
-                    value={formData.currentRank}
-                    onChange={(e) => setFormData({ ...formData, currentRank: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-medium"
-                  >
-                    {availableRanksForGender.map((r) => (
-                      <option key={r.id} value={r.name}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                    Year Conferred Current Order
-                  </label>
-                  <input
-                    type="number"
-                    min="1970"
-                    max="2026"
-                    value={formData.currentRankYear}
-                    onChange={(e) => setFormData({ ...formData, currentRankYear: Number(e.target.value) })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
-                  />
-                </div>
-              </div>
-
-              {/* Target Order Selection with Automatic Eligibility Validation */}
-              <div className="pt-2">
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Proposed Elevation Holy Order
-                </label>
-                <select
-                  value={formData.targetRankId}
-                  onChange={(e) => setFormData({ ...formData, targetRankId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold text-church-800 dark:text-gold-300"
+            {/* Step Tracker */}
+            <div className="px-6 pt-4 pb-2 bg-slate-50/40 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-colors ${
+                    nominateStep === 1
+                      ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20'
+                      : 'bg-emerald-500 text-white'
+                  }`}
                 >
-                  {availableRanksForGender.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name} ({r.liturgicalColor || r.robingCategory})
-                    </option>
-                  ))}
-                </select>
+                  {nominateStep === 1 ? '1' : <Check className="w-3.5 h-3.5" />}
+                </div>
+                <span className={`font-semibold ${nominateStep === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                  Candidate Identity & Lineage
+                </span>
               </div>
 
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Parish Leader Confidential Testimonial & Character Reference
-                </label>
-                <textarea
-                  rows={3}
-                  value={formData.parishNotes}
-                  onChange={(e) => setFormData({ ...formData, parishNotes: e.target.value })}
-                  placeholder="Attest to candidate's spiritual maturity, financial integrity, attendance, and sanctuary devotion..."
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
-                />
-              </div>
+              <div className="h-0.5 w-12 bg-slate-200 dark:bg-slate-800" />
 
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
-                <Button variant="outline" size="sm" type="button" onClick={() => setShowNominateModal(false)}>
-                  Cancel
-                </Button>
-                <Button variant="primary" size="sm" type="submit" icon={<Send className="w-4 h-4" />}>
-                  Submit Nomination to Directorate
-                </Button>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-colors ${
+                    nominateStep === 2
+                      ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20'
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
+                  }`}
+                >
+                  2
+                </div>
+                <span className={`font-semibold ${nominateStep === 2 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
+                  Canonical Elevation & Attestation
+                </span>
               </div>
+            </div>
+
+            {/* Modal Form Body */}
+            <form onSubmit={handleCreateNomination} className="p-6 sm:p-8 space-y-6">
+              {nominateStep === 1 && (
+                <div className="space-y-5 animate-in fade-in">
+                  {/* Candidate Name */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Candidate Full Name (As on Baptismal Certificate) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      placeholder="e.g. Bro. Joshua T. Martins"
+                      className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                    />
+                  </div>
+
+                  {/* Gender Order Selection Cards */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Sacred Gender Order *
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => handleGenderChange('male')}
+                        className={`p-4 rounded-2xl border text-left transition-all ${
+                          formData.gender === 'male'
+                            ? 'bg-amber-500/10 dark:bg-amber-400/10 border-amber-500 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
+                            : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                        }`}
+                      >
+                        <div className="font-bold text-sm mb-0.5">Brethren (Male Order)</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">Pastor, Evangelist, Apostle, etc.</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleGenderChange('female')}
+                        className={`p-4 rounded-2xl border text-left transition-all ${
+                          formData.gender === 'female'
+                            ? 'bg-amber-500/10 dark:bg-amber-400/10 border-amber-500 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
+                            : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                        }`}
+                      >
+                        <div className="font-bold text-sm mb-0.5">Sisters (Female Order)</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">Lady Leader, Dorcas, Mother, etc.</div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        Church Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="joshua.m@esocs.church"
+                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="+234 800 000 0000"
+                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Step 1 Actions */}
+                  <div className="pt-3 flex items-center justify-between">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      type="button"
+                      onClick={() => setShowNominateModal(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      type="button"
+                      onClick={() => {
+                        if (!formData.fullName || !formData.email || !formData.phone) {
+                          alert('Please complete candidate name, email, and phone number.');
+                          return;
+                        }
+                        setNominateStep(2);
+                      }}
+                      icon={<ArrowRight className="w-4 h-4" />}
+                      className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold"
+                    >
+                      Continue to Canonical Elevation
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {nominateStep === 2 && (
+                <div className="space-y-5 animate-in fade-in">
+                  {/* Current Rank & Conferred Year */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        Current Conferred Rank *
+                      </label>
+                      <select
+                        value={formData.currentRank}
+                        onChange={(e) => setFormData({ ...formData, currentRank: e.target.value })}
+                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                      >
+                        {availableRanksForGender.map((r) => (
+                          <option key={r.id} value={r.name}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                        Year Conferred Current Rank *
+                      </label>
+                      <input
+                        type="number"
+                        min="1970"
+                        max="2026"
+                        value={formData.currentRankYear}
+                        onChange={(e) => setFormData({ ...formData, currentRankYear: Number(e.target.value) })}
+                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Proposed Elevation Target Rank */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Proposed Elevation Target Sacred Order *
+                    </label>
+                    <select
+                      value={formData.targetRankId}
+                      onChange={(e) => setFormData({ ...formData, targetRankId: e.target.value })}
+                      className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-bold text-amber-600 dark:text-amber-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                    >
+                      {availableRanksForGender.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name} ({r.liturgicalColor || r.robingCategory}) — Statutory: ₦{(r.levyBreakdown?.total || 0).toLocaleString()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Fee & Robing Preview Badge */}
+                  {targetRank && (
+                    <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-400/5 border border-amber-500/20 flex items-center justify-between text-xs">
+                      <div className="space-y-0.5">
+                        <span className="text-slate-500 dark:text-slate-400 block font-medium">Canonical Assessment & Robing Tier</span>
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">{targetRank.name}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-slate-500 dark:text-slate-400 block font-medium">Statutory Synod Fee</span>
+                        <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">
+                          ₦{(targetRank.levyBreakdown?.total || 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Testimonial Note */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Parish Rector Attestation & Character Reference *
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.parishNotes}
+                      onChange={(e) => setFormData({ ...formData, parishNotes: e.target.value })}
+                      placeholder="Attest to candidate's spiritual maturity, financial integrity, active attendance, and sanctuary devotion..."
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all leading-relaxed"
+                    />
+                  </div>
+
+                  {/* Step 2 Actions */}
+                  <div className="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setNominateStep(1)}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                    >
+                      ← Back to Candidate Info
+                    </button>
+                    <Button
+                      variant="primary"
+                      size="lg"
+                      type="submit"
+                      icon={<Send className="w-4 h-4" />}
+                      className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-3.5"
+                    >
+                      Submit Nomination to Directorate
+                    </Button>
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>
