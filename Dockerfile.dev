@@ -1,0 +1,29 @@
+# Development Dockerfile for ESOCS Holy Order Ordination Portal
+FROM node:20-alpine AS dev
+
+WORKDIR /app
+
+# Install libc6-compat for Alpine compatibility with Next.js SWC
+RUN apk add --no-cache libc6-compat
+
+# Install dependencies based on package-lock.json
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy source files
+COPY . .
+
+# Ensure data directory exists with write permissions
+RUN mkdir -p /app/data && chown -R node:node /app/data
+
+# Environment configuration
+ENV NODE_ENV=development
+ENV PORT=3000
+ENV NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3000
+
+USER node
+
+CMD ["npm", "run", "dev"]
+
