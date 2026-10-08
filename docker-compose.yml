@@ -1,5 +1,5 @@
 # =========================================================================
-# Docker Compose: Development Environment
+# Docker Compose: Development Environment (Live Instant Hot-Reloading)
 # Usage: docker compose up --build
 # =========================================================================
 
@@ -16,18 +16,18 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
+      - HOSTNAME=0.0.0.0
       - NEXT_TELEMETRY_DISABLED=1
+      # Enable real-time file watcher polling across host-container boundary
+      - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=500
+      - FAST_REFRESH=true
+      - WDS_SOCKET_PORT=3000
     volumes:
-      # Bind mounts for live code editing
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./data:/app/data
-      - ./next.config.ts:/app/next.config.ts
-      - ./tailwind.config.ts:/app/tailwind.config.ts
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./eslint.config.mjs:/app/eslint.config.mjs
-      # Preserve container node_modules
+      # Live bind mount for the entire workspace (all file edits sync instantly)
+      - .:/app:delegated
+      # Isolated volume for container node_modules preventing host overrides
       - portal_dev_node_modules:/app/node_modules
     restart: unless-stopped
     stdin_open: true
