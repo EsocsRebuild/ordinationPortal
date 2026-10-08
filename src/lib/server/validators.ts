@@ -1,5 +1,6 @@
 import { GenderType } from './types';
 import { validateRankProgression } from './canonicalEngine';
+import { validatePhoneNumber } from '@/utils/phoneValidation';
 
 export interface RegistrationInput {
   fullName: string;
@@ -12,6 +13,8 @@ export interface RegistrationInput {
   province: string;
   district?: string;
   parish: string;
+  houseOfPrayer?: string;
+  passportPhotoUrl?: string;
   password: string;
   enable2FA?: boolean;
 }
@@ -23,7 +26,6 @@ export interface ValidationResult<T = any> {
 }
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const PHONE_REGEX = /^[+]?[0-9\s\-()]{7,20}$/;
 
 export function sanitizeString(input: any): string {
   if (typeof input !== 'string') return '';
@@ -35,7 +37,9 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
 
   const fullName = sanitizeString(body?.fullName);
   const email = sanitizeString(body?.email).toLowerCase();
-  const phone = sanitizeString(body?.phone) || '+234 800 000 0000';
+  const rawPhone = sanitizeString(body?.phone);
+  const phoneValidation = rawPhone ? validatePhoneNumber(rawPhone) : null;
+  const phone = phoneValidation?.isValid ? phoneValidation.formatted : rawPhone || '+234 800 000 0000';
   const gender = (body?.gender === 'female' ? 'female' : 'male') as GenderType;
   const currentRank = sanitizeString(body?.currentRank);
   const targetRankName = sanitizeString(body?.targetRankName);
@@ -43,6 +47,8 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
   const province = sanitizeString(body?.province);
   const district = sanitizeString(body?.district) || `${province} Central District`;
   const parish = sanitizeString(body?.parish);
+  const houseOfPrayer = sanitizeString(body?.houseOfPrayer) || 'Main House of Prayer';
+  const passportPhotoUrl = sanitizeString(body?.passportPhotoUrl) || undefined;
   const password = typeof body?.password === 'string' ? body.password : '';
   const enable2FA = Boolean(body?.enable2FA);
 
@@ -55,8 +61,8 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
     errors.push('A valid canonical email address is required.');
   }
 
-  if (phone && !PHONE_REGEX.test(phone)) {
-    errors.push('Please enter a valid international contact telephone number.');
+  if (rawPhone && phoneValidation && !phoneValidation.isValid) {
+    errors.push(phoneValidation.error || 'Please enter a valid Nigerian mobile phone number (e.g., 08031234567).');
   }
 
   if (!province) {
@@ -101,6 +107,8 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
       province,
       district,
       parish,
+      houseOfPrayer,
+      passportPhotoUrl,
       password,
       enable2FA,
     } : undefined,

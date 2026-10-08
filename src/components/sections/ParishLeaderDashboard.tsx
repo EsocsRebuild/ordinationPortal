@@ -1,11 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { CandidateProfile, UserSession } from '@/types';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { ESOCS_RANKS } from '@/lib/constants';
+import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { validatePhoneNumber, PhoneValidationResult } from '@/utils/phoneValidation';
+import {
+  ESOCS_RANKS,
+  ESOCS_HIERARCHY,
+  getDistrictsForProvince,
+  getBranchesForDistrict,
+  getHousesOfPrayerForBranch,
+} from '@/lib/constants';
 import { getEligibleNextRanks } from '@/utils/ranks';
 import { getStageMeta } from '@/utils/workflow';
 import {
@@ -24,6 +32,12 @@ import {
   ArrowRight,
   Sparkles,
   UserCheck,
+  MapPin,
+  Church,
+  Layers,
+  User,
+  Mail,
+  Phone,
 } from 'lucide-react';
 
 interface ParishLeaderDashboardProps {
@@ -42,6 +56,26 @@ export function ParishLeaderDashboard({
   const [showNominateModal, setShowNominateModal] = useState(false);
   const [nominateStep, setNominateStep] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Hierarchy state for nomination
+  const [province, setProvince] = useState<string>(ESOCS_HIERARCHY[0].name);
+  const [district, setDistrict] = useState<string>(() => {
+    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
+    return districts[0]?.name || '';
+  });
+  const [parish, setParish] = useState<string>(() => {
+    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
+    const branches = getBranchesForDistrict(ESOCS_HIERARCHY[0].name, districts[0]?.name || '');
+    return branches[0]?.name || '';
+  });
+  const [houseOfPrayer, setHouseOfPrayer] = useState<string>(() => {
+    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
+    const branches = getBranchesForDistrict(ESOCS_HIERARCHY[0].name, districts[0]?.name || '');
+    const houses = getHousesOfPrayerForBranch(ESOCS_HIERARCHY[0].name, districts[0]?.name || '', branches[0]?.name || '');
+    return houses[0] || 'Main House of Prayer';
+  });
+  const [customHouseOfPrayer, setCustomHouseOfPrayer] = useState('');
+  const [isCustomHouse, setIsCustomHouse] = useState(false);
 
   // New nomination form state
   const [formData, setFormData] = useState({
@@ -70,6 +104,100 @@ export function ParishLeaderDashboard({
   );
 
   const targetRank = ESOCS_RANKS.find((r) => r.id === formData.targetRankId);
+
+  const availableDistricts = useMemo(() => getDistrictsForProvince(province), [province]);
+  const availableBranches = useMemo(() => getBranchesForDistrict(province, district), [province, district]);
+  const availableHousesOfPrayer = useMemo(() => getHousesOfPrayerForBranch(province, district, parish), [province, district, parish]);
+
+  // Real-time Nigerian phone validation & carrier detection
+  const phoneValidation: PhoneValidationResult = useMemo(() => {
+    if (!formData.phone) {
+      return { isValid: false, formatted: '', isNigerian: false };
+    }
+    return validatePhoneNumber(formData.phone);
+  }, [formData.phone]);
+
+  // Searchable Select Option Formats
+  const provinceOptions = useMemo(() => {
+    return ESOCS_HIERARCHY.map((prov) => ({
+      value: prov.name,
+      label: prov.name,
+      subLabel: prov.shortCode,
+      badge: `${prov.districts.length} Districts`,
+    }));
+  }, []);
+
+  const districtOptions = useMemo(() => {
+    return availableDistricts.map((dist) => ({
+      value: dist.name,
+      label: dist.name,
+      subLabel: `${dist.branches.length} Parishes / Branches`,
+      badge: 'District',
+    }));
+  }, [availableDistricts]);
+
+  const branchOptions = useMemo(() => {
+    return availableBranches.map((br) => ({
+      value: br.name,
+      label: br.name,
+      subLabel: `${br.housesOfPrayer.length} Sanctuaries`,
+      badge: 'Branch',
+    }));
+  }, [availableBranches]);
+
+  const houseOptions = useMemo(() => {
+    return availableHousesOfPrayer.map((h) => ({
+      value: h,
+      label: h,
+      subLabel: 'Sanctuary of Prayer',
+    }));
+  }, [availableHousesOfPrayer]);
+
+  const handleProvinceChange = (newProvince: string) => {
+    setProvince(newProvince);
+    const districts = getDistrictsForProvince(newProvince);
+    const firstDistrict = districts[0]?.name || '';
+    setDistrict(firstDistrict);
+
+    const branches = getBranchesForDistrict(newProvince, firstDistrict);
+    const firstBranch = branches[0]?.name || '';
+    setParish(firstBranch);
+
+    const houses = getHousesOfPrayerForBranch(newProvince, firstDistrict, firstBranch);
+    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+    setIsCustomHouse(false);
+    setCustomHouseOfPrayer('');
+  };
+
+  const handleDistrictChange = (newDistrict: string) => {
+    setDistrict(newDistrict);
+    const branches = getBranchesForDistrict(province, newDistrict);
+    const firstBranch = branches[0]?.name || '';
+    setParish(firstBranch);
+
+    const houses = getHousesOfPrayerForBranch(province, newDistrict, firstBranch);
+    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+    setIsCustomHouse(false);
+    setCustomHouseOfPrayer('');
+  };
+
+  const handleBranchChange = (newBranch: string) => {
+    setParish(newBranch);
+    const houses = getHousesOfPrayerForBranch(province, district, newBranch);
+    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+    setIsCustomHouse(false);
+    setCustomHouseOfPrayer('');
+  };
+
+  const handleHouseChange = (newHouse: string) => {
+    if (newHouse === '__custom__') {
+      setIsCustomHouse(true);
+      setHouseOfPrayer('__custom__');
+    } else {
+      setIsCustomHouse(false);
+      setHouseOfPrayer(newHouse);
+    }
+  };
 
   const handleGenderChange = (gender: 'male' | 'female') => {
     if (gender === 'male') {
@@ -116,6 +244,8 @@ export function ParishLeaderDashboard({
     e.preventDefault();
     if (!targetRank) return;
 
+    const resolvedHouseOfPrayer = isCustomHouse ? customHouseOfPrayer.trim() : houseOfPrayer;
+
     const newCandidate: Partial<CandidateProfile> = {
       fullName: formData.fullName,
       email: formData.email,
@@ -127,9 +257,10 @@ export function ParishLeaderDashboard({
       currentRankYear: Number(formData.currentRankYear),
       targetRankId: targetRank.id,
       targetRankName: targetRank.name,
-      province: 'Lagos Central Province',
-      district: 'Surulere District',
-      parish: 'Mount Zion Cathedral Branch',
+      province,
+      district,
+      parish,
+      houseOfPrayer: resolvedHouseOfPrayer,
       branchPriestName: session.name,
       stage: 'nominated',
       submissionDate: new Date().toISOString().split('T')[0],
@@ -394,84 +525,202 @@ export function ParishLeaderDashboard({
             <form onSubmit={handleCreateNomination} className="p-6 sm:p-8 space-y-6">
               {nominateStep === 1 && (
                 <div className="space-y-5 animate-in fade-in">
-                  {/* Candidate Name */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Candidate Full Name (As on Baptismal Certificate) *
+                  {/* Candidate Name First */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Candidate Full Ecclesiastical Name (Title, First, Middle, Surname) *
                     </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      placeholder="e.g. Bro. Joshua T. Martins"
-                      className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
-                    />
+                    <div className="relative">
+                      <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        required
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder="e.g. Senior Apostle Emmanuel Babatunde Adeleke"
+                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                      />
+                    </div>
                   </div>
 
-                  {/* Gender Order Selection Cards */}
-                  <div className="space-y-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Sacred Gender Order *
+                  {/* Gender / Order Segmented Switch */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Sacred Holy Order Category *
                     </label>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl">
                       <button
                         type="button"
                         onClick={() => handleGenderChange('male')}
-                        className={`p-4 rounded-2xl border text-left transition-all ${
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                           formData.gender === 'male'
-                            ? 'bg-amber-500/10 dark:bg-amber-400/10 border-amber-500 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
-                            : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                            ? 'bg-amber-500 text-slate-950 shadow-md'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
-                        <div className="font-bold text-sm mb-0.5">Brethren (Male Order)</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">Pastor, Evangelist, Apostle, etc.</div>
+                        <span>Brethren (Male Order)</span>
+                        {formData.gender === 'male' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </button>
-
                       <button
                         type="button"
                         onClick={() => handleGenderChange('female')}
-                        className={`p-4 rounded-2xl border text-left transition-all ${
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
                           formData.gender === 'female'
-                            ? 'bg-amber-500/10 dark:bg-amber-400/10 border-amber-500 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
-                            : 'bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400'
+                            ? 'bg-amber-500 text-slate-950 shadow-md'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
-                        <div className="font-bold text-sm mb-0.5">Sisters (Female Order)</div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">Lady Leader, Dorcas, Mother, etc.</div>
+                        <span>Sisters (Female Order)</span>
+                        {formData.gender === 'female' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Contact Info */}
+                  {/* Contact Info with Nigerian Phone Validator */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
                         Church Email Address *
                       </label>
-                      <input
-                        type="email"
+                      <div className="relative">
+                        <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="e.g. e.adeleke@esocs.church"
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          Mobile Phone Number *
+                        </label>
+                        {formData.phone && (
+                          <span
+                            className={`text-[10px] font-mono font-semibold flex items-center gap-1 ${
+                              phoneValidation.isValid ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
+                            }`}
+                          >
+                            {phoneValidation.isValid ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>{phoneValidation.carrier}</span>
+                              </>
+                            ) : (
+                              <span>Invalid Number</span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="relative flex items-center">
+                        <div className="absolute left-3 flex items-center gap-1 text-slate-400 pointer-events-none text-xs font-mono font-medium border-r border-slate-300 dark:border-slate-800 pr-2">
+                          <span className="text-sm">🇳🇬</span>
+                          <span>+234</span>
+                        </div>
+                        <input
+                          type="tel"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="0803 123 4567"
+                          className={`w-full pl-20 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border rounded-2xl text-sm font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 transition-all ${
+                            formData.phone && phoneValidation.isValid
+                              ? 'border-emerald-500/60 focus:ring-emerald-500/15 focus:border-emerald-500'
+                              : formData.phone && !phoneValidation.isValid
+                              ? 'border-rose-500/60 focus:ring-rose-500/15 focus:border-rose-500'
+                              : 'border-slate-300 dark:border-slate-700/80 focus:ring-amber-500/15 focus:border-amber-500'
+                          }`}
+                        />
+                      </div>
+                      {formData.phone && !phoneValidation.isValid && phoneValidation.error && (
+                        <p className="text-[11px] text-rose-500 dark:text-rose-400 leading-tight mt-1">
+                          {phoneValidation.error}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Cascading 4-Tier Ecclesiastical Hierarchy (Searchable Select) */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/80 space-y-3.5">
+                    <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800 text-xs">
+                      <span className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Layers className="w-4 h-4" />
+                        Ecclesiastical Territorial Jurisdiction
+                      </span>
+                      <span className="text-[11px] text-slate-400">Searchable Directory</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <SearchableSelect
+                        label="1. Ecclesiastical Province / Diocese"
                         required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="joshua.m@esocs.church"
-                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                        options={provinceOptions}
+                        value={province}
+                        onChange={handleProvinceChange}
+                        placeholder="Search Province / Diocese..."
+                        searchPlaceholder="Type province keyword..."
+                        icon={<MapPin className="w-4 h-4 text-amber-500" />}
+                      />
+
+                      <SearchableSelect
+                        label="2. District / Zonal Council"
+                        required
+                        options={districtOptions}
+                        value={district}
+                        onChange={handleDistrictChange}
+                        placeholder="Search District Council..."
+                        searchPlaceholder={`Type district in ${province}...`}
+                        icon={<Building className="w-4 h-4 text-amber-500" />}
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <SearchableSelect
+                        label="3. Local Parish / Cathedral Branch"
                         required
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        placeholder="+234 800 000 0000"
-                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                        options={branchOptions}
+                        value={parish}
+                        onChange={handleBranchChange}
+                        placeholder="Search Parish Branch..."
+                        searchPlaceholder="Type parish name..."
+                        icon={<Church className="w-4 h-4 text-amber-500" />}
+                      />
+
+                      <SearchableSelect
+                        label="4. House of Prayer / Sanctuary"
+                        required
+                        options={houseOptions}
+                        value={isCustomHouse ? '__custom__' : houseOfPrayer}
+                        onChange={handleHouseChange}
+                        placeholder="Select House of Prayer..."
+                        searchPlaceholder="Type sanctuary or chapel name..."
+                        allowCustom={true}
+                        customOptionLabel="+ Other / Enter Custom House of Prayer"
+                        icon={<Sparkles className="w-4 h-4 text-amber-500" />}
                       />
                     </div>
+
+                    {isCustomHouse && (
+                      <div className="space-y-1.5 pt-1 animate-in fade-in">
+                        <label className="block text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Specify House of Prayer Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={customHouseOfPrayer}
+                          onChange={(e) => setCustomHouseOfPrayer(e.target.value)}
+                          placeholder="e.g. Mount Carmel Sanctuary of Grace"
+                          className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-amber-500/50 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-medium"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   {/* Step 1 Actions */}
@@ -489,8 +738,30 @@ export function ParishLeaderDashboard({
                       size="lg"
                       type="button"
                       onClick={() => {
-                        if (!formData.fullName || !formData.email || !formData.phone) {
-                          alert('Please complete candidate name, email, and phone number.');
+                        if (!formData.fullName.trim() || formData.fullName.trim().length < 3) {
+                          alert('Please enter candidate full ecclesiastical name (minimum 3 characters).');
+                          return;
+                        }
+                        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                        if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
+                          alert('Please enter a valid ecclesiastical or personal email address.');
+                          return;
+                        }
+                        if (!formData.phone.trim()) {
+                          alert('Please enter a valid Nigerian mobile phone number.');
+                          return;
+                        }
+                        const phoneVal = validatePhoneNumber(formData.phone);
+                        if (!phoneVal.isValid) {
+                          alert(phoneVal.error || 'Please enter a valid 11-digit Nigerian phone number.');
+                          return;
+                        }
+                        if (!province || !district || !parish) {
+                          alert('Please select Province, District, and Local Parish Branch.');
+                          return;
+                        }
+                        if (isCustomHouse && !customHouseOfPrayer.trim()) {
+                          alert('Please specify the name of the House of Prayer / Sanctuary.');
                           return;
                         }
                         setNominateStep(2);

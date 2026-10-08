@@ -848,6 +848,7 @@ export function SuperAdminDashboard({
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {inspectingCandidate.fullName} • <span className="font-mono">{inspectingCandidate.regNumber}</span>
+                    {inspectingCandidate.houseOfPrayer ? ` • ${inspectingCandidate.houseOfPrayer}` : ''} • {inspectingCandidate.parish} ({inspectingCandidate.province})
                   </p>
                 </div>
               </div>

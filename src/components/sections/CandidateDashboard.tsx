@@ -378,9 +378,21 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-400 mt-1 flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  {candidate.houseOfPrayer && (
+                    <>
+                      <span className="text-amber-200/90 font-medium">{candidate.houseOfPrayer}</span>
+                      <span className="text-slate-600">•</span>
+                    </>
+                  )}
                   <span>{candidate.parish}</span>
+                  {candidate.district && (
+                    <>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-slate-400">{candidate.district}</span>
+                    </>
+                  )}
                   <span className="text-slate-600">•</span>
-                  <span>{candidate.province}</span>
+                  <span className="text-slate-300 font-medium">{candidate.province}</span>
                 </p>
               </div>
 

@@ -29,6 +29,8 @@ export interface RegisterCandidatePayload {
   province: string;
   district?: string;
   parish: string;
+  houseOfPrayer?: string;
+  passportPhotoUrl?: string;
   password: string;
   enable2FA?: boolean;
 }

@@ -34,6 +34,7 @@ export function getRankByName(name: string): EcclesiasticalRank | undefined {
 
 export interface RankValidationResult {
   isValid: boolean;
+  targetRank?: EcclesiasticalRank;
   expectedNextRank?: EcclesiasticalRank;
   allowedNextRanks: EcclesiasticalRank[];
   errorReason?: string;
@@ -95,6 +96,7 @@ export function validateRankProgression(
   if (targetRank.genderEligibility !== 'both' && targetRank.genderEligibility !== gender) {
     return {
       isValid: false,
+      targetRank,
       expectedNextRank,
       allowedNextRanks,
       errorReason: `The rank of "${targetRank.name}" is restricted to ${
@@ -111,6 +113,7 @@ export function validateRankProgression(
     if (targetRank.orderLevel <= currentRank.orderLevel) {
       return {
         isValid: false,
+        targetRank,
         expectedNextRank,
         allowedNextRanks,
         errorReason: `Canonical Error: "${targetRank.name}" is not an elevation from your current rank of "${currentRank.name}".`,
@@ -123,6 +126,7 @@ export function validateRankProgression(
     if (targetRank.orderLevel > currentRank.orderLevel + 1) {
       return {
         isValid: false,
+        targetRank,
         expectedNextRank,
         allowedNextRanks,
         errorReason: `Canonical Hierarchy Violation: As "${currentRank.name}", your canonical next rank is "${
@@ -144,6 +148,7 @@ export function validateRankProgression(
 
     return {
       isValid: true,
+      targetRank,
       expectedNextRank,
       allowedNextRanks,
       tenureYears,
@@ -155,6 +160,7 @@ export function validateRankProgression(
 
   return {
     isValid: true,
+    targetRank,
     expectedNextRank,
     allowedNextRanks,
     tenureYears,

@@ -59,6 +59,25 @@ export interface TierApprovalRecord {
   comments?: string;
 }
 
+export interface ParishBranch {
+  id: string;
+  name: string;
+  housesOfPrayer: string[];
+}
+
+export interface DistrictHierarchy {
+  id: string;
+  name: string;
+  branches: ParishBranch[];
+}
+
+export interface ProvinceHierarchy {
+  id: string;
+  name: string;
+  shortCode: string;
+  districts: DistrictHierarchy[];
+}
+
 export interface CandidateProfile {
   id: string;
   regNumber: string; // e.g. "ESOCS/ORD/2026/0481"
@@ -78,6 +97,7 @@ export interface CandidateProfile {
   province: string;
   district: string;
   parish: string;
+  houseOfPrayer?: string;
   branchPriestName: string;
   avatarUrl?: string;
   
