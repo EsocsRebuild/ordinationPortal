@@ -1,0 +1,4 @@
+#!/bin/sh
+echo "🔍 Running pre-commit validation..."
+npx tsc --noEmit && npm run lint
+

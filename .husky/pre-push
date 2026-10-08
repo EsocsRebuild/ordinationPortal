@@ -1,0 +1,13 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🚀 Running pre-push full production build verification..."
+
+npm run build
+if [ $? -ne 0 ]; then
+  echo "❌ Production build failed. Push aborted to prevent breaking remote branch."
+  exit 1
+fi
+
+echo "✅ Pre-push production build verified successfully."
+
