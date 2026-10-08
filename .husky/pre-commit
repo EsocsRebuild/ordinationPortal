@@ -11,13 +11,18 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# 2. Lint
+# 2. Linting (if ESLint is installed)
 echo "  ↳ Linting source files..."
-npm run lint
-if [ $? -ne 0 ]; then
-  echo "❌ Lint errors detected. Please fix linting issues before committing."
-  exit 1
+if command -v eslint >/dev/null 2>&1 || [ -f "./node_modules/.bin/eslint" ]; then
+  npm run lint
+  if [ $? -ne 0 ]; then
+    echo "❌ Lint errors detected. Please fix linting issues before committing."
+    exit 1
+  fi
+else
+  echo "  ↳ ESLint not locally installed, skipping local lint (CI will validate)."
 fi
 
 echo "✅ Pre-commit verification passed."
+
 

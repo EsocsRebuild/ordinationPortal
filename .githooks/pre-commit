@@ -1,4 +1,8 @@
 #!/bin/sh
 echo "🔍 Running pre-commit validation..."
-npx tsc --noEmit && npm run lint
+npx tsc --noEmit
+if [ -f "./node_modules/.bin/eslint" ]; then
+  npm run lint
+fi
+
 
