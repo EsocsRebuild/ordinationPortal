@@ -44,8 +44,8 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Create persistent data directory with proper ownership
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+# Create persistent data and cache directories with proper ownership
+RUN mkdir -p /app/data /app/.next/cache && chown -R nextjs:nodejs /app/data /app/.next
 
 USER nextjs
 
