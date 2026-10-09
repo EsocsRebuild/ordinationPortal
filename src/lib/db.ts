@@ -1,4 +1,4 @@
-import { CandidateProfile, InAppMessage, UserRole, UserSession, VettingTier } from '@/types';
+import { CandidateProfile, InAppMessage, UserRole, UserSession, VettingTier, ProvinceHierarchy, EcclesiasticalRank, DistrictHierarchy, ParishBranch } from '@/types';
 import { generateCertificateHash } from '@/utils/certificate';
 import {
   validateRankProgression,
@@ -9,6 +9,7 @@ import {
   generateCryptographicVerification,
   GenderType,
 } from './server/canonicalEngine';
+import { ESOCS_HIERARCHY, ESOCS_RANKS } from './constants';
 import fs from 'fs';
 import path from 'path';
 
@@ -32,6 +33,8 @@ interface DatabaseSchema {
   users: UserRecord[];
   auditLogs: AuditLog[];
   messages: InAppMessage[];
+  hierarchy: ProvinceHierarchy[];
+  ranks: EcclesiasticalRank[];
 }
 
 const DB_FILE_PATH = path.join(process.cwd(), 'data', 'db.json');
@@ -469,6 +472,8 @@ let memoryDb: DatabaseSchema = {
     },
   ],
   messages: [...INITIAL_MESSAGES],
+  hierarchy: JSON.parse(JSON.stringify(ESOCS_HIERARCHY)),
+  ranks: JSON.parse(JSON.stringify(ESOCS_RANKS)),
 };
 
 function ensureDataDirectory() {
@@ -489,6 +494,12 @@ function readDb(): DatabaseSchema {
       const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.candidates) && Array.isArray(parsed.users)) {
+        if (!Array.isArray(parsed.hierarchy)) {
+          parsed.hierarchy = JSON.parse(JSON.stringify(ESOCS_HIERARCHY));
+        }
+        if (!Array.isArray(parsed.ranks)) {
+          parsed.ranks = JSON.parse(JSON.stringify(ESOCS_RANKS));
+        }
         return parsed;
       }
     }
@@ -987,6 +998,115 @@ export const db = {
       data.messages.push(newMsg);
       writeDb(data);
       return newMsg;
+    },
+  },
+
+  hierarchy: {
+    get: (): ProvinceHierarchy[] => {
+      const data = readDb();
+      return data.hierarchy || [];
+    },
+
+    saveAll: (newHierarchy: ProvinceHierarchy[], performedBy?: string): ProvinceHierarchy[] => {
+      const data = readDb();
+      data.hierarchy = newHierarchy;
+      writeDb(data);
+      if (performedBy) {
+        db.auditLogs.add({
+          performedBy,
+          action: 'HIERARCHY_UPDATE',
+          details: 'Updated global ecclesiastical structure (provinces, districts, branches, and houses of prayer).',
+        });
+      }
+      return data.hierarchy;
+    },
+
+    addProvince: (province: ProvinceHierarchy, performedBy?: string): ProvinceHierarchy[] => {
+      const data = readDb();
+      if (!data.hierarchy) data.hierarchy = [];
+      data.hierarchy.push(province);
+      writeDb(data);
+      if (performedBy) {
+        db.auditLogs.add({
+          performedBy,
+          action: 'PROVINCE_CREATE',
+          details: `Created new Ecclesiastical Province: ${province.name} (${province.shortCode})`,
+        });
+      }
+      return data.hierarchy;
+    },
+
+    updateProvince: (id: string, updated: Partial<ProvinceHierarchy>, performedBy?: string): ProvinceHierarchy[] => {
+      const data = readDb();
+      if (!data.hierarchy) data.hierarchy = [];
+      const index = data.hierarchy.findIndex((p) => p.id === id || p.name === id);
+      if (index !== -1) {
+        data.hierarchy[index] = { ...data.hierarchy[index], ...updated };
+        writeDb(data);
+        if (performedBy) {
+          db.auditLogs.add({
+            performedBy,
+            action: 'PROVINCE_UPDATE',
+            details: `Updated Ecclesiastical Province: ${data.hierarchy[index].name}`,
+          });
+        }
+      }
+      return data.hierarchy;
+    },
+
+    deleteProvince: (id: string, performedBy?: string): ProvinceHierarchy[] => {
+      const data = readDb();
+      if (!data.hierarchy) data.hierarchy = [];
+      const found = data.hierarchy.find((p) => p.id === id || p.name === id);
+      data.hierarchy = data.hierarchy.filter((p) => p.id !== id && p.name !== id);
+      writeDb(data);
+      if (performedBy && found) {
+        db.auditLogs.add({
+          performedBy,
+          action: 'PROVINCE_DELETE',
+          details: `Deleted Ecclesiastical Province: ${found.name}`,
+        });
+      }
+      return data.hierarchy;
+    },
+  },
+
+  ranks: {
+    get: (): EcclesiasticalRank[] => {
+      const data = readDb();
+      return data.ranks || [];
+    },
+
+    saveAll: (newRanks: EcclesiasticalRank[], performedBy?: string): EcclesiasticalRank[] => {
+      const data = readDb();
+      data.ranks = newRanks;
+      writeDb(data);
+      if (performedBy) {
+        db.auditLogs.add({
+          performedBy,
+          action: 'RANKS_UPDATE',
+          details: 'Updated ecclesiastical ranks, robing categories, and statutory levies schedule.',
+        });
+      }
+      return data.ranks;
+    },
+
+    updateRank: (id: string, updated: Partial<EcclesiasticalRank>, performedBy?: string): EcclesiasticalRank[] => {
+      const data = readDb();
+      if (!data.ranks) data.ranks = [];
+      const index = data.ranks.findIndex((r) => r.id === id || r.name.toLowerCase() === id.toLowerCase());
+      if (index !== -1) {
+        data.ranks[index] = { ...data.ranks[index], ...updated };
+        writeDb(data);
+        if (performedBy) {
+          db.auditLogs.add({
+            performedBy,
+            action: 'RANK_UPDATE',
+            details: `Updated Holy Order rank specifications: ${data.ranks[index].name}`,
+          });
+        }
+      }
+      return data.ranks;
     },
   },
 };

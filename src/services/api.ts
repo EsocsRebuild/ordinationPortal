@@ -320,6 +320,52 @@ class ApiService {
     const data = await res.json();
     return data.data || data;
   }
+
+  // Live Ecclesiastical Hierarchy Management
+  async getHierarchy(): Promise<{ hierarchy: any[]; provinces: string[] }> {
+    const res = await fetch(`${API_BASE_URL}/api/hierarchy`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch ecclesiastical hierarchy');
+    const data = await res.json();
+    return data.data || { hierarchy: [], provinces: [] };
+  }
+
+  async saveHierarchy(payload: { action: string; [key: string]: any }): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/api/hierarchy`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to update hierarchy');
+    }
+    return data.data || data;
+  }
+
+  // Ranks & Levies Schedule
+  async getRanks(): Promise<{ ranks: any[] }> {
+    const res = await fetch(`${API_BASE_URL}/api/ranks`, {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch ecclesiastical ranks');
+    const data = await res.json();
+    return data.data || { ranks: [] };
+  }
+
+  async saveRanks(payload: { action: string; [key: string]: any }): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/api/ranks`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to update ranks');
+    }
+    return data.data || data;
+  }
 }
 
 export const api = new ApiService();

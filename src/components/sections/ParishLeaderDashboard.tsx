@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { CandidateProfile, UserSession } from '@/types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { CandidateProfile, UserSession, ProvinceHierarchy, EcclesiasticalRank } from '@/types';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { InternationalPhoneInput } from '@/components/ui/InternationalPhoneInput';
 import { PhoneValidationResult } from '@/utils/phoneValidation';
+import { api } from '@/services/api';
 import {
   ESOCS_RANKS,
   ESOCS_HIERARCHY,
@@ -60,6 +61,28 @@ export function ParishLeaderDashboard({
   const [nominateStep, setNominateStep] = useState<1 | 2>(1);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Live dynamic hierarchy and ranks
+  const [hierarchyData, setHierarchyData] = useState<ProvinceHierarchy[]>(ESOCS_HIERARCHY);
+  const [ranksData, setRanksData] = useState<EcclesiasticalRank[]>(ESOCS_RANKS);
+
+  useEffect(() => {
+    api.getHierarchy()
+      .then((res) => {
+        if (res && Array.isArray(res.hierarchy) && res.hierarchy.length > 0) {
+          setHierarchyData(res.hierarchy);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch dynamic hierarchy', err));
+
+    api.getRanks()
+      .then((res) => {
+        if (res && Array.isArray(res.ranks) && res.ranks.length > 0) {
+          setRanksData(res.ranks);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch dynamic ranks', err));
+  }, []);
+
   // Hierarchy state for nomination
   const [province, setProvince] = useState<string>(ESOCS_HIERARCHY[0].name);
   const [district, setDistrict] = useState<string>(() => {
@@ -109,25 +132,42 @@ export function ParishLeaderDashboard({
 
   const pendingEndorsements = candidates.filter((c) => c.stage === 'nominated');
 
-  const availableRanksForGender = ESOCS_RANKS.filter(
-    (r) => r.genderEligibility === 'both' || r.genderEligibility === formData.gender
-  );
+  const availableRanksForGender = useMemo(() => {
+    return ranksData.filter(
+      (r) => r.genderEligibility === 'both' || r.genderEligibility === formData.gender
+    );
+  }, [ranksData, formData.gender]);
 
-  const targetRank = ESOCS_RANKS.find((r) => r.id === formData.targetRankId);
+  const targetRank = useMemo(() => {
+    return ranksData.find((r) => r.id === formData.targetRankId);
+  }, [ranksData, formData.targetRankId]);
 
   // Searchable options
   const provinceOptions = useMemo(() => {
-    return ESOCS_HIERARCHY.map((prov) => ({
+    return hierarchyData.map((prov) => ({
       value: prov.name,
       label: prov.name,
       subLabel: prov.shortCode,
       badge: `${prov.districts.length} Districts`,
     }));
-  }, []);
+  }, [hierarchyData]);
 
   const provinceBranches = useMemo(() => {
-    return getAllBranchesForProvince(province);
-  }, [province]);
+    const prov = hierarchyData.find((p) => p.name === province);
+    if (!prov) return [];
+    const list: Array<{ id: string; name: string; districtName: string; housesOfPrayer: string[] }> = [];
+    for (const d of prov.districts) {
+      for (const b of d.branches) {
+        list.push({
+          id: b.id,
+          name: b.name,
+          districtName: d.name,
+          housesOfPrayer: b.housesOfPrayer || [],
+        });
+      }
+    }
+    return list;
+  }, [hierarchyData, province]);
 
   const branchOptions = useMemo(() => {
     return provinceBranches.map((br) => ({

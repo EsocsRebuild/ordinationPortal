@@ -13,6 +13,7 @@ import { validateRankProgression, getRobingSpecifications } from '@/utils/ranks'
 import { CertificateModal } from '@/components/shared/CertificateModal';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
 import { LiveAccreditationDesk } from './LiveAccreditationDesk';
+import { HierarchyManager } from './HierarchyManager';
 import { api } from '@/services/api';
 import {
   Crown,
@@ -56,7 +57,7 @@ interface SuperAdminDashboardProps {
   onBatchGenerateCerts: () => void;
 }
 
-type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs' | 'accreditation_live';
+type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs' | 'accreditation_live' | 'hierarchy_manager';
 
 export function SuperAdminDashboard({
   session,
@@ -446,6 +447,17 @@ export function SuperAdminDashboard({
         </button>
 
         <button
+          onClick={() => setActiveTab('hierarchy_manager')}
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'hierarchy_manager'
+              ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+              : 'text-amber-500 dark:text-amber-400 hover:bg-amber-500/10'
+          }`}
+        >
+          <Building className="w-3.5 h-3.5" /> 🏛️ Church Parishes & Provinces
+        </button>
+
+        <button
           onClick={() => setActiveTab('audit_logs')}
           className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'audit_logs'
@@ -639,8 +651,16 @@ export function SuperAdminDashboard({
         </Card>
       )}
 
+      {/* Tab: Live Ecclesiastical Structure & Hierarchy Manager */}
+      {activeTab === 'hierarchy_manager' && (
+        <HierarchyManager session={session} onHierarchyUpdated={() => {}} />
+      )}
+
       {/* Main Candidate Table (For All Tier Queues) */}
-      {activeTab !== 'audit_logs' && activeTab !== 'accreditation_live' && (
+      {activeTab !== 'audit_logs' &&
+        activeTab !== 'accreditation_live' &&
+        activeTab !== 'financials' &&
+        activeTab !== 'hierarchy_manager' && (
         <Card>
           <CardHeader
             title={

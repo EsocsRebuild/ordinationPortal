@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
+import { ProvinceHierarchy, EcclesiasticalRank } from '@/types';
 import {
   ESOCS_RANKS,
   ESOCS_HIERARCHY,
@@ -17,6 +18,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { PhoneValidationResult } from '@/utils/phoneValidation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { InternationalPhoneInput } from '@/components/ui/InternationalPhoneInput';
+import { api } from '@/services/api';
 import {
   X,
   User,
@@ -103,24 +105,43 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [phone, setPhone] = useState('');
   const [phoneValidation, setPhoneValidation] = useState<PhoneValidationResult | null>(null);
 
+  // Dynamic Ecclesiastical Hierarchy & Ranks state (loaded from live backend)
+  const [liveHierarchy, setLiveHierarchy] = useState<ProvinceHierarchy[]>(ESOCS_HIERARCHY);
+  const [liveRanks, setLiveRanks] = useState<EcclesiasticalRank[]>(ESOCS_RANKS);
+
+  useEffect(() => {
+    api.getHierarchy()
+      .then((res) => {
+        if (res && Array.isArray(res.hierarchy) && res.hierarchy.length > 0) {
+          setLiveHierarchy(res.hierarchy);
+        }
+      })
+      .catch(() => {});
+
+    api.getRanks()
+      .then((res) => {
+        if (res && Array.isArray(res.ranks) && res.ranks.length > 0) {
+          setLiveRanks(res.ranks);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Canonical rank state
   const [currentRank, setCurrentRank] = useState('Pastor');
   const [currentRankYear, setCurrentRankYear] = useState(2022);
   const [targetRankName, setTargetRankName] = useState('Evangelist');
 
   // Ecclesiastical Hierarchy state
-  const [province, setProvince] = useState<string>(ESOCS_HIERARCHY[0].name);
+  const [province, setProvince] = useState<string>(() => liveHierarchy[0]?.name || 'Lagos Central Province');
   const [district, setDistrict] = useState<string>(() => {
-    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
-    return districts[0]?.name || '';
+    return liveHierarchy[0]?.districts[0]?.name || 'Ebute Metta District';
   });
   const [parish, setParish] = useState<string>(() => {
-    const branches = getAllBranchesForProvince(ESOCS_HIERARCHY[0].name);
-    return branches[0]?.name || '';
+    return liveHierarchy[0]?.districts[0]?.branches[0]?.name || 'Mount Zion Cathedral Branch';
   });
   const [houseOfPrayer, setHouseOfPrayer] = useState<string>(() => {
-    const branches = getAllBranchesForProvince(ESOCS_HIERARCHY[0].name);
-    return branches[0]?.housesOfPrayer?.[0] || 'Main House of Prayer';
+    return liveHierarchy[0]?.districts[0]?.branches[0]?.housesOfPrayer?.[0] || 'Main House of Prayer';
   });
   const [customHouseOfPrayer, setCustomHouseOfPrayer] = useState('');
   const [isCustomHouse, setIsCustomHouse] = useState(false);
@@ -133,10 +154,10 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [enable2FA, setEnable2FA] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Filter available ranks by gender
+  // Filter available ranks by gender dynamically
   const availableRanks = useMemo(() => {
-    return ESOCS_RANKS.filter((r) => r.genderEligibility === 'both' || r.genderEligibility === gender);
-  }, [gender]);
+    return liveRanks.filter((r) => r.genderEligibility === 'both' || r.genderEligibility === gender);
+  }, [liveRanks, gender]);
 
   // Compute full name automatically
   const computedFullName = useMemo(() => {
@@ -144,20 +165,33 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     return parts.join(' ');
   }, [firstName, middleName, lastName]);
 
-  // Hierarchy options for the selected Province
+  // Hierarchy options for the selected Province dynamically
   const provinceOptions = useMemo(() => {
-    return ESOCS_HIERARCHY.map((prov) => ({
+    return liveHierarchy.map((prov) => ({
       value: prov.name,
       label: prov.name,
       subLabel: prov.shortCode,
       badge: `${prov.districts.length} Districts`,
     }));
-  }, []);
+  }, [liveHierarchy]);
 
-  // All branches across the selected Province
+  // All branches across the selected Province dynamically
   const provinceBranches = useMemo(() => {
-    return getAllBranchesForProvince(province);
-  }, [province]);
+    const foundProv = liveHierarchy.find((p) => p.name === province);
+    if (!foundProv) return [];
+    const list: Array<{ id: string; name: string; districtName: string; housesOfPrayer: string[] }> = [];
+    for (const d of foundProv.districts) {
+      for (const b of d.branches) {
+        list.push({
+          id: b.id,
+          name: b.name,
+          districtName: d.name,
+          housesOfPrayer: b.housesOfPrayer || [],
+        });
+      }
+    }
+    return list;
+  }, [liveHierarchy, province]);
 
   const branchOptions = useMemo(() => {
     return provinceBranches.map((br) => ({
