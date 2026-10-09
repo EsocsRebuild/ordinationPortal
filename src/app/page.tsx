@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
 import { AppLoader } from '@/components/ui/AppLoader';
+import { LoginModal } from '@/components/auth/LoginModal';
 import { RegisterModal } from '@/components/auth/RegisterModal';
 import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 import { TwoFactorModal } from '@/components/auth/TwoFactorModal';
@@ -14,504 +15,338 @@ import {
   Shield,
   ArrowRight,
   Lock,
-  User,
-  AlertCircle,
   UserPlus,
-  KeyRound,
-  Eye,
-  EyeOff,
-  Sparkles,
+  QrCode,
+  Search,
   CheckCircle2,
-  Church,
-  Crown,
-  Award,
-  ChevronRight,
-  Check,
-  Building,
-  GraduationCap,
-  BadgeCheck,
-  Flame,
-  Scroll,
+  Building2,
+  Clock,
 } from 'lucide-react';
 
-const QUICK_DEMO_PERSONAS = [
-  {
-    role: 'candidate',
-    name: 'Snr. Apostle Emmanuel Adeleke',
-    email: 'e.adeleke@esocs.church',
-    title: 'Male Candidate (Yellow → Blue)',
-    badge: 'Candidate',
-    badgeColor: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-    icon: '👨',
-  },
-  {
-    role: 'candidate',
-    name: 'Lady Leader Grace Williams',
-    email: 'g.williams@esocs.church',
-    title: 'Female Candidate (Prophetess → Mother in Israel)',
-    badge: 'Candidate',
-    badgeColor: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    icon: '👩',
-  },
-  {
-    role: 'parish_leader',
-    name: 'Snr. Apostle Festus Okon',
-    email: 'f.okon@esocs.church',
-    title: 'Branch Rector & Parish Chairman',
-    badge: 'Parish Leader',
-    badgeColor: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-    icon: '⛪',
-  },
-  {
-    role: 'screening_officer',
-    name: 'Special Snr. Apostle Dr. Bassey',
-    email: 'g.bassey@esocs.church',
-    title: 'CMC Screening & Examination Director',
-    badge: 'CMC Screener',
-    badgeColor: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-    icon: '📋',
-  },
-  {
-    role: 'advisory_board',
-    name: 'Apostle General Elder M. Adebayo',
-    email: 'm.adebayo@esocs.church',
-    title: 'Holy Synod Advisory Board of Elders',
-    badge: 'Holy Synod',
-    badgeColor: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-    icon: '👑',
-  },
-  {
-    role: 'admin',
-    name: 'Prof. David A. Oladele',
-    email: 'admin@esocs.church',
-    title: 'Supervising Apostle General / Super Admin',
-    badge: 'Super Admin',
-    badgeColor: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
-    icon: '🛡️',
-  },
-];
-
 export default function HomePage() {
-  const { login, isLoading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // Active auth tab: 'signin' | 'apply' | 'demo'
-  const [authTab, setAuthTab] = useState<'signin' | 'apply' | 'demo'>('signin');
-
   // Modals state
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
+
+  // Verification Quick Search state
+  const [verifyId, setVerifyId] = useState('');
+  const [isSearchingVerify, setIsSearchingVerify] = useState(false);
+  const [verifyError, setVerifyError] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoading(false);
-    }, 120);
+    }, 180);
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleQuickVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg(null);
-
-    if (!identifier.trim()) {
-      setErrorMsg('Please enter your Registration Number or Church Email.');
+    const cleanId = verifyId.trim().toLowerCase();
+    if (!cleanId) {
+      setVerifyError('Please enter a candidate registration or pass ID.');
       return;
     }
-
-    try {
-      await login({
-        identifier: identifier.trim(),
-        password: password || 'password123',
-      });
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Unable to sign in. Please verify your credentials.');
-    }
-  };
-
-  const handleQuickDemoLogin = async (email: string) => {
-    setErrorMsg(null);
-    setIdentifier(email);
-    setPassword('password123');
-    try {
-      await login({
-        identifier: email,
-        password: 'password123',
-      });
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Quick login failed.');
-    }
+    setVerifyError('');
+    setIsSearchingVerify(true);
+    router.push(`/verify/${encodeURIComponent(cleanId)}`);
   };
 
   if (isInitialLoading) {
-    return <AppLoader message="Initializing ESOCS Portal Gateway..." subMessage="Canonical Ordination Directorate Worldwide" />;
+    return (
+      <AppLoader
+        message="Loading Canonical Portal..."
+        subMessage="The Eternal Sacred Order of the Cherubim & Seraphim"
+      />
+    );
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col lg:flex-row bg-slate-50 dark:bg-[#060913] text-slate-900 dark:text-slate-100 font-sans selection:bg-amber-500/20 selection:text-amber-900">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-amber-500/30 selection:text-amber-900 dark:selection:text-amber-200 transition-colors duration-200">
       
       {/* ========================================================================= */}
-      {/* LEFT SIDE (50%): Brand Context, Canonical Heritage & Sovereign Ledger */}
+      {/* CANONICAL HEADER (Fully Responsive, Light & Dark Adaptable)                */}
       {/* ========================================================================= */}
-      <section className="lg:w-1/2 min-h-[50vh] lg:min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-14 bg-gradient-to-br from-slate-900 via-[#0a0f24] to-[#050814] text-white relative overflow-hidden border-b lg:border-b-0 lg:border-r border-slate-800/80">
+      <header className="border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0a0f1d]/95 sticky top-0 z-50 transition-colors backdrop-blur-md">
+        <div className="max-w-5xl mx-auto px-3.5 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+          
+          {/* Official Crest & Brand Title */}
+          <Link href="/" className="flex items-center gap-2">
+            <EsocsLogo size={30} showText={true} />
+          </Link>
+
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5">
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95 min-h-[38px]"
+              >
+                <span>Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterOpen(true)}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-700 hover:border-amber-500 bg-white dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 transition-all hover:bg-slate-50 dark:hover:bg-slate-800 min-h-[38px]"
+                >
+                  <UserPlus className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+                  <span>Register</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsLoginOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95 min-h-[38px]"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Sign In</span>
+                </button>
+              </>
+            )}
+
+            <div className="pl-1 border-l border-slate-200 dark:border-slate-800">
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* SECTION 1: CINEMATIC HD AMBIENT VIDEO HERO                                */}
+      {/* ========================================================================= */}
+      <section className="relative min-h-[460px] sm:min-h-[520px] flex items-center justify-center border-b border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-100 dark:bg-[#060810]">
         
-        {/* Subtle Ambient Radial Lighting */}
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Top: Official Logo & Crest */}
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md p-1.5 border border-white/15 flex items-center justify-center shadow-lg">
-              <img
-                src="/brand/esocs-crest.png"
-                alt="ESOCS Holy Order Crest"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
-              <span className="font-serif font-bold text-sm tracking-wider text-white block">
-                ESOCS HOLY ORDER
-              </span>
-              <span className="text-[10px] text-amber-400 font-medium tracking-widest uppercase block">
-                Ordination Directorate • Worldwide
-              </span>
-            </div>
-          </div>
-
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs text-amber-300 backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold text-[11px]">2026 Session Live</span>
-          </div>
+        {/* Ambient Video & High-Res Poster Fallback */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            poster="/brand/hero-mount-zion.webp"
+            className="w-full h-full object-cover object-center opacity-30 dark:opacity-45 brightness-100 dark:brightness-95 transition-opacity"
+          >
+            <source
+              src="/brand/hero-ambient.mp4"
+              type="video/mp4"
+            />
+          </video>
+          
+          {/* Subtle Contrast Vignette */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50/70 to-slate-50/85 dark:from-[#070b14] dark:via-[#070b14]/65 dark:to-[#070b14]/75 transition-colors duration-200" />
         </div>
 
-        {/* Center: Hero Narrative & Canonical Statistics */}
-        <div className="relative z-10 my-8 lg:my-auto space-y-6 max-w-xl">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-400/30 text-amber-300 text-xs font-semibold">
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
-              <span>General Conference Cohort 2026</span>
-            </div>
-
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.12]">
-              Holy Ordination & <br />
-              <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200 bg-clip-text text-transparent">
-                Consecration Portal
-              </span>
-            </h1>
-
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-light">
-              The official sovereign platform for candidate vetting, theological examinations, apostolic endorsements, and digital investiture credential issuance across all dioceses.
-            </p>
+        {/* Hero Content */}
+        <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-16 text-center">
+          
+          {/* Canonical Eyebrow Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-300 dark:border-amber-500/30 bg-amber-100/90 dark:bg-amber-500/10 text-amber-900 dark:text-amber-300 font-mono text-[10px] sm:text-[11px] uppercase tracking-wider mb-4 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
+            <span>EST. 1925 &bull; ESOCS HOLY ORDER WORLDWIDE</span>
           </div>
 
-          {/* Minimalist Metrics Grid */}
-          <div className="grid grid-cols-3 gap-3 pt-2">
-            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <span className="block font-serif font-bold text-xl text-amber-400">6</span>
-              <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Dioceses</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <span className="block font-serif font-bold text-xl text-amber-400">12</span>
-              <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Holy Orders</span>
-            </div>
-            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
-              <span className="block font-serif font-bold text-xl text-amber-400">100%</span>
-              <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Cryptographic</span>
-            </div>
+          {/* Stately Headline */}
+          <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-bold text-slate-900 dark:text-white tracking-tight leading-tight mb-3 sm:mb-4 font-['Raleway']">
+            The Holy Ordination & <br className="hidden sm:inline" />
+            <span className="italic text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 dark:from-amber-200 dark:via-amber-400 dark:to-amber-500 font-normal">
+              Consecration Gateway
+            </span>
+          </h1>
+
+          {/* Concise Subtitle */}
+          <p className="max-w-lg mx-auto text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 sm:mb-8 px-2">
+            The centralized ecclesiastical management platform for clerical nominations, doctrinal vetting, and digital accreditation passes worldwide.
+          </p>
+
+          {/* Primary Action Buttons (Mobile-first stacked & ergonomic) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-xs sm:max-w-sm mx-auto">
+            <button
+              type="button"
+              onClick={() => setIsLoginOpen(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-md active:scale-95 min-h-[46px] sm:min-h-[40px]"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Access Member Portal</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsRegisterOpen(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-xl sm:rounded-lg text-xs font-semibold border border-slate-300 dark:border-slate-700 hover:border-amber-500 bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm min-h-[46px] sm:min-h-[40px]"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+              <span>Register Candidate</span>
+            </button>
           </div>
 
-          {/* Council of Elders Desaturated Photography Card */}
-          <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl group bg-slate-950">
-            <div className="h-36 sm:h-40 w-full relative overflow-hidden">
-              <img
-                src="/brand/hero-fathers.webp"
-                alt="ESOCS Council of Elders"
-                className="w-full h-full object-cover object-top opacity-85 group-hover:scale-105 transition-transform duration-700 ease-out"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#060913] via-[#060913]/50 to-transparent flex flex-col justify-end p-4">
-                <span className="text-xs font-serif font-bold text-amber-300">
-                  Council of Consecrated Ministers & Elders
-                </span>
-                <span className="text-[10px] text-slate-300 font-light">
-                  Mount Zion Cathedral Worldwide Headquarters • Lagos, Nigeria
-                </span>
-              </div>
-            </div>
+          {/* Conference Status Note */}
+          <div className="mt-6 sm:mt-8 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-400 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="font-medium text-slate-800 dark:text-slate-300">General Conference 2026 Session</span>
+            <span className="text-slate-400 dark:text-slate-600">&bull;</span>
+            <span>Registry Active</span>
           </div>
-        </div>
-
-        {/* Bottom: Canonical Stepper & Trademark */}
-        <div className="relative z-10 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
-          <div className="flex items-center gap-2">
-            <Shield className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span>Anti-Forgery Cryptographic Ledger</span>
-          </div>
-          <span>The Eternal Sacred Order of the Cherubim and Seraphim</span>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* RIGHT SIDE (50%): Pure Clean, Focused, High-Contrast Auth Cockpit */}
+      {/* SECTION 2: INSTANT PASS & CERTIFICATE VERIFICATION (HIGH IMPORTANCE)      */}
       {/* ========================================================================= */}
-      <section className="lg:w-1/2 flex flex-col justify-between p-6 sm:p-10 lg:p-16 bg-white dark:bg-[#070b18] transition-colors">
-        
-        {/* Top Header Controls */}
-        <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800/80">
-          {/* Segmented Control Tabs */}
-          <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => setAuthTab('signin')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                authTab === 'signin'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => setAuthTab('apply')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                authTab === 'apply'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Apply Now
-            </button>
-            <button
-              type="button"
-              onClick={() => setAuthTab('demo')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                authTab === 'demo'
-                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              Demo Logins
-            </button>
-          </div>
-
-          <ThemeToggle />
-        </div>
-
-        {/* Center: Auth Forms & Interactive Cockpits */}
-        <div className="my-auto py-8 max-w-md w-full mx-auto space-y-6">
+      <section id="verify-pass" className="py-10 sm:py-16 bg-slate-100/70 dark:bg-[#0a0f1e] border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div className="max-w-2xl mx-auto px-3.5 sm:px-6">
           
-          {/* TAB 1: Pure Clean Sign In */}
-          {authTab === 'signin' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="space-y-1.5">
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Welcome Back
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  Please enter your canonical credentials to access the ordination cockpit.
-                </p>
+          <div className="bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-7 shadow-sm dark:shadow-lg transition-colors">
+            
+            {/* Header in Card */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4 pb-3.5 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    Accreditation Pass Verification
+                  </h3>
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
+                    Live verification of Holy Ordination credentials
+                  </p>
+                </div>
               </div>
 
-              {errorMsg && (
-                <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs rounded-xl flex items-center gap-2.5">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
+              <span className="inline-flex items-center self-start sm:self-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>SHA-256 SECURED</span>
+              </span>
+            </div>
 
-              <form onSubmit={handleSignIn} className="space-y-4">
-                {/* Registration Number Field */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Registration Number or Church Email
-                  </label>
-                  <div className="relative">
-                    <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            {/* Direct Verification Form */}
+            <form onSubmit={handleQuickVerify} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Enter Candidate ID, Roll Number, or Reference Code
+                </label>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      required
-                      value={identifier}
-                      onChange={(e) => setIdentifier(e.target.value)}
-                      placeholder="e.g. ESOCS/ORD/2026/0481 or e.adeleke@esocs.church"
-                      className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all shadow-sm"
+                      value={verifyId}
+                      onChange={(e) => {
+                        setVerifyId(e.target.value);
+                        if (verifyError) setVerifyError('');
+                      }}
+                      placeholder="e.g. cand-001 or ESOCS/2026/0842"
+                      className="w-full bg-slate-50 dark:bg-[#080d1a] border border-slate-300 dark:border-slate-700 focus:border-amber-500 dark:focus:border-amber-400 rounded-lg pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono transition-colors"
                     />
                   </div>
-                </div>
-
-                {/* Password Field */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Password / Access Key
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setIsForgotOpen(true)}
-                      className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold"
-                    >
-                      Forgot Password?
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your security access key"
-                      className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500 transition-all shadow-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sign In Primary CTA */}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.99]"
-                >
-                  {isLoading ? (
-                    <span className="inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span>Sign In to Portal</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* Bottom Registration CTA */}
-              <div className="pt-5 border-t border-slate-100 dark:border-slate-800 text-center">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  New Candidate for the 2026 Exercise?{' '}
                   <button
-                    type="button"
-                    onClick={() => setAuthTab('apply')}
-                    className="text-amber-600 dark:text-amber-400 font-bold hover:underline ml-1"
+                    type="submit"
+                    disabled={isSearchingVerify}
+                    className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shrink-0 active:scale-95 disabled:opacity-50 min-h-[42px]"
                   >
-                    Apply Here
+                    <Search className="w-3.5 h-3.5" />
+                    <span>{isSearchingVerify ? 'Verifying...' : 'Verify Pass'}</span>
                   </button>
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: Clean Apply / Self-Registration Overview */}
-          {authTab === 'apply' && (
-            <div className="space-y-5 animate-fadeIn">
-              <div className="space-y-1.5">
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Candidate Registration
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  Self-service portal for new ordinands ascending into sacred Holy Orders.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 space-y-3">
-                <div className="flex items-center gap-2 font-serif font-bold text-sm text-amber-900 dark:text-amber-300">
-                  <BadgeCheck className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  <span>Prerequisites & Requirements</span>
                 </div>
-                <div className="space-y-2 text-xs text-slate-700 dark:text-slate-300">
-                  <div className="flex items-start gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Select Holy Order Order Category (Brethren or Sisters Order)</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Structured Ecclesiastical Name (Title, First, Middle, Surname)</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Dynamic Diocese, District & Parish Branch Selection</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                    <span>Verified Domestic / International Phone Number</span>
-                  </div>
-                </div>
+
+                {verifyError && (
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5 font-medium">
+                    {verifyError}
+                  </p>
+                )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setIsRegisterOpen(true)}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Launch Candidate Application</span>
-              </button>
-            </div>
-          )}
-
-          {/* TAB 3: 1-Click Instant Demo Personas */}
-          {authTab === 'demo' && (
-            <div className="space-y-4 animate-fadeIn">
-              <div className="space-y-1">
-                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                  Demo Personas
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Select any canonical role for instant 1-click test access:
-                </p>
-              </div>
-
-              <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-                {QUICK_DEMO_PERSONAS.map((persona, idx) => (
+              {/* Sample Quick Lookups */}
+              <div className="pt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-[11px]">Demo Passes:</span>
+                {['cand-001', 'cand-002', 'cand-003'].map((code) => (
                   <button
-                    key={idx}
+                    key={code}
                     type="button"
-                    onClick={() => handleQuickDemoLogin(persona.email)}
-                    className="w-full p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 hover:bg-amber-500/10 dark:bg-slate-900/80 dark:hover:bg-slate-800/90 transition-all flex items-center justify-between text-left group shadow-sm"
+                    onClick={() => {
+                      setVerifyId(code);
+                      setVerifyError('');
+                      router.push(`/verify/${code}`);
+                    }}
+                    className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-amber-400 text-amber-800 dark:text-amber-300 font-mono text-[10px] transition-colors"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-lg shrink-0">{persona.icon}</span>
-                      <div className="min-w-0">
-                        <div className="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">
-                          {persona.name}
-                        </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                          {persona.title}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${persona.badgeColor}`}>
-                        {persona.badge}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                    </div>
+                    {code}
                   </button>
                 ))}
               </div>
-            </div>
-          )}
+            </form>
+          </div>
 
         </div>
-
-        {/* Bottom Help & Secretariat Info */}
-        <div className="pt-6 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>Need Secretariat Assistance?</span>
-          <span className="text-amber-600 dark:text-amber-400 font-semibold">support@esocs.church</span>
-        </div>
-
       </section>
 
-      {/* Global Modals */}
+      {/* ========================================================================= */}
+      {/* SECTION 3: MINIMALIST EXECUTIVE SECRETARIAT FOOTER                        */}
+      {/* ========================================================================= */}
+      <footer className="bg-slate-100 dark:bg-[#060810] text-slate-600 dark:text-slate-400 text-xs py-6 sm:py-8 mt-auto border-t border-slate-200 dark:border-slate-800/80 transition-colors">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3.5 border-b border-slate-200 dark:border-slate-800/80">
+            <EsocsLogo size={24} showText={true} />
+            <div className="flex items-center gap-3 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setIsLoginOpen(true)}
+                className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                Portal Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsRegisterOpen(true)}
+                className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                Register
+              </button>
+              <a href="#verify-pass" className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                Verify Pass
+              </a>
+            </div>
+          </div>
+
+          <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-1.5 text-[10px] sm:text-[11px] text-slate-500">
+            <div>
+              &copy; {new Date().getFullYear()} The Eternal Sacred Order of the Cherubim & Seraphim.
+            </div>
+            <div className="flex items-center gap-2.5">
+              <span>SHA-256 Pass Security</span>
+              <span>&bull;</span>
+              <span>Canonical Governance</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* ========================================================================= */}
+      {/* AUTHENTICATION & SECURITY MODALS                                          */}
+      {/* ========================================================================= */}
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onOpenRegister={() => {
+          setIsLoginOpen(false);
+          setIsRegisterOpen(true);
+        }}
+        onOpenForgot={() => {
+          setIsLoginOpen(false);
+          setIsForgotOpen(true);
+        }}
+      />
+
       <RegisterModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
@@ -520,9 +355,14 @@ export default function HomePage() {
       <ForgotPasswordModal
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
+        onSuccessLogin={() => {
+          setIsForgotOpen(false);
+          setIsLoginOpen(true);
+        }}
       />
 
       <TwoFactorModal />
+
     </div>
   );
 }

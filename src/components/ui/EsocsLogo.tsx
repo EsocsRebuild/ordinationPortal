@@ -9,15 +9,15 @@ interface EsocsLogoProps {
 }
 
 export function EsocsLogo({
-  size = 44,
+  size = 32,
   className = '',
   showText = false,
 }: EsocsLogoProps) {
   return (
-    <div className={`inline-flex items-center gap-3 select-none ${className}`}>
+    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
       {/* Official ESOCS Brand Crest */}
       <div
-        className="relative shrink-0 transition-transform duration-200 hover:scale-105"
+        className="relative shrink-0"
         style={{ width: size, height: size }}
       >
         <img
@@ -25,17 +25,17 @@ export function EsocsLogo({
           alt="ESOCS Holy Order Official Crest"
           width={size}
           height={size}
-          className="w-full h-full object-contain drop-shadow-sm"
+          className="w-full h-full object-contain"
         />
       </div>
 
       {showText && (
-        <div className="flex flex-col">
-          <span className="font-serif font-bold text-base tracking-tight text-slate-900 dark:text-white leading-tight">
+        <div className="flex flex-col justify-center">
+          <span className="font-bold text-xs sm:text-sm tracking-tight text-slate-900 dark:text-white leading-tight font-sans">
             ESOCS HOLY ORDER
           </span>
-          <span className="text-[10px] text-slate-500 dark:text-gold-400 font-medium tracking-wide">
-            Ordination Directorate • Worldwide
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-normal leading-tight mt-0.5">
+            Ordination Directorate
           </span>
         </div>
       )}
