@@ -39,9 +39,9 @@ export default function CandidateDashboardPage() {
           }
         }
 
-        setErrorMessage('No active ordination application dossier found for this account.');
+        setErrorMessage('No active ordination record found for this account.');
       } catch (err: any) {
-        setErrorMessage(err.message || 'Unable to retrieve your ordination dossier from the server.');
+        setErrorMessage(err.message || 'Unable to retrieve your ordination profile from the server.');
       } finally {
         setIsLoading(false);
       }
@@ -52,8 +52,8 @@ export default function CandidateDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <AppLoader message="Loading your canonical ordination profile & dossier..." />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <AppLoader message="Loading your ordination profile & records..." />
       </div>
     );
   }
@@ -61,20 +61,20 @@ export default function CandidateDashboardPage() {
   if (errorMessage || !candidate) {
     return (
       <AuthGuard allowedRoles={['candidate', 'super_admin']}>
-        <DashboardLayout activeSectionTitle="Ordinand Dossier & Clearance">
-          <div className="p-8 text-center max-w-lg mx-auto my-12 bg-slate-900/60 border border-slate-800 rounded-2xl">
-            <div className="w-12 h-12 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+        <DashboardLayout activeSectionTitle="My Profile & Clearance">
+          <div className="p-8 text-center max-w-lg mx-auto my-12 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+            <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
               !
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">Canonical Dossier Not Found</h3>
-            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-              {errorMessage || 'Your registration is being indexed by the Central Secretariat. Please refresh or contact your Parish Leader.'}
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Candidate Record Not Found</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+              {errorMessage || 'Your registration is being verified by the church office. Please refresh or contact your Parish Priest.'}
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all"
+              className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-sm"
             >
-              Refresh Dossier
+              Refresh Record
             </button>
           </div>
         </DashboardLayout>
@@ -84,7 +84,7 @@ export default function CandidateDashboardPage() {
 
   return (
     <AuthGuard allowedRoles={['candidate', 'super_admin']}>
-      <DashboardLayout activeSectionTitle="Ordinand Dossier & Clearance">
+      <DashboardLayout activeSectionTitle="My Profile & Credentials">
         <CandidateDashboard candidate={candidate} />
       </DashboardLayout>
     </AuthGuard>

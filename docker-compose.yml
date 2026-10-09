@@ -27,6 +27,8 @@ services:
       - .:/app:delegated
       # Isolated volume for container node_modules preventing host overrides
       - portal_dev_node_modules:/app/node_modules
+      # Isolated volume for container .next runtime preventing Mac OS sync ENOENT collisions
+      - portal_dev_next_cache:/app/.next
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -34,3 +36,5 @@ services:
 volumes:
   portal_dev_node_modules:
     name: esocs_portal_dev_node_modules
+  portal_dev_next_cache:
+    name: esocs_portal_dev_next_cache

@@ -385,7 +385,7 @@ export function ParishLeaderDashboard({
         <Card variant="goldAccent">
           <CardHeader
             title="Awaiting Your Pastoral Endorsement"
-            subtitle="Verify spiritual character and forward candidate dossier to National Screening Directorate"
+            subtitle="Verify spiritual character and forward candidate profile to National Screening Directorate"
           />
           <CardBody className="p-0">
             <div className="divide-y divide-slate-100 dark:divide-slate-800">

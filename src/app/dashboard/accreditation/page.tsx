@@ -1,20 +1,20 @@
 'use client';
 
-import React from 'react';
-import { AuthGuard } from '@/components/shared/AuthGuard';
-import { DashboardLayout } from '@/components/shared/DashboardLayout';
-import { LiveAccreditationDesk } from '@/components/sections/LiveAccreditationDesk';
-import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AppLoader } from '@/components/ui/AppLoader';
 
 export default function AccreditationPage() {
-  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/dashboard/admin');
+  }, [router]);
 
   return (
-    <AuthGuard allowedRoles={['super_admin', 'screening_officer', 'parish_leader', 'advisory_board']}>
-      <DashboardLayout activeSectionTitle="Live Gate Accreditation Desk">
-        <LiveAccreditationDesk officerName={user?.name || 'Gate Marshal'} />
-      </DashboardLayout>
-    </AuthGuard>
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+      <AppLoader message="Connecting to Executive Admin Portal..." />
+    </div>
   );
 }
 

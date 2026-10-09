@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const existing = db.users.authenticate(email);
     if (existing) {
       return createErrorResponse(
-        'An ecclesiastical account or candidate dossier is already registered with this email address.',
+        'An account or candidate profile is already registered with this email address.',
         ['DUPLICATE_EMAIL_REGISTRATION'],
         409
       );

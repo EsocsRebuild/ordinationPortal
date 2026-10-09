@@ -882,7 +882,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           {currentStep === 3 && (
             <form onSubmit={handleSubmit} id="reg-step-3" className="space-y-5 animate-in fade-in">
               <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-amber-200 leading-relaxed">
-                Create a secure password to protect your ordination dossier, clearance records, and credentials pass.
+                Create a secure password to protect your ordination profile, clearance records, and admission pass.
               </div>
 
               <div className="space-y-2">

@@ -215,6 +215,7 @@ export interface UserSession {
   userId: string;
   name: string;
   email: string;
+  phone?: string;
   role: UserRole;
   roleTitle: string;
   jurisdiction: string; // e.g. "Mount Zion Cathedral, Lagos Central Province"

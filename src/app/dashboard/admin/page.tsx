@@ -69,8 +69,8 @@ export default function SuperAdminDashboardPage() {
   if (!user) return null;
 
   return (
-    <AuthGuard allowedRoles={['super_admin']}>
-      <DashboardLayout activeSectionTitle="Central Secretariat Sovereign Master Roster">
+    <AuthGuard allowedRoles={['super_admin', 'parish_leader', 'screening_officer', 'advisory_board']}>
+      <DashboardLayout activeSectionTitle="Executive Admin & Secretariat Command Center">
         <SuperAdminDashboard
           session={user}
           candidates={candidates}

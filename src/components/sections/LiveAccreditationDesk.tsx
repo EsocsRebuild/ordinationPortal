@@ -543,7 +543,7 @@ export function LiveAccreditationDesk({ officerName = 'Accreditation Marshal' }:
             )}
           </div>
 
-          {/* Scanned Candidate Consecration Dossier */}
+          {/* Scanned Candidate Profile & Records */}
           {scannedCandidate ? (
             <div className="bg-slate-900 border border-amber-500/40 rounded-2xl p-6 space-y-5 shadow-xl animate-in fade-in duration-200">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
@@ -651,7 +651,7 @@ export function LiveAccreditationDesk({ officerName = 'Accreditation Marshal' }:
                   <Award className="w-4 h-4 text-amber-400" />
                   <span>{selectedCohortDef.title} Stream Roster</span>
                 </h3>
-                <p className="text-xs text-slate-400">Click any ordinand below to inspect dossier or instant-accredit</p>
+                <p className="text-xs text-slate-400">Click any candidate below to view profile details or instant-accredit</p>
               </div>
 
               {/* Filter check-in status buttons */}

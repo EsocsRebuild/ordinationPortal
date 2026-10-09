@@ -64,15 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       case 'candidate':
         return '/dashboard/candidate';
       case 'parish_leader':
-        return '/dashboard/parish-leader';
       case 'screening_officer':
-        return '/dashboard/screening';
       case 'advisory_board':
-        return '/dashboard/advisory-board';
       case 'super_admin':
-        return '/dashboard/admin';
       default:
-        return '/dashboard/candidate';
+        return '/dashboard/admin';
     }
   };
 

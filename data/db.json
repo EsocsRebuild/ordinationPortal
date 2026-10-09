@@ -467,6 +467,45 @@
   ],
   "auditLogs": [
     {
+      "id": "log-1791544422896-219",
+      "timestamp": "2026-10-09T11:13:42.897Z",
+      "performedBy": "Lady Leader Grace Folashade Williams",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-002",
+      "details": "Successful login by candidate (g.williams@esocs.church)."
+    },
+    {
+      "id": "log-1791544116231-93",
+      "timestamp": "2026-10-09T11:08:36.231Z",
+      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-001",
+      "details": "Successful login by candidate (e.adeleke@esocs.church)."
+    },
+    {
+      "id": "log-1791543646919-255",
+      "timestamp": "2026-10-09T11:00:46.919Z",
+      "performedBy": "Lady Leader Grace Folashade Williams",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-002",
+      "details": "Successful login by candidate (g.williams@esocs.church)."
+    },
+    {
+      "id": "log-1791543329301-182",
+      "timestamp": "2026-10-09T10:55:29.301Z",
+      "performedBy": "Lady Leader Grace Folashade Williams",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-002",
+      "details": "Successful login by candidate (g.williams@esocs.church)."
+    },
+    {
+      "id": "log-1791543248264-957",
+      "timestamp": "2026-10-09T10:54:08.264Z",
+      "performedBy": "Senior Apostle Festus N. Okon",
+      "action": "USER_LOGIN",
+      "details": "Successful login by parish_leader (f.okon@esocs.church)."
+    },
+    {
       "id": "log-1791542336580-540",
       "timestamp": "2026-10-09T10:38:56.580Z",
       "performedBy": "Lady Leader Grace Folashade Williams",

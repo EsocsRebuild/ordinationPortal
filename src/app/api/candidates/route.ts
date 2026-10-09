@@ -43,12 +43,12 @@ export async function POST(request: Request) {
 
     return createSuccessResponse(
       { candidate },
-      'Candidate dossier created successfully in canonical ledger.',
+      'Candidate profile created successfully in canonical ledger.',
       201
     );
   } catch (error: any) {
     return createErrorResponse(
-      error.message || 'Failed to create candidate dossier.',
+      error.message || 'Failed to create candidate profile.',
       [error.message || 'Validation error'],
       400
     );
