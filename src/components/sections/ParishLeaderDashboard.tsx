@@ -6,11 +6,13 @@ import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
-import { validatePhoneNumber, PhoneValidationResult } from '@/utils/phoneValidation';
+import { InternationalPhoneInput } from '@/components/ui/InternationalPhoneInput';
+import { PhoneValidationResult } from '@/utils/phoneValidation';
 import {
   ESOCS_RANKS,
   ESOCS_HIERARCHY,
   getDistrictsForProvince,
+  getAllBranchesForProvince,
   getBranchesForDistrict,
   getHousesOfPrayerForBranch,
 } from '@/lib/constants';
@@ -30,6 +32,7 @@ import {
   Building,
   Shield,
   ArrowRight,
+  ArrowLeft,
   Sparkles,
   UserCheck,
   MapPin,
@@ -64,22 +67,22 @@ export function ParishLeaderDashboard({
     return districts[0]?.name || '';
   });
   const [parish, setParish] = useState<string>(() => {
-    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
-    const branches = getBranchesForDistrict(ESOCS_HIERARCHY[0].name, districts[0]?.name || '');
+    const branches = getAllBranchesForProvince(ESOCS_HIERARCHY[0].name);
     return branches[0]?.name || '';
   });
   const [houseOfPrayer, setHouseOfPrayer] = useState<string>(() => {
-    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
-    const branches = getBranchesForDistrict(ESOCS_HIERARCHY[0].name, districts[0]?.name || '');
-    const houses = getHousesOfPrayerForBranch(ESOCS_HIERARCHY[0].name, districts[0]?.name || '', branches[0]?.name || '');
-    return houses[0] || 'Main House of Prayer';
+    const branches = getAllBranchesForProvince(ESOCS_HIERARCHY[0].name);
+    return branches[0]?.housesOfPrayer?.[0] || 'Main House of Prayer';
   });
   const [customHouseOfPrayer, setCustomHouseOfPrayer] = useState('');
   const [isCustomHouse, setIsCustomHouse] = useState(false);
 
-  // New nomination form state
+  // New nomination form state with structured names
   const [formData, setFormData] = useState({
-    fullName: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    preferredName: '',
     email: '',
     phone: '',
     gender: 'male' as 'male' | 'female',
@@ -90,6 +93,13 @@ export function ParishLeaderDashboard({
     targetRankId: 'rank_evangelist',
     parishNotes: '',
   });
+
+  const [phoneValidation, setPhoneValidation] = useState<PhoneValidationResult | null>(null);
+
+  const computedNomineeFullName = useMemo(() => {
+    const parts = [formData.firstName.trim(), formData.middleName.trim(), formData.lastName.trim()].filter(Boolean);
+    return parts.join(' ');
+  }, [formData.firstName, formData.middleName, formData.lastName]);
 
   const branchCandidates = candidates.filter((c) =>
     c.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -105,19 +115,7 @@ export function ParishLeaderDashboard({
 
   const targetRank = ESOCS_RANKS.find((r) => r.id === formData.targetRankId);
 
-  const availableDistricts = useMemo(() => getDistrictsForProvince(province), [province]);
-  const availableBranches = useMemo(() => getBranchesForDistrict(province, district), [province, district]);
-  const availableHousesOfPrayer = useMemo(() => getHousesOfPrayerForBranch(province, district, parish), [province, district, parish]);
-
-  // Real-time Nigerian phone validation & carrier detection
-  const phoneValidation: PhoneValidationResult = useMemo(() => {
-    if (!formData.phone) {
-      return { isValid: false, formatted: '', isNigerian: false };
-    }
-    return validatePhoneNumber(formData.phone);
-  }, [formData.phone]);
-
-  // Searchable Select Option Formats
+  // Searchable options
   const provinceOptions = useMemo(() => {
     return ESOCS_HIERARCHY.map((prov) => ({
       value: prov.name,
@@ -127,23 +125,23 @@ export function ParishLeaderDashboard({
     }));
   }, []);
 
-  const districtOptions = useMemo(() => {
-    return availableDistricts.map((dist) => ({
-      value: dist.name,
-      label: dist.name,
-      subLabel: `${dist.branches.length} Parishes / Branches`,
-      badge: 'District',
-    }));
-  }, [availableDistricts]);
+  const provinceBranches = useMemo(() => {
+    return getAllBranchesForProvince(province);
+  }, [province]);
 
   const branchOptions = useMemo(() => {
-    return availableBranches.map((br) => ({
+    return provinceBranches.map((br) => ({
       value: br.name,
       label: br.name,
-      subLabel: `${br.housesOfPrayer.length} Sanctuaries`,
-      badge: 'Branch',
+      subLabel: br.districtName,
+      badge: 'Parish Branch',
     }));
-  }, [availableBranches]);
+  }, [provinceBranches]);
+
+  const availableHousesOfPrayer = useMemo(() => {
+    const found = provinceBranches.find((b) => b.name === parish);
+    return found?.housesOfPrayer || ['Main House of Prayer', 'Sanctuary of Grace'];
+  }, [provinceBranches, parish]);
 
   const houseOptions = useMemo(() => {
     return availableHousesOfPrayer.map((h) => ({
@@ -155,36 +153,28 @@ export function ParishLeaderDashboard({
 
   const handleProvinceChange = (newProvince: string) => {
     setProvince(newProvince);
-    const districts = getDistrictsForProvince(newProvince);
-    const firstDistrict = districts[0]?.name || '';
-    setDistrict(firstDistrict);
-
-    const branches = getBranchesForDistrict(newProvince, firstDistrict);
-    const firstBranch = branches[0]?.name || '';
-    setParish(firstBranch);
-
-    const houses = getHousesOfPrayerForBranch(newProvince, firstDistrict, firstBranch);
-    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+    const branches = getAllBranchesForProvince(newProvince);
+    const firstBranch = branches[0];
+    if (firstBranch) {
+      setDistrict(firstBranch.districtName);
+      setParish(firstBranch.name);
+      setHouseOfPrayer(firstBranch.housesOfPrayer[0] || 'Main House of Prayer');
+    } else {
+      setDistrict('');
+      setParish('');
+      setHouseOfPrayer('Main House of Prayer');
+    }
     setIsCustomHouse(false);
     setCustomHouseOfPrayer('');
   };
 
-  const handleDistrictChange = (newDistrict: string) => {
-    setDistrict(newDistrict);
-    const branches = getBranchesForDistrict(province, newDistrict);
-    const firstBranch = branches[0]?.name || '';
-    setParish(firstBranch);
-
-    const houses = getHousesOfPrayerForBranch(province, newDistrict, firstBranch);
-    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
-    setIsCustomHouse(false);
-    setCustomHouseOfPrayer('');
-  };
-
-  const handleBranchChange = (newBranch: string) => {
-    setParish(newBranch);
-    const houses = getHousesOfPrayerForBranch(province, district, newBranch);
-    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+  const handleBranchChange = (newBranchName: string) => {
+    setParish(newBranchName);
+    const found = provinceBranches.find((b) => b.name === newBranchName);
+    if (found) {
+      setDistrict(found.districtName);
+      setHouseOfPrayer(found.housesOfPrayer[0] || 'Main House of Prayer');
+    }
     setIsCustomHouse(false);
     setCustomHouseOfPrayer('');
   };
@@ -247,7 +237,11 @@ export function ParishLeaderDashboard({
     const resolvedHouseOfPrayer = isCustomHouse ? customHouseOfPrayer.trim() : houseOfPrayer;
 
     const newCandidate: Partial<CandidateProfile> = {
-      fullName: formData.fullName,
+      fullName: computedNomineeFullName,
+      firstName: formData.firstName.trim(),
+      middleName: formData.middleName.trim() || undefined,
+      lastName: formData.lastName.trim(),
+      preferredName: formData.preferredName.trim() || undefined,
       email: formData.email,
       phone: formData.phone,
       gender: formData.gender,
@@ -275,7 +269,10 @@ export function ParishLeaderDashboard({
     onAddNewNomination(newCandidate);
     setShowNominateModal(false);
     setFormData({
-      fullName: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      preferredName: '',
       email: '',
       phone: '',
       gender: 'male',
@@ -458,129 +455,205 @@ export function ParishLeaderDashboard({
 
       {/* Nomination Form Modal */}
       {showNominateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
-          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden my-6 text-slate-900 dark:text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl bg-slate-900/95 backdrop-blur-2xl border border-slate-700/60 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/80 flex flex-col max-h-[94vh] sm:max-h-[90vh] overflow-hidden text-slate-100">
+            
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
-              <div className="flex items-center gap-3.5">
-                <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-                  <UserCheck className="w-6 h-6" />
+            <div className="p-5 sm:p-7 border-b border-slate-800 bg-slate-950/80 shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                    <UserCheck className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                      Initiate Ecclesiastical Nomination
+                    </h3>
+                    <p className="text-xs text-amber-400/90 font-medium mt-0.5">
+                      Parish Rector Directorate • Canonical Vetting Intake
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                    Initiate Ecclesiastical Nomination
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Submit candidate profile for 5-tier canonical vetting & Directorate clearance
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setShowNominateModal(false);
-                  setNominateStep(1);
-                }}
-                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Step Tracker */}
-            <div className="px-6 pt-4 pb-2 bg-slate-50/40 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-colors ${
-                    nominateStep === 1
-                      ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20'
-                      : 'bg-emerald-500 text-white'
-                  }`}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNominateModal(false);
+                    setNominateStep(1);
+                  }}
+                  className="p-2.5 rounded-2xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white transition-all border border-slate-700/40"
                 >
-                  {nominateStep === 1 ? '1' : <Check className="w-3.5 h-3.5" />}
-                </div>
-                <span className={`font-semibold ${nominateStep === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
-                  Candidate Identity & Lineage
-                </span>
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="h-0.5 w-12 bg-slate-200 dark:bg-slate-800" />
-
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-colors ${
-                    nominateStep === 2
-                      ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20'
-                      : 'bg-slate-200 dark:bg-slate-800 text-slate-500'
-                  }`}
-                >
-                  2
-                </div>
-                <span className={`font-semibold ${nominateStep === 2 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`}>
-                  Canonical Elevation & Attestation
-                </span>
+              {/* Step Tracker */}
+              <div className="mt-6 grid grid-cols-2 gap-4">
+                {[
+                  { num: 1, title: 'Identity & Territorial Lineage' },
+                  { num: 2, title: 'Canonical Order & Attestation' },
+                ].map((step) => {
+                  const isCompleted = nominateStep > step.num;
+                  const isCurrent = nominateStep === step.num;
+                  return (
+                    <div key={step.num} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
+                            isCompleted
+                              ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                              : isCurrent
+                              ? 'bg-amber-400 text-slate-950 ring-4 ring-amber-400/20 shadow-md shadow-amber-400/20'
+                              : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
+                          }`}
+                        >
+                          {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.num}
+                        </span>
+                        <span className={`text-xs font-semibold truncate ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                          {step.title}
+                        </span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden bg-slate-800/90">
+                        <div
+                          className={`h-full transition-all duration-300 ${
+                            isCompleted
+                              ? 'bg-emerald-500 w-full'
+                              : isCurrent
+                              ? 'bg-gradient-to-r from-amber-400 to-amber-500 w-full'
+                              : 'w-0'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Modal Form Body */}
-            <form onSubmit={handleCreateNomination} className="p-6 sm:p-8 space-y-6">
+            <form onSubmit={handleCreateNomination} className="p-5 sm:p-7 overflow-y-auto flex-1 space-y-6">
               {nominateStep === 1 && (
-                <div className="space-y-5 animate-in fade-in">
-                  {/* Candidate Name First */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Candidate Full Ecclesiastical Name (Title, First, Middle, Surname) *
+                <div className="space-y-6 animate-in fade-in">
+                  
+                  {/* 1. Holy Order Ministry Switch with Male & Female Icons */}
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Holy Order Ministry <span className="text-amber-400">*</span>
                     </label>
-                    <div className="relative">
-                      <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                        placeholder="e.g. Senior Apostle Emmanuel Babatunde Adeleke"
-                        className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Gender / Order Segmented Switch */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      Sacred Holy Order Category *
-                    </label>
-                    <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                    <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-950/70 border border-slate-800/90 rounded-2xl">
                       <button
                         type="button"
                         onClick={() => handleGenderChange('male')}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                        className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 ${
                           formData.gender === 'male'
-                            ? 'bg-amber-500 text-slate-950 shadow-md'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border border-amber-500/60 text-amber-300 ring-2 ring-amber-500/20 shadow-md'
+                            : 'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border border-transparent'
                         }`}
                       >
-                        <span>Brethren (Male Order)</span>
-                        {formData.gender === 'male' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-5 h-5 ${formData.gender === 'male' ? 'text-amber-400' : 'text-slate-500'}`}>
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="10" cy="7" r="4" />
+                          <path d="M19 8l3-3" />
+                          <path d="M16 5h6v6" />
+                        </svg>
+                        <span>Brethren Order (Male)</span>
+                        {formData.gender === 'male' && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleGenderChange('female')}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                        className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 ${
                           formData.gender === 'female'
-                            ? 'bg-amber-500 text-slate-950 shadow-md'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                            ? 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border border-amber-500/60 text-amber-300 ring-2 ring-amber-500/20 shadow-md'
+                            : 'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border border-transparent'
                         }`}
                       >
-                        <span>Sisters (Female Order)</span>
-                        {formData.gender === 'female' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`w-5 h-5 ${formData.gender === 'female' ? 'text-amber-400' : 'text-slate-500'}`}>
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="10" cy="7" r="4" />
+                          <path d="M18 11v6" />
+                          <path d="M15 14h6" />
+                        </svg>
+                        <span>Sisters Order (Female)</span>
+                        {formData.gender === 'female' && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
                       </button>
                     </div>
                   </div>
 
-                  {/* Contact Info with Nigerian Phone Validator */}
+                  {/* 2. Structured Name Inputs */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                        Candidate Name Details <span className="text-amber-400">*</span>
+                      </label>
+                      {computedNomineeFullName && (
+                        <span className="text-xs text-amber-300 font-mono font-medium truncate max-w-[260px]">
+                          {computedNomineeFullName}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-medium text-slate-400">
+                          First Name <span className="text-amber-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          placeholder="e.g. Emmanuel"
+                          className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-medium text-slate-400">
+                          Middle Name <span className="text-slate-500">(Optional)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.middleName}
+                          onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                          placeholder="e.g. Babatunde"
+                          className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="block text-[11px] font-medium text-slate-400">
+                          Last Name / Surname <span className="text-amber-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          placeholder="e.g. Adeleke"
+                          className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-1">
+                      <label className="block text-[11px] font-medium text-slate-400">
+                        Preferred / Alias Name <span className="text-slate-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.preferredName}
+                        onChange={(e) => setFormData({ ...formData, preferredName: e.target.value })}
+                        placeholder="e.g. Pastor Adeleke"
+                        className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3. Contact Details */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        Church Email Address *
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                        Church Email Address <span className="text-amber-400">*</span>
                       </label>
                       <div className="relative">
                         <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -590,73 +663,38 @@ export function ParishLeaderDashboard({
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                           placeholder="e.g. e.adeleke@esocs.church"
-                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                          className="w-full pl-10 pr-4 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm text-white placeholder-slate-500 transition-all"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                          Mobile Phone Number *
-                        </label>
-                        {formData.phone && (
-                          <span
-                            className={`text-[10px] font-mono font-semibold flex items-center gap-1 ${
-                              phoneValidation.isValid ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'
-                            }`}
-                          >
-                            {phoneValidation.isValid ? (
-                              <>
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>{phoneValidation.carrier}</span>
-                              </>
-                            ) : (
-                              <span>Invalid Number</span>
-                            )}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="relative flex items-center">
-                        <div className="absolute left-3 flex items-center gap-1 text-slate-400 pointer-events-none text-xs font-mono font-medium border-r border-slate-300 dark:border-slate-800 pr-2">
-                          <span className="text-sm">🇳🇬</span>
-                          <span>+234</span>
-                        </div>
-                        <input
-                          type="tel"
-                          required
-                          value={formData.phone}
-                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          placeholder="0803 123 4567"
-                          className={`w-full pl-20 pr-4 py-2.5 bg-slate-50 dark:bg-slate-950/80 border rounded-2xl text-sm font-mono text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 transition-all ${
-                            formData.phone && phoneValidation.isValid
-                              ? 'border-emerald-500/60 focus:ring-emerald-500/15 focus:border-emerald-500'
-                              : formData.phone && !phoneValidation.isValid
-                              ? 'border-rose-500/60 focus:ring-rose-500/15 focus:border-rose-500'
-                              : 'border-slate-300 dark:border-slate-700/80 focus:ring-amber-500/15 focus:border-amber-500'
-                          }`}
-                        />
-                      </div>
-                      {formData.phone && !phoneValidation.isValid && phoneValidation.error && (
-                        <p className="text-[11px] text-rose-500 dark:text-rose-400 leading-tight mt-1">
-                          {phoneValidation.error}
-                        </p>
-                      )}
+                      <InternationalPhoneInput
+                        value={formData.phone}
+                        onChange={(val, res) => {
+                          setFormData({ ...formData, phone: val });
+                          setPhoneValidation(res);
+                        }}
+                        defaultCountry="NG"
+                        label="Mobile Phone Number (Worldwide / Nigeria)"
+                        required
+                      />
                     </div>
                   </div>
 
-                  {/* Cascading 4-Tier Ecclesiastical Hierarchy (Searchable Select) */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800/80 space-y-3.5">
-                    <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800 text-xs">
-                      <span className="font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <Layers className="w-4 h-4" />
-                        Ecclesiastical Territorial Jurisdiction
-                      </span>
-                      <span className="text-[11px] text-slate-400">Searchable Directory</span>
+                  {/* 4. Ecclesiastical Hierarchy */}
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-800/90">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                          Ecclesiastical Territorial Jurisdiction
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-slate-400 font-medium">Searchable Directory</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <SearchableSelect
                         label="1. Ecclesiastical Province / Diocese"
                         required
@@ -665,35 +703,24 @@ export function ParishLeaderDashboard({
                         onChange={handleProvinceChange}
                         placeholder="Search Province / Diocese..."
                         searchPlaceholder="Type province keyword..."
-                        icon={<MapPin className="w-4 h-4 text-amber-500" />}
+                        icon={<MapPin className="w-4 h-4 text-amber-400" />}
                       />
 
                       <SearchableSelect
-                        label="2. District / Zonal Council"
-                        required
-                        options={districtOptions}
-                        value={district}
-                        onChange={handleDistrictChange}
-                        placeholder="Search District Council..."
-                        searchPlaceholder={`Type district in ${province}...`}
-                        icon={<Building className="w-4 h-4 text-amber-500" />}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      <SearchableSelect
-                        label="3. Local Parish / Cathedral Branch"
+                        label="2. Local Parish / Cathedral Branch"
                         required
                         options={branchOptions}
                         value={parish}
                         onChange={handleBranchChange}
                         placeholder="Search Parish Branch..."
-                        searchPlaceholder="Type parish name..."
-                        icon={<Church className="w-4 h-4 text-amber-500" />}
+                        searchPlaceholder={`Search all branches in ${province}...`}
+                        icon={<Church className="w-4 h-4 text-amber-400" />}
                       />
+                    </div>
 
+                    <div className="space-y-2">
                       <SearchableSelect
-                        label="4. House of Prayer / Sanctuary"
+                        label="3. House of Prayer / Sanctuary"
                         required
                         options={houseOptions}
                         value={isCustomHouse ? '__custom__' : houseOfPrayer}
@@ -702,44 +729,41 @@ export function ParishLeaderDashboard({
                         searchPlaceholder="Type sanctuary or chapel name..."
                         allowCustom={true}
                         customOptionLabel="+ Other / Enter Custom House of Prayer"
-                        icon={<Sparkles className="w-4 h-4 text-amber-500" />}
+                        icon={<Sparkles className="w-4 h-4 text-amber-400" />}
                       />
-                    </div>
 
-                    {isCustomHouse && (
-                      <div className="space-y-1.5 pt-1 animate-in fade-in">
-                        <label className="block text-xs font-semibold text-amber-600 dark:text-amber-400">
-                          Specify House of Prayer Name *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={customHouseOfPrayer}
-                          onChange={(e) => setCustomHouseOfPrayer(e.target.value)}
-                          placeholder="e.g. Mount Carmel Sanctuary of Grace"
-                          className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-amber-500/50 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-medium"
-                        />
-                      </div>
-                    )}
+                      {isCustomHouse && (
+                        <div className="space-y-1.5 pt-1 animate-in fade-in">
+                          <label className="block text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                            Specify House of Prayer Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={customHouseOfPrayer}
+                            onChange={(e) => setCustomHouseOfPrayer(e.target.value)}
+                            placeholder="e.g. Mount Carmel Sanctuary of Grace"
+                            className="w-full px-4 py-3 bg-slate-950/80 border border-amber-500/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-amber-500/20 font-medium"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Step 1 Actions */}
-                  <div className="pt-3 flex items-center justify-between">
-                    <Button
-                      variant="outline"
-                      size="lg"
+                  <div className="pt-4 flex items-center justify-between border-t border-slate-800">
+                    <button
                       type="button"
                       onClick={() => setShowNominateModal(false)}
+                      className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all"
                     >
                       Cancel
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="lg"
+                    </button>
+                    <button
                       type="button"
                       onClick={() => {
-                        if (!formData.fullName.trim() || formData.fullName.trim().length < 3) {
-                          alert('Please enter candidate full ecclesiastical name (minimum 3 characters).');
+                        if (!formData.firstName.trim() || !formData.lastName.trim()) {
+                          alert('Please enter candidate first and last name.');
                           return;
                         }
                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -748,16 +772,15 @@ export function ParishLeaderDashboard({
                           return;
                         }
                         if (!formData.phone.trim()) {
-                          alert('Please enter a valid Nigerian mobile phone number.');
+                          alert('Please enter a valid mobile phone number.');
                           return;
                         }
-                        const phoneVal = validatePhoneNumber(formData.phone);
-                        if (!phoneVal.isValid) {
-                          alert(phoneVal.error || 'Please enter a valid 11-digit Nigerian phone number.');
+                        if (phoneValidation && !phoneValidation.isValid) {
+                          alert(phoneValidation.error || 'Please enter a valid phone number for selected country.');
                           return;
                         }
-                        if (!province || !district || !parish) {
-                          alert('Please select Province, District, and Local Parish Branch.');
+                        if (!province || !parish) {
+                          alert('Please select Province and Local Parish Branch.');
                           return;
                         }
                         if (isCustomHouse && !customHouseOfPrayer.trim()) {
@@ -766,27 +789,27 @@ export function ParishLeaderDashboard({
                         }
                         setNominateStep(2);
                       }}
-                      icon={<ArrowRight className="w-4 h-4" />}
-                      className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold"
+                      className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center gap-2"
                     >
-                      Continue to Canonical Elevation
-                    </Button>
+                      <span>Continue to Canonical Elevation</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               )}
 
               {nominateStep === 2 && (
-                <div className="space-y-5 animate-in fade-in">
+                <div className="space-y-6 animate-in fade-in">
                   {/* Current Rank & Conferred Year */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Current Conferred Rank *
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                        Current Conferred Rank <span className="text-amber-400">*</span>
                       </label>
                       <select
                         value={formData.currentRank}
                         onChange={(e) => setFormData({ ...formData, currentRank: e.target.value })}
-                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                        className="w-full px-4 py-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl text-sm font-semibold text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all"
                       >
                         {availableRanksForGender.map((r) => (
                           <option key={r.id} value={r.name}>
@@ -797,8 +820,8 @@ export function ParishLeaderDashboard({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                        Year Conferred Current Rank *
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                        Year Conferred Current Rank <span className="text-amber-400">*</span>
                       </label>
                       <input
                         type="number"
@@ -806,20 +829,20 @@ export function ParishLeaderDashboard({
                         max="2026"
                         value={formData.currentRankYear}
                         onChange={(e) => setFormData({ ...formData, currentRankYear: Number(e.target.value) })}
-                        className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                        className="w-full px-4 py-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl text-sm font-medium text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all"
                       />
                     </div>
                   </div>
 
                   {/* Proposed Elevation Target Rank */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Proposed Elevation Target Sacred Order *
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Proposed Elevation Target Holy Order <span className="text-amber-400">*</span>
                     </label>
                     <select
                       value={formData.targetRankId}
                       onChange={(e) => setFormData({ ...formData, targetRankId: e.target.value })}
-                      className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-sm font-bold text-amber-600 dark:text-amber-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                      className="w-full px-4 py-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl text-sm font-bold text-amber-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 transition-all"
                     >
                       {availableRanksForGender.map((r) => (
                         <option key={r.id} value={r.id}>
@@ -831,14 +854,14 @@ export function ParishLeaderDashboard({
 
                   {/* Fee & Robing Preview Badge */}
                   {targetRank && (
-                    <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-400/5 border border-amber-500/20 flex items-center justify-between text-xs">
+                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs sm:text-sm">
                       <div className="space-y-0.5">
-                        <span className="text-slate-500 dark:text-slate-400 block font-medium">Canonical Assessment & Robing Tier</span>
-                        <span className="font-bold text-slate-900 dark:text-white text-sm">{targetRank.name}</span>
+                        <span className="text-slate-400 block text-xs">Canonical Assessment & Robing Tier</span>
+                        <span className="font-bold text-white text-sm sm:text-base">{targetRank.name}</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-slate-500 dark:text-slate-400 block font-medium">Statutory Synod Fee</span>
-                        <span className="font-mono font-bold text-amber-600 dark:text-amber-400 text-sm">
+                        <span className="text-slate-400 block text-xs">Statutory Synod Fee</span>
+                        <span className="font-mono font-bold text-amber-400 text-sm sm:text-base">
                           ₦{(targetRank.levyBreakdown?.total || 0).toLocaleString()}
                         </span>
                       </div>
@@ -847,36 +870,35 @@ export function ParishLeaderDashboard({
 
                   {/* Testimonial Note */}
                   <div className="space-y-2">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Parish Rector Attestation & Character Reference *
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Parish Rector Attestation & Character Reference <span className="text-amber-400">*</span>
                     </label>
                     <textarea
                       rows={3}
                       value={formData.parishNotes}
                       onChange={(e) => setFormData({ ...formData, parishNotes: e.target.value })}
                       placeholder="Attest to candidate's spiritual maturity, financial integrity, active attendance, and sanctuary devotion..."
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all leading-relaxed"
+                      className="w-full px-4 py-3 bg-slate-950/70 border border-slate-800 rounded-2xl text-xs sm:text-sm font-medium text-white placeholder-slate-500 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 transition-all leading-relaxed"
                     />
                   </div>
 
                   {/* Step 2 Actions */}
-                  <div className="pt-3 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
+                  <div className="pt-4 flex items-center justify-between border-t border-slate-800">
                     <button
                       type="button"
                       onClick={() => setNominateStep(1)}
-                      className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                      className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all flex items-center gap-2"
                     >
-                      ← Back to Candidate Info
+                      <ArrowLeft className="w-4 h-4" />
+                      <span>Back to Candidate Info</span>
                     </button>
-                    <Button
-                      variant="primary"
-                      size="lg"
+                    <button
                       type="submit"
-                      icon={<Send className="w-4 h-4" />}
-                      className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-3.5"
+                      className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center gap-2"
                     >
-                      Submit Nomination to Directorate
-                    </Button>
+                      <span>Submit Nomination to Directorate</span>
+                      <Send className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               )}

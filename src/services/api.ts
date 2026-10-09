@@ -20,6 +20,10 @@ export interface LoginCredentials {
 
 export interface RegisterCandidatePayload {
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  preferredName?: string;
   email: string;
   phone: string;
   gender: 'male' | 'female';

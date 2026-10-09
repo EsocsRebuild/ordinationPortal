@@ -7,41 +7,74 @@ import { EsocsLogo } from '@/components/ui/EsocsLogo';
 import {
   ESOCS_RANKS,
   ESOCS_HIERARCHY,
-  ESOCS_PROVINCES,
   getDistrictsForProvince,
+  getAllBranchesForProvince,
   getBranchesForDistrict,
   getHousesOfPrayerForBranch,
 } from '@/lib/constants';
 import { validateRankProgression, getRankByName } from '@/utils/ranks';
 import { formatCurrency } from '@/utils/formatters';
-import { validatePhoneNumber, PhoneValidationResult } from '@/utils/phoneValidation';
+import { PhoneValidationResult } from '@/utils/phoneValidation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
+import { InternationalPhoneInput } from '@/components/ui/InternationalPhoneInput';
 import {
   X,
   User,
   Mail,
-  Phone,
   Lock,
   Eye,
   EyeOff,
-  Shield,
   Church,
   MapPin,
   CheckCircle2,
   AlertCircle,
-  KeyRound,
   Calendar,
   CreditCard,
   ArrowRight,
   ArrowLeft,
   Sparkles,
   Check,
-  ChevronRight,
   ShieldCheck,
   Camera,
   Layers,
   Building,
+  Award,
 } from 'lucide-react';
+
+// Dedicated Male & Female Icons
+const MaleOrderIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="10" cy="7" r="4" />
+    <path d="M19 8l3-3" />
+    <path d="M16 5h6v6" />
+  </svg>
+);
+
+const FemaleOrderIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="10" cy="7" r="4" />
+    <path d="M18 11v6" />
+    <path d="M15 14h6" />
+  </svg>
+);
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -56,37 +89,42 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
-  // Form identity state
-  const [fullName, setFullName] = useState('');
+  // Holy Order Ministry state
   const [gender, setGender] = useState<'male' | 'female'>('male');
+
+  // Structured Name state
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [preferredName, setPreferredName] = useState('');
+
+  // Contact state
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneValidation, setPhoneValidation] = useState<PhoneValidationResult | null>(null);
 
-  // Cascading Ecclesiastical Hierarchy state
+  // Canonical rank state
+  const [currentRank, setCurrentRank] = useState('Pastor');
+  const [currentRankYear, setCurrentRankYear] = useState(2022);
+  const [targetRankName, setTargetRankName] = useState('Evangelist');
+
+  // Ecclesiastical Hierarchy state
   const [province, setProvince] = useState<string>(ESOCS_HIERARCHY[0].name);
   const [district, setDistrict] = useState<string>(() => {
     const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
     return districts[0]?.name || '';
   });
   const [parish, setParish] = useState<string>(() => {
-    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
-    const branches = getBranchesForDistrict(ESOCS_HIERARCHY[0].name, districts[0]?.name || '');
+    const branches = getAllBranchesForProvince(ESOCS_HIERARCHY[0].name);
     return branches[0]?.name || '';
   });
   const [houseOfPrayer, setHouseOfPrayer] = useState<string>(() => {
-    const districts = getDistrictsForProvince(ESOCS_HIERARCHY[0].name);
-    const branches = getBranchesForDistrict(ESOCS_HIERARCHY[0].name, districts[0]?.name || '');
-    const houses = getHousesOfPrayerForBranch(ESOCS_HIERARCHY[0].name, districts[0]?.name || '', branches[0]?.name || '');
-    return houses[0] || 'Main House of Prayer';
+    const branches = getAllBranchesForProvince(ESOCS_HIERARCHY[0].name);
+    return branches[0]?.housesOfPrayer?.[0] || 'Main House of Prayer';
   });
   const [customHouseOfPrayer, setCustomHouseOfPrayer] = useState('');
   const [isCustomHouse, setIsCustomHouse] = useState(false);
   const [passportPhotoUrl, setPassportPhotoUrl] = useState<string | null>(null);
-
-  // Canonical rank state
-  const [currentRank, setCurrentRank] = useState('Pastor');
-  const [currentRankYear, setCurrentRankYear] = useState(2022);
-  const [targetRankName, setTargetRankName] = useState('Evangelist');
 
   // Security state
   const [password, setPassword] = useState('');
@@ -95,28 +133,18 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [enable2FA, setEnable2FA] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Available hierarchy options
-  const availableDistricts = useMemo(() => {
-    return getDistrictsForProvince(province);
-  }, [province]);
+  // Filter available ranks by gender
+  const availableRanks = useMemo(() => {
+    return ESOCS_RANKS.filter((r) => r.genderEligibility === 'both' || r.genderEligibility === gender);
+  }, [gender]);
 
-  const availableBranches = useMemo(() => {
-    return getBranchesForDistrict(province, district);
-  }, [province, district]);
+  // Compute full name automatically
+  const computedFullName = useMemo(() => {
+    const parts = [firstName.trim(), middleName.trim(), lastName.trim()].filter(Boolean);
+    return parts.join(' ');
+  }, [firstName, middleName, lastName]);
 
-  const availableHousesOfPrayer = useMemo(() => {
-    return getHousesOfPrayerForBranch(province, district, parish);
-  }, [province, district, parish]);
-
-  // Real-time Nigerian phone validation & carrier detection
-  const phoneValidation: PhoneValidationResult = useMemo(() => {
-    if (!phone) {
-      return { isValid: false, formatted: '', isNigerian: false };
-    }
-    return validatePhoneNumber(phone);
-  }, [phone]);
-
-  // Searchable Select Option Formats
+  // Hierarchy options for the selected Province
   const provinceOptions = useMemo(() => {
     return ESOCS_HIERARCHY.map((prov) => ({
       value: prov.name,
@@ -126,65 +154,60 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }));
   }, []);
 
-  const districtOptions = useMemo(() => {
-    return availableDistricts.map((dist) => ({
-      value: dist.name,
-      label: dist.name,
-      subLabel: `${dist.branches.length} Parishes / Branches`,
-      badge: 'District',
-    }));
-  }, [availableDistricts]);
+  // All branches across the selected Province
+  const provinceBranches = useMemo(() => {
+    return getAllBranchesForProvince(province);
+  }, [province]);
 
   const branchOptions = useMemo(() => {
-    return availableBranches.map((br) => ({
+    return provinceBranches.map((br) => ({
       value: br.name,
       label: br.name,
-      subLabel: `${br.housesOfPrayer.length} Sanctuaries`,
-      badge: 'Branch',
+      subLabel: br.districtName,
+      badge: 'Parish Branch',
     }));
-  }, [availableBranches]);
+  }, [provinceBranches]);
+
+  // Houses of prayer for selected branch
+  const availableHousesOfPrayer = useMemo(() => {
+    const foundBranch = provinceBranches.find((b) => b.name === parish);
+    return foundBranch?.housesOfPrayer || ['Main House of Prayer', 'Sanctuary of Grace'];
+  }, [provinceBranches, parish]);
 
   const houseOptions = useMemo(() => {
     return availableHousesOfPrayer.map((h) => ({
       value: h,
       label: h,
-      subLabel: 'Sanctuary of Prayer',
+      subLabel: 'Sanctuary / Altar of Prayer',
     }));
   }, [availableHousesOfPrayer]);
 
-  // Cascading Handlers
+  // Handle Province change - automatically refreshes all branches in this province
   const handleProvinceChange = (newProvince: string) => {
     setProvince(newProvince);
-    const districts = getDistrictsForProvince(newProvince);
-    const firstDistrict = districts[0]?.name || '';
-    setDistrict(firstDistrict);
-
-    const branches = getBranchesForDistrict(newProvince, firstDistrict);
-    const firstBranch = branches[0]?.name || '';
-    setParish(firstBranch);
-
-    const houses = getHousesOfPrayerForBranch(newProvince, firstDistrict, firstBranch);
-    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+    const branches = getAllBranchesForProvince(newProvince);
+    const firstBranch = branches[0];
+    if (firstBranch) {
+      setDistrict(firstBranch.districtName);
+      setParish(firstBranch.name);
+      setHouseOfPrayer(firstBranch.housesOfPrayer[0] || 'Main House of Prayer');
+    } else {
+      setDistrict('');
+      setParish('');
+      setHouseOfPrayer('Main House of Prayer');
+    }
     setIsCustomHouse(false);
     setCustomHouseOfPrayer('');
   };
 
-  const handleDistrictChange = (newDistrict: string) => {
-    setDistrict(newDistrict);
-    const branches = getBranchesForDistrict(province, newDistrict);
-    const firstBranch = branches[0]?.name || '';
-    setParish(firstBranch);
-
-    const houses = getHousesOfPrayerForBranch(province, newDistrict, firstBranch);
-    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
-    setIsCustomHouse(false);
-    setCustomHouseOfPrayer('');
-  };
-
-  const handleBranchChange = (newBranch: string) => {
-    setParish(newBranch);
-    const houses = getHousesOfPrayerForBranch(province, district, newBranch);
-    setHouseOfPrayer(houses[0] || 'Main House of Prayer');
+  // Handle Branch change
+  const handleBranchChange = (newBranchName: string) => {
+    setParish(newBranchName);
+    const foundBranch = provinceBranches.find((b) => b.name === newBranchName);
+    if (foundBranch) {
+      setDistrict(foundBranch.districtName);
+      setHouseOfPrayer(foundBranch.housesOfPrayer[0] || 'Main House of Prayer');
+    }
     setIsCustomHouse(false);
     setCustomHouseOfPrayer('');
   };
@@ -199,12 +222,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
   };
 
-  // Filter available ranks by gender
-  const availableRanks = useMemo(() => {
-    return ESOCS_RANKS.filter((r) => r.genderEligibility === 'both' || r.genderEligibility === gender);
-  }, [gender]);
-
-  // Real-time canonical step & tenure validation
+  // Canonical progression validation
   const validation = useMemo(() => {
     return validateRankProgression(currentRank, targetRankName, gender, currentRankYear, CURRENT_YEAR);
   }, [currentRank, targetRankName, gender, currentRankYear]);
@@ -239,13 +257,22 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
   };
 
+  const handlePhoneChange = (val: string, result: PhoneValidationResult) => {
+    setPhone(val);
+    setPhoneValidation(result);
+  };
+
   const handleNextStep = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
 
     if (currentStep === 1) {
-      if (!fullName.trim() || fullName.trim().length < 3) {
-        setSubmitError('Please enter your full legal ecclesiastical name (minimum 3 characters).');
+      if (!firstName.trim()) {
+        setSubmitError('First name is required.');
+        return;
+      }
+      if (!lastName.trim()) {
+        setSubmitError('Last name / Surname is required.');
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -254,16 +281,15 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         return;
       }
       if (!phone.trim()) {
-        setSubmitError('Please enter your active Nigerian mobile phone number (e.g. 08031234567).');
+        setSubmitError('Mobile phone number is required.');
         return;
       }
-      const phoneVal = validatePhoneNumber(phone);
-      if (!phoneVal.isValid) {
-        setSubmitError(phoneVal.error || 'Please enter a valid 11-digit Nigerian mobile phone number.');
+      if (phoneValidation && !phoneValidation.isValid) {
+        setSubmitError(phoneValidation.error || 'Please enter a valid mobile phone number for your selected country.');
         return;
       }
-      if (!province || !district || !parish) {
-        setSubmitError('Please select your complete Province, District, and Local Parish Branch.');
+      if (!province || !parish) {
+        setSubmitError('Please select your Ecclesiastical Province and Local Parish Branch.');
         return;
       }
       if (isCustomHouse && !customHouseOfPrayer.trim()) {
@@ -300,17 +326,20 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
 
     const resolvedHouseOfPrayer = isCustomHouse ? customHouseOfPrayer.trim() : houseOfPrayer;
-    const phoneVal = validatePhoneNumber(phone);
-    const resolvedPhone = phoneVal.isValid ? phoneVal.formatted : phone.trim();
+    const resolvedPhone = phoneValidation?.isValid ? phoneValidation.formatted : phone.trim();
 
     try {
       await registerCandidate({
-        fullName: fullName.trim(),
+        fullName: computedFullName,
+        firstName: firstName.trim(),
+        middleName: middleName.trim() || undefined,
+        lastName: lastName.trim(),
+        preferredName: preferredName.trim() || undefined,
         email: email.trim(),
         phone: resolvedPhone,
         gender,
         province,
-        district,
+        district: district || `${province} Central District`,
         parish,
         houseOfPrayer: resolvedHouseOfPrayer,
         passportPhotoUrl: passportPhotoUrl || undefined,
@@ -327,64 +356,68 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl my-6 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden transition-all text-slate-100 flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative w-full max-w-3xl bg-slate-900/95 backdrop-blur-2xl border border-slate-700/60 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/80 flex flex-col max-h-[94vh] sm:max-h-[90vh] overflow-hidden text-slate-100">
+        
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-800 bg-slate-950/70 relative">
+        <div className="p-5 sm:p-6 border-b border-slate-800 bg-slate-950/80 shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <EsocsLogo size={36} showText={false} />
+            <div className="flex items-center gap-3.5">
+              <div className="p-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-inner">
+                <EsocsLogo size={34} showText={false} />
+              </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                   Canonical Ordination Registration
                 </h3>
-                <p className="text-xs text-amber-400 font-medium">
-                  Holy Order General Conference 2026 Onboarding
+                <p className="text-xs text-amber-400/90 font-medium mt-0.5">
+                  Holy Order General Conference 2026 Ordinand Portal
                 </p>
               </div>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              className="p-2.5 rounded-2xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white transition-all border border-slate-700/40"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Multi-Step Progress Tracker */}
-          <div className="mt-5 grid grid-cols-3 gap-2">
+          {/* Stepper Timeline */}
+          <div className="mt-5 grid grid-cols-3 gap-3">
             {[
-              { num: 1, title: 'Identity & Lineage' },
-              { num: 2, title: 'Canonical Rank' },
-              { num: 3, title: 'Security & 2FA' },
+              { num: 1, title: 'Profile & Jurisdiction' },
+              { num: 2, title: 'Ordination Order' },
+              { num: 3, title: 'Account Security' },
             ].map((step) => {
               const isCompleted = currentStep > step.num;
               const isCurrent = currentStep === step.num;
               return (
                 <div key={step.num} className="space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-all ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
                         isCompleted
-                          ? 'bg-emerald-500 text-slate-950'
+                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
                           : isCurrent
-                          ? 'bg-amber-400 text-slate-950 ring-2 ring-amber-400/30'
-                          : 'bg-slate-800 text-slate-500'
+                          ? 'bg-amber-400 text-slate-950 ring-4 ring-amber-400/20 shadow-md shadow-amber-400/20'
+                          : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
                       }`}
                     >
-                      {isCompleted ? <Check className="w-3 h-3 stroke-[3]" /> : step.num}
+                      {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.num}
                     </span>
-                    <span className={`hidden sm:inline ${isCurrent ? 'text-white' : 'text-slate-500'}`}>
+                    <span className={`text-xs font-semibold truncate ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
                       {step.title}
                     </span>
                   </div>
-                  <div className="h-1 rounded-full overflow-hidden bg-slate-800">
+                  <div className="h-1.5 rounded-full overflow-hidden bg-slate-800/90">
                     <div
                       className={`h-full transition-all duration-300 ${
                         isCompleted
                           ? 'bg-emerald-500 w-full'
                           : isCurrent
-                          ? 'bg-amber-400 w-1/2'
+                          ? 'bg-gradient-to-r from-amber-400 to-amber-500 w-full'
                           : 'w-0'
                       }`}
                     />
@@ -395,151 +428,188 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           </div>
         </div>
 
-        {/* Modal Form Content */}
-        <div className="p-5 sm:p-7 overflow-y-auto flex-1 space-y-5">
+        {/* Modal Form Scrollable Content */}
+        <div className="p-5 sm:p-7 overflow-y-auto flex-1 space-y-6">
           {submitError && (
-            <div className="p-4 bg-rose-950/40 border border-rose-800/80 text-rose-200 rounded-2xl flex items-start gap-3 text-xs leading-relaxed">
+            <div className="p-4 bg-rose-950/50 border border-rose-800/80 text-rose-200 rounded-2xl flex items-start gap-3 text-xs sm:text-sm leading-relaxed animate-in fade-in">
               <AlertCircle className="w-5 h-5 shrink-0 text-rose-400 mt-0.5" />
               <span>{submitError}</span>
             </div>
           )}
 
-          {/* STEP 1: Personal Identity & Ecclesiastical Hierarchy */}
+          {/* STEP 1: Personal Identity, Ministry Order & Ecclesiastical Jurisdiction */}
           {currentStep === 1 && (
-            <form onSubmit={handleNextStep} id="reg-step-1" className="space-y-5">
-              {/* Full Name First */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">
-                  Full Ecclesiastical Name (Title, First, Middle, Surname) *
+            <form onSubmit={handleNextStep} id="reg-step-1" className="space-y-6 animate-in fade-in">
+              
+              {/* 1. Holy Order Ministry Switch with Clear Male & Female Icons */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  Holy Order Ministry <span className="text-amber-400">*</span>
                 </label>
-                <div className="relative">
-                  <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Senior Apostle Emmanuel Babatunde Adeleke"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all font-medium"
-                  />
-                </div>
-              </div>
-
-              {/* Gender / Holy Order Category Segmented Switch */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">
-                  Sacred Holy Order Category *
-                </label>
-                <div className="grid grid-cols-2 p-1 bg-slate-950/80 border border-slate-800 rounded-xl">
+                <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-950/70 border border-slate-800/90 rounded-2xl">
                   <button
                     type="button"
                     onClick={() => handleGenderChange('male')}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 ${
                       gender === 'male'
-                        ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border border-amber-500/60 text-amber-300 ring-2 ring-amber-500/20 shadow-md'
+                        : 'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border border-transparent'
                     }`}
                   >
-                    <span>Brethren (Male Order)</span>
-                    {gender === 'male' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    <MaleOrderIcon className={`w-5 h-5 ${gender === 'male' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span>Brethren Order (Male)</span>
+                    {gender === 'male' && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleGenderChange('female')}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                    className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 ${
                       gender === 'female'
-                        ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border border-amber-500/60 text-amber-300 ring-2 ring-amber-500/20 shadow-md'
+                        : 'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border border-transparent'
                     }`}
                   >
-                    <span>Sisters (Female Order)</span>
-                    {gender === 'female' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    <FemaleOrderIcon className={`w-5 h-5 ${gender === 'female' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <span>Sisters Order (Female)</span>
+                    {gender === 'female' && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
                   </button>
                 </div>
               </div>
 
-              {/* Email & Phone Contact with Nigerian Validation */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* 2. Structured Name Inputs (First, Middle, Last, Preferred) */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Member Name Details <span className="text-amber-400">*</span>
+                  </label>
+                  {computedFullName && (
+                    <span className="text-xs text-amber-300 font-mono font-medium truncate max-w-[260px]">
+                      {computedFullName}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-medium text-slate-400">
+                      First Name <span className="text-amber-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="e.g. Emmanuel"
+                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-medium text-slate-400">
+                      Middle Name <span className="text-slate-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={middleName}
+                      onChange={(e) => setMiddleName(e.target.value)}
+                      placeholder="e.g. Babatunde"
+                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-medium text-slate-400">
+                      Last Name / Surname <span className="text-amber-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="e.g. Adeleke"
+                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Preferred Name & Current Rank Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-medium text-slate-400">
+                      Preferred / Alias Name <span className="text-slate-500">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={preferredName}
+                      onChange={(e) => setPreferredName(e.target.value)}
+                      placeholder="e.g. Pastor Adeleke"
+                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-medium text-slate-400">
+                      Current Confirmed Rank <span className="text-amber-400">*</span>
+                    </label>
+                    <select
+                      value={currentRank}
+                      onChange={(e) => setCurrentRank(e.target.value)}
+                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white transition-all outline-none"
+                    >
+                      {availableRanks.map((r) => (
+                        <option key={r.id} value={r.name}>
+                          {r.name} ({r.liturgicalColor || r.robingCategory})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Email & International Phone Input with Country Selector */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Ecclesiastical / Personal Email *
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Ecclesiastical / Personal Email <span className="text-amber-400">*</span>
                   </label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="e.g. e.adeleke@esocs.church"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm text-white placeholder-slate-500 transition-all"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-300">
-                      Mobile Phone Number *
-                    </label>
-                    {phone && (
-                      <span
-                        className={`text-[10px] font-mono font-semibold flex items-center gap-1 ${
-                          phoneValidation.isValid ? 'text-emerald-400' : 'text-rose-400'
-                        }`}
-                      >
-                        {phoneValidation.isValid ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>{phoneValidation.carrier}</span>
-                          </>
-                        ) : (
-                          <span>Invalid Number</span>
-                        )}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="relative flex items-center">
-                    <div className="absolute left-3 flex items-center gap-1 text-slate-400 pointer-events-none text-xs font-mono font-medium border-r border-slate-800 pr-2">
-                      <span className="text-sm">🇳🇬</span>
-                      <span>+234</span>
-                    </div>
-                    <input
-                      type="tel"
-                      required
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="0803 123 4567"
-                      className={`w-full pl-20 pr-4 py-2.5 bg-slate-950/80 border rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:ring-2 focus:outline-none transition-all font-mono ${
-                        phone && phoneValidation.isValid
-                          ? 'border-emerald-500/50 focus:ring-emerald-500/20 focus:border-emerald-400'
-                          : phone && !phoneValidation.isValid
-                          ? 'border-rose-500/50 focus:ring-rose-500/20 focus:border-rose-400'
-                          : 'border-slate-800 focus:ring-amber-500/20 focus:border-amber-400'
-                      }`}
-                    />
-                  </div>
-                  {phone && !phoneValidation.isValid && phoneValidation.error && (
-                    <p className="text-[11px] text-rose-400 leading-tight mt-1">
-                      {phoneValidation.error}
-                    </p>
-                  )}
+                  <InternationalPhoneInput
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    defaultCountry="NG"
+                    label="Mobile Phone Number (Worldwide / Nigeria)"
+                    required
+                  />
                 </div>
               </div>
 
-              {/* Seamless Cascading Ecclesiastical Hierarchy (4-Tier Searchable Select) */}
-              <div className="p-4 rounded-2xl bg-slate-950/50 border border-slate-800/80 space-y-3.5">
-                <div className="flex items-center justify-between pb-1 border-b border-slate-800 text-xs">
-                  <span className="font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers className="w-4 h-4" />
-                    Ecclesiastical Territorial Jurisdiction
-                  </span>
-                  <span className="text-[11px] text-slate-400">Searchable Directory</span>
+              {/* 4. Ecclesiastical Hierarchy (Province -> Direct Branch Dropdown -> Sanctuary) */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800/90">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
+                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                      Ecclesiastical Territorial Jurisdiction
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-medium">Searchable Church Directory</span>
                 </div>
 
-                {/* Tier 1: Province & Tier 2: District */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* Tier 1: Province & Tier 2: Local Parish Branch (Shows all branches in province) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <SearchableSelect
                     label="1. Ecclesiastical Province / Diocese"
                     required
@@ -547,37 +617,26 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     value={province}
                     onChange={handleProvinceChange}
                     placeholder="Search Province or Diocese..."
-                    searchPlaceholder="Type keyword (e.g. Lagos, Edo, Delta, Western)..."
+                    searchPlaceholder="Type keyword (e.g. Lagos, Edo, Delta, Western, UK, USA)..."
                     icon={<MapPin className="w-4 h-4 text-amber-400" />}
                   />
 
                   <SearchableSelect
-                    label="2. District / Zonal Council"
-                    required
-                    options={districtOptions}
-                    value={district}
-                    onChange={handleDistrictChange}
-                    placeholder="Search District Council..."
-                    searchPlaceholder={`Type district in ${province}...`}
-                    icon={<Building className="w-4 h-4 text-amber-400" />}
-                  />
-                </div>
-
-                {/* Tier 3: Local Parish Branch & Tier 4: House of Prayer */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <SearchableSelect
-                    label="3. Local Parish / Cathedral Branch"
+                    label="2. Local Parish / Cathedral Branch"
                     required
                     options={branchOptions}
                     value={parish}
                     onChange={handleBranchChange}
                     placeholder="Search Parish or Branch..."
-                    searchPlaceholder={`Type parish branch name...`}
+                    searchPlaceholder={`Search all branches in ${province}...`}
                     icon={<Church className="w-4 h-4 text-amber-400" />}
                   />
+                </div>
 
+                {/* Tier 3: House of Prayer / Sanctuary */}
+                <div className="space-y-2">
                   <SearchableSelect
-                    label="4. House of Prayer / Sanctuary / Chapel"
+                    label="3. House of Prayer / Sanctuary / Chapel"
                     required
                     options={houseOptions}
                     value={isCustomHouse ? '__custom__' : houseOfPrayer}
@@ -588,67 +647,68 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     customOptionLabel="+ Other / Enter Custom House of Prayer"
                     icon={<Sparkles className="w-4 h-4 text-amber-400" />}
                   />
-                </div>
 
-                {/* Custom House of Prayer Input if selected */}
-                {isCustomHouse && (
-                  <div className="space-y-1.5 pt-1 animate-in fade-in">
-                    <label className="text-xs font-semibold text-amber-300">
-                      Specify House of Prayer / Sanctuary Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={customHouseOfPrayer}
-                      onChange={(e) => setCustomHouseOfPrayer(e.target.value)}
-                      placeholder="e.g. Mount Horeb Sanctuary of Grace"
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-amber-500/50 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all font-medium"
-                    />
-                  </div>
-                )}
+                  {isCustomHouse && (
+                    <div className="space-y-1.5 pt-1 animate-in fade-in">
+                      <label className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                        Specify House of Prayer / Sanctuary Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={customHouseOfPrayer}
+                        onChange={(e) => setCustomHouseOfPrayer(e.target.value)}
+                        placeholder="e.g. Mount Horeb Sanctuary of Grace"
+                        className="w-full px-4 py-3 bg-slate-950/80 border border-amber-500/50 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all font-medium"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Passport Photo Upload Preview */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
-                  <span>Canonical Passport Photo (White Robing Attire)</span>
-                  <span className="text-[11px] text-slate-400 font-normal">Optional / Can upload later</span>
-                </label>
-                <div className="flex items-center gap-4 p-3 bg-slate-950/80 border border-slate-800 rounded-2xl">
+              {/* 5. Passport Photo Upload Preview */}
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Passport Photo (White Robing Attire)
+                  </label>
+                  <span className="text-[11px] text-slate-400">Optional / Can upload later</span>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl">
                   {passportPhotoUrl ? (
-                    <div className="w-14 h-14 rounded-xl overflow-hidden border border-amber-400/50 shrink-0">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-400/60 shrink-0 shadow-md">
                       <img src={passportPhotoUrl} alt="Passport" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 shrink-0">
-                      <Camera className="w-6 h-6" />
+                    <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 shrink-0">
+                      <Camera className="w-7 h-7 text-slate-400" />
                     </div>
                   )}
                   <div className="flex-1 space-y-1">
-                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors">
-                      <Camera className="w-3.5 h-3.5" />
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-amber-300 border border-slate-700/80 transition-all shadow-sm">
+                      <Camera className="w-4 h-4" />
                       <span>{passportPhotoUrl ? 'Change Photo' : 'Select Photo File'}</span>
                       <input type="file" accept="image/*" onChange={handlePassportUpload} className="hidden" />
                     </label>
-                    <p className="text-[10px] text-slate-500">Supported: JPG, PNG, WEBP (Max 5MB)</p>
+                    <p className="text-[11px] text-slate-500">Supported: JPG, PNG, WEBP (Official white robing photo recommended)</p>
                   </div>
                 </div>
               </div>
             </form>
           )}
 
-          {/* STEP 2: Canonical Rank & Hierarchy Validation */}
+          {/* STEP 2: Canonical Progression & Levies Breakdown */}
           {currentStep === 2 && (
-            <form onSubmit={handleNextStep} id="reg-step-2" className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Current Ordination Rank *
+            <form onSubmit={handleNextStep} id="reg-step-2" className="space-y-5 animate-in fade-in">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Current Confirmed Rank <span className="text-amber-400">*</span>
                   </label>
                   <select
                     value={currentRank}
                     onChange={(e) => setCurrentRank(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all font-medium"
+                    className="w-full px-4 py-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl text-sm text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all font-medium"
                   >
                     {availableRanks.map((r) => (
                       <option key={r.id} value={r.name}>
@@ -658,16 +718,16 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   </select>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Year Conferred Current Rank *
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Year Conferred Current Rank <span className="text-amber-400">*</span>
                   </label>
                   <div className="relative">
-                    <Calendar className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Calendar className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                     <select
                       value={currentRankYear}
                       onChange={(e) => setCurrentRankYear(Number(e.target.value))}
-                      className="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all font-medium"
+                      className="w-full pl-11 pr-4 py-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl text-sm text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all font-medium"
                     >
                       {YEARS_OPTIONS.map((year) => (
                         <option key={year} value={year}>
@@ -680,18 +740,18 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               </div>
 
               {/* Target Rank Selection with Visual Color & Insignia Badge */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Proposed Target Sacred Order *
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                    Target Ordination Rank <span className="text-amber-400">*</span>
                   </label>
                   {validation.expectedNextRank && (
                     <button
                       type="button"
                       onClick={handleApplyCanonicalRecommendation}
-                      className="text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 transition-colors"
+                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 transition-colors"
                     >
-                      <Sparkles className="w-3 h-3" /> Auto-select Eligible: {validation.expectedNextRank.name}
+                      <Sparkles className="w-3.5 h-3.5" /> Auto-select Eligible: {validation.expectedNextRank.name}
                     </button>
                   )}
                 </div>
@@ -699,10 +759,10 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 <select
                   value={targetRankName}
                   onChange={(e) => setTargetRankName(e.target.value)}
-                  className={`w-full px-4 py-3 bg-slate-950/80 border rounded-xl text-xs sm:text-sm font-semibold transition-all focus:outline-none ${
+                  className={`w-full px-4 py-3.5 bg-slate-950/80 border rounded-2xl text-sm font-semibold transition-all focus:outline-none ${
                     validation.isValid
-                      ? 'border-emerald-500/50 text-emerald-300 focus:ring-2 focus:ring-emerald-500/20'
-                      : 'border-rose-500/50 text-rose-300 focus:ring-2 focus:ring-rose-500/20'
+                      ? 'border-emerald-500/50 text-emerald-300 focus:ring-4 focus:ring-emerald-500/15'
+                      : 'border-rose-500/50 text-rose-300 focus:ring-4 focus:ring-rose-500/15'
                   }`}
                 >
                   {availableRanks.map((r) => (
@@ -713,25 +773,25 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 </select>
               </div>
 
-              {/* Hierarchy Validation Card */}
+              {/* Progression Validation Card */}
               <div
-                className={`p-4 rounded-2xl border text-xs leading-relaxed space-y-2 transition-all ${
+                className={`p-4 rounded-2xl border text-xs sm:text-sm leading-relaxed space-y-2 transition-all ${
                   validation.isValid
                     ? 'bg-emerald-950/30 border-emerald-800/80 text-emerald-200'
                     : 'bg-rose-950/30 border-rose-800/80 text-rose-200'
                 }`}
               >
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-3">
                   {validation.isValid ? (
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-400 mt-0.5" />
                   )}
                   <div className="space-y-1">
-                    <p className="font-bold">
+                    <p className="font-bold text-sm">
                       {validation.isValid ? 'Canonical Progression Validated' : 'Canonical Rule Invalidation'}
                     </p>
-                    <p className="text-[11px] opacity-90">
+                    <p className="text-xs opacity-90">
                       {validation.isValid
                         ? `Eligibility confirmed for ${targetRankName}. Satisfies constitutional tenure and order stepping requirements.`
                         : validation.errorReason}
@@ -742,39 +802,39 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
               {/* Statutory Levies Summary */}
               {validation.targetRank && (
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2.5 text-xs">
+                <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3 text-xs">
                   <div className="flex items-center justify-between text-slate-300">
-                    <span className="font-semibold flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="font-semibold flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-amber-400" />
                       Statutory Ordination Levies Breakdown:
                     </span>
-                    <span className="font-mono font-bold text-amber-400 text-sm">
+                    <span className="font-mono font-bold text-amber-400 text-sm sm:text-base">
                       {formatCurrency(validation.targetRank.levyBreakdown.total)}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-400">
-                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/60">
-                      <span className="block text-[10px] text-slate-500">Branch Share</span>
-                      <span className="font-mono font-medium text-slate-200">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs text-slate-400">
+                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                      <span className="block text-[10px] uppercase tracking-wider text-slate-500">Branch Share</span>
+                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.branchLevy)}
                       </span>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/60">
-                      <span className="block text-[10px] text-slate-500">District Quota</span>
-                      <span className="font-mono font-medium text-slate-200">
+                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                      <span className="block text-[10px] uppercase tracking-wider text-slate-500">District Quota</span>
+                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.districtLevy)}
                       </span>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/60">
-                      <span className="block text-[10px] text-slate-500">Provincial Dues</span>
-                      <span className="font-mono font-medium text-slate-200">
+                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                      <span className="block text-[10px] uppercase tracking-wider text-slate-500">Provincial Dues</span>
+                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.provincialLevy)}
                       </span>
                     </div>
-                    <div className="p-2 rounded-lg bg-slate-900 border border-slate-800/60">
-                      <span className="block text-[10px] text-slate-500">Synod & Robing Fee</span>
-                      <span className="font-mono font-medium text-slate-200">
+                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                      <span className="block text-[10px] uppercase tracking-wider text-slate-500">Synod & Robing</span>
+                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.nationalFee)}
                       </span>
                     </div>
@@ -786,67 +846,67 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
           {/* STEP 3: Security & 2FA Setup */}
           {currentStep === 3 && (
-            <form onSubmit={handleSubmit} id="reg-step-3" className="space-y-4">
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 leading-relaxed">
+            <form onSubmit={handleSubmit} id="reg-step-3" className="space-y-5 animate-in fade-in">
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-amber-200 leading-relaxed">
                 Create a secure password to protect your ordination dossier, clearance records, and credentials pass.
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">
-                  Account Password *
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  Account Password <span className="text-amber-400">*</span>
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full pl-10 pr-10 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-11 py-3.5 bg-slate-950/70 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-2xl text-sm text-white placeholder-slate-500 transition-all"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300">
-                  Confirm Password *
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  Confirm Password <span className="text-amber-400">*</span>
                 </label>
                 <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
-                    className="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-11 py-3.5 bg-slate-950/70 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-2xl text-sm text-white placeholder-slate-500 transition-all"
                   />
                 </div>
               </div>
 
               {/* 2FA Protection Toggle */}
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 flex items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <span className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-amber-400" />
                     Two-Factor Authentication (2FA)
                   </span>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs text-slate-400">
                     Require one-time authentication passcode for enhanced credential security.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setEnable2FA(!enable2FA)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
+                  className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${
                     enable2FA ? 'bg-amber-500' : 'bg-slate-800'
                   }`}
                 >
@@ -862,46 +922,45 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="p-5 sm:p-6 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between gap-3">
+        <div className="p-5 sm:p-6 border-t border-slate-800/90 bg-slate-950/90 flex items-center justify-between gap-4 shrink-0">
           {currentStep > 1 ? (
-            <Button
-              variant="outline"
-              size="md"
+            <button
               type="button"
               onClick={handlePrevStep}
-              icon={<ArrowLeft className="w-4 h-4" />}
+              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-all flex items-center gap-2"
             >
-              Previous Step
-            </Button>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Previous Step</span>
+            </button>
           ) : (
-            <Button variant="outline" size="md" type="button" onClick={onClose}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all"
+            >
               Cancel
-            </Button>
+            </button>
           )}
 
           {currentStep < 3 ? (
-            <Button
-              variant="primary"
-              size="md"
+            <button
               type="submit"
               form={`reg-step-${currentStep}`}
-              icon={<ArrowRight className="w-4 h-4" />}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold"
+              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center gap-2"
             >
-              Continue Next
-            </Button>
+              <span>Continue Next</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           ) : (
-            <Button
-              variant="primary"
-              size="md"
+            <button
               type="submit"
               form="reg-step-3"
-              loading={isLoading}
-              icon={<CheckCircle2 className="w-4 h-4" />}
-              className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold"
+              disabled={isLoading}
+              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center gap-2 disabled:opacity-50"
             >
-              Complete Registration
-            </Button>
+              <span>{isLoading ? 'Submitting...' : 'Complete Registration'}</span>
+              <CheckCircle2 className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>

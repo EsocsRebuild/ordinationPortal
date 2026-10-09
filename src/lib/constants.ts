@@ -1195,6 +1195,27 @@ export function getDistrictsForProvince(provinceName: string): DistrictHierarchy
   return found?.districts || [];
 }
 
+export function getAllBranchesForProvince(provinceName: string): Array<{
+  id: string;
+  name: string;
+  districtName: string;
+  housesOfPrayer: string[];
+}> {
+  const districts = getDistrictsForProvince(provinceName);
+  const list: Array<{ id: string; name: string; districtName: string; housesOfPrayer: string[] }> = [];
+  for (const d of districts) {
+    for (const b of d.branches) {
+      list.push({
+        id: b.id,
+        name: b.name,
+        districtName: d.name,
+        housesOfPrayer: b.housesOfPrayer || [],
+      });
+    }
+  }
+  return list;
+}
+
 export function getBranchesForDistrict(provinceName: string, districtName: string): ParishBranch[] {
   const districts = getDistrictsForProvince(provinceName);
   const found = districts.find((d) => d.name === districtName);

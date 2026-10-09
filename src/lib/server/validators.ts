@@ -4,6 +4,10 @@ import { validatePhoneNumber } from '@/utils/phoneValidation';
 
 export interface RegistrationInput {
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  preferredName?: string;
   email: string;
   phone?: string;
   gender: GenderType;
@@ -35,7 +39,17 @@ export function sanitizeString(input: any): string {
 export function validateCandidateRegistration(body: any): ValidationResult<RegistrationInput> {
   const errors: string[] = [];
 
-  const fullName = sanitizeString(body?.fullName);
+  const firstName = sanitizeString(body?.firstName);
+  const middleName = sanitizeString(body?.middleName);
+  const lastName = sanitizeString(body?.lastName);
+  const preferredName = sanitizeString(body?.preferredName);
+
+  let rawFullName = sanitizeString(body?.fullName);
+  if (!rawFullName && (firstName || lastName)) {
+    rawFullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+  }
+  const fullName = rawFullName;
+
   const email = sanitizeString(body?.email).toLowerCase();
   const rawPhone = sanitizeString(body?.phone);
   const phoneValidation = rawPhone ? validatePhoneNumber(rawPhone) : null;
@@ -53,8 +67,8 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
   const enable2FA = Boolean(body?.enable2FA);
 
   // Field validations
-  if (!fullName || fullName.length < 3) {
-    errors.push('Full legal name is required and must be at least 3 characters long.');
+  if (!fullName || fullName.length < 2) {
+    errors.push('Full name (First and Last name) is required.');
   }
 
   if (!email || !EMAIL_REGEX.test(email)) {
@@ -98,6 +112,10 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
     errors,
     sanitizedData: errors.length === 0 ? {
       fullName,
+      firstName,
+      middleName,
+      lastName,
+      preferredName,
       email,
       phone,
       gender,

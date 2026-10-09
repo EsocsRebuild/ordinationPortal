@@ -82,6 +82,10 @@ export interface CandidateProfile {
   id: string;
   regNumber: string; // e.g. "ESOCS/ORD/2026/0481"
   fullName: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  preferredName?: string;
   email: string;
   phone: string;
   gender: Gender;
