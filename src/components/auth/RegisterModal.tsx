@@ -2,18 +2,14 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/Button';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
 import { ProvinceHierarchy, EcclesiasticalRank } from '@/types';
 import {
   ESOCS_RANKS,
   ESOCS_HIERARCHY,
-  getDistrictsForProvince,
   getAllBranchesForProvince,
-  getBranchesForDistrict,
-  getHousesOfPrayerForBranch,
 } from '@/lib/constants';
-import { validateRankProgression, getRankByName } from '@/utils/ranks';
+import { validateRankProgression } from '@/utils/ranks';
 import { formatCurrency } from '@/utils/formatters';
 import { PhoneValidationResult } from '@/utils/phoneValidation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
@@ -38,9 +34,6 @@ import {
   Check,
   ShieldCheck,
   Camera,
-  Layers,
-  Building,
-  Award,
 } from 'lucide-react';
 
 // Dedicated Male & Female Icons
@@ -390,21 +383,21 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-950/85 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl bg-slate-900/95 backdrop-blur-2xl border border-slate-700/60 rounded-t-3xl sm:rounded-3xl shadow-2xl shadow-black/80 flex flex-col max-h-[94vh] sm:max-h-[90vh] overflow-hidden text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[94vh] sm:max-h-[90vh] overflow-hidden text-slate-900 dark:text-slate-100 transition-colors duration-200">
         
         {/* Modal Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-800 bg-slate-950/80 shrink-0">
+        <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/80 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3.5">
               <div className="p-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 shadow-inner">
                 <EsocsLogo size={34} showText={false} />
               </div>
               <div>
-                <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+                <h3 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
                   Canonical Ordination Registration
                 </h3>
-                <p className="text-xs text-amber-400/90 font-medium mt-0.5">
+                <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-0.5">
                   Holy Order General Conference 2026 Ordinand Portal
                 </p>
               </div>
@@ -412,7 +405,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="p-2.5 rounded-2xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white transition-all border border-slate-700/40"
+              className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border border-slate-200 dark:border-slate-700/40"
             >
               <X className="w-5 h-5" />
             </button>
@@ -433,25 +426,25 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
                         isCompleted
-                          ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                          ? 'bg-emerald-500 text-white shadow-sm'
                           : isCurrent
-                          ? 'bg-amber-400 text-slate-950 ring-4 ring-amber-400/20 shadow-md shadow-amber-400/20'
-                          : 'bg-slate-800/80 text-slate-400 border border-slate-700/60'
+                          ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20 shadow-sm'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700/60'
                       }`}
                     >
                       {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.num}
                     </span>
-                    <span className={`text-xs font-semibold truncate ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-xs font-semibold truncate ${isCurrent ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                       {step.title}
                     </span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden bg-slate-800/90">
+                  <div className="h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
                     <div
                       className={`h-full transition-all duration-300 ${
                         isCompleted
                           ? 'bg-emerald-500 w-full'
                           : isCurrent
-                          ? 'bg-gradient-to-r from-amber-400 to-amber-500 w-full'
+                          ? 'bg-amber-500 w-full'
                           : 'w-0'
                       }`}
                     />
@@ -465,8 +458,8 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         {/* Modal Form Scrollable Content */}
         <div className="p-5 sm:p-7 overflow-y-auto flex-1 space-y-6">
           {submitError && (
-            <div className="p-4 bg-rose-950/50 border border-rose-800/80 text-rose-200 rounded-2xl flex items-start gap-3 text-xs sm:text-sm leading-relaxed animate-in fade-in">
-              <AlertCircle className="w-5 h-5 shrink-0 text-rose-400 mt-0.5" />
+            <div className="p-4 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-200 rounded-2xl flex items-start gap-3 text-xs sm:text-sm leading-relaxed animate-in fade-in">
+              <AlertCircle className="w-5 h-5 shrink-0 text-rose-500 mt-0.5" />
               <span>{submitError}</span>
             </div>
           )}
@@ -477,35 +470,35 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               
               {/* 1. Holy Order Ministry Switch with Clear Male & Female Icons */}
               <div className="space-y-2">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Holy Order Ministry <span className="text-amber-400">*</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Holy Order Ministry <span className="text-amber-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-950/70 border border-slate-800/90 rounded-2xl">
+                <div className="grid grid-cols-2 gap-3 p-1.5 bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-2xl">
                   <button
                     type="button"
                     onClick={() => handleGenderChange('male')}
                     className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 ${
                       gender === 'male'
-                        ? 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border border-amber-500/60 text-amber-300 ring-2 ring-amber-500/20 shadow-md'
-                        : 'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border border-transparent'
+                        ? 'bg-white dark:bg-amber-500/20 border border-amber-500/60 text-amber-800 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20'
+                        : 'bg-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-900/50'
                     }`}
                   >
-                    <MaleOrderIcon className={`w-5 h-5 ${gender === 'male' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <MaleOrderIcon className={`w-5 h-5 ${gender === 'male' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`} />
                     <span>Brethren Order (Male)</span>
-                    {gender === 'male' && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
+                    {gender === 'male' && <Check className="w-4 h-4 text-amber-600 dark:text-amber-400 stroke-[3]" />}
                   </button>
                   <button
                     type="button"
                     onClick={() => handleGenderChange('female')}
                     className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2.5 ${
                       gender === 'female'
-                        ? 'bg-gradient-to-r from-amber-500/25 to-amber-600/20 border border-amber-500/60 text-amber-300 ring-2 ring-amber-500/20 shadow-md'
-                        : 'bg-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/50 border border-transparent'
+                        ? 'bg-white dark:bg-amber-500/20 border border-amber-500/60 text-amber-800 dark:text-amber-300 shadow-sm ring-2 ring-amber-500/20'
+                        : 'bg-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-900/50'
                     }`}
                   >
-                    <FemaleOrderIcon className={`w-5 h-5 ${gender === 'female' ? 'text-amber-400' : 'text-slate-500'}`} />
+                    <FemaleOrderIcon className={`w-5 h-5 ${gender === 'female' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`} />
                     <span>Sisters Order (Female)</span>
-                    {gender === 'female' && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
+                    {gender === 'female' && <Check className="w-4 h-4 text-amber-600 dark:text-amber-400 stroke-[3]" />}
                   </button>
                 </div>
               </div>
@@ -513,11 +506,11 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               {/* 2. Structured Name Inputs (First, Middle, Last, Preferred) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Member Name Details <span className="text-amber-400">*</span>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Member Name Details <span className="text-amber-500">*</span>
                   </label>
                   {computedFullName && (
-                    <span className="text-xs text-amber-300 font-mono font-medium truncate max-w-[260px]">
+                    <span className="text-xs text-amber-700 dark:text-amber-300 font-mono font-medium truncate max-w-[260px]">
                       {computedFullName}
                     </span>
                   )}
@@ -525,8 +518,8 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-medium text-slate-400">
-                      First Name <span className="text-amber-400">*</span>
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      First Name <span className="text-amber-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -534,26 +527,26 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="e.g. Emmanuel"
-                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                      className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-medium text-slate-400">
-                      Middle Name <span className="text-slate-500">(Optional)</span>
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      Middle Name <span className="text-slate-400">(Optional)</span>
                     </label>
                     <input
                       type="text"
                       value={middleName}
                       onChange={(e) => setMiddleName(e.target.value)}
                       placeholder="e.g. Babatunde"
-                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                      className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-medium text-slate-400">
-                      Last Name / Surname <span className="text-amber-400">*</span>
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      Last Name / Surname <span className="text-amber-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -561,7 +554,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="e.g. Adeleke"
-                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                      className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
                 </div>
@@ -569,29 +562,29 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 {/* Preferred Name & Current Rank Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-medium text-slate-400">
-                      Preferred / Alias Name <span className="text-slate-500">(Optional)</span>
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      Preferred / Alias Name <span className="text-slate-400">(Optional)</span>
                     </label>
                     <input
                       type="text"
                       value={preferredName}
                       onChange={(e) => setPreferredName(e.target.value)}
                       placeholder="e.g. Pastor Adeleke"
-                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
+                      className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-[11px] font-medium text-slate-400">
-                      Current Confirmed Rank <span className="text-amber-400">*</span>
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      Current Confirmed Rank <span className="text-amber-500">*</span>
                     </label>
                     <select
                       value={currentRank}
                       onChange={(e) => setCurrentRank(e.target.value)}
-                      className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white transition-all outline-none"
+                      className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white transition-all outline-none"
                     >
                       {availableRanks.map((r) => (
-                        <option key={r.id} value={r.name}>
+                        <option key={r.id} value={r.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                           {r.name} ({r.liturgicalColor || r.robingCategory})
                         </option>
                       ))}
@@ -603,8 +596,8 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               {/* 3. Email & International Phone Input with Country Selector */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Ecclesiastical / Personal Email <span className="text-amber-400">*</span>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Ecclesiastical / Personal Email <span className="text-amber-500">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -614,7 +607,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="e.g. e.adeleke@esocs.church"
-                      className="w-full pl-10 pr-4 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm text-white placeholder-slate-500 transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
                 </div>
@@ -632,14 +625,14 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
               {/* 4. Ecclesiastical Hierarchy (Province -> Direct Branch Dropdown -> Sanctuary) */}
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800/90">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
-                    <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
+                    <div className="w-2 h-2 rounded-full bg-amber-500 shadow-sm shadow-amber-500" />
+                    <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                       Ecclesiastical Territorial Jurisdiction
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-400 font-medium">Searchable Church Directory</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Searchable Church Directory</span>
                 </div>
 
                 {/* Tier 1: Province & Tier 2: Local Parish Branch (Shows all branches in province) */}
@@ -652,7 +645,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     onChange={handleProvinceChange}
                     placeholder="Search Province or Diocese..."
                     searchPlaceholder="Type keyword (e.g. Lagos, Edo, Delta, Western, UK, USA)..."
-                    icon={<MapPin className="w-4 h-4 text-amber-400" />}
+                    icon={<MapPin className="w-4 h-4 text-amber-500" />}
                   />
 
                   <SearchableSelect
@@ -663,7 +656,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     onChange={handleBranchChange}
                     placeholder="Search Parish or Branch..."
                     searchPlaceholder={`Search all branches in ${province}...`}
-                    icon={<Church className="w-4 h-4 text-amber-400" />}
+                    icon={<Church className="w-4 h-4 text-amber-500" />}
                   />
                 </div>
 
@@ -679,12 +672,12 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     searchPlaceholder="Type sanctuary or chapel name..."
                     allowCustom={true}
                     customOptionLabel="+ Other / Enter Custom House of Prayer"
-                    icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+                    icon={<Sparkles className="w-4 h-4 text-amber-500" />}
                   />
 
                   {isCustomHouse && (
                     <div className="space-y-1.5 pt-1 animate-in fade-in">
-                      <label className="text-xs font-semibold text-amber-300 uppercase tracking-wider">
+                      <label className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                         Specify House of Prayer / Sanctuary Name *
                       </label>
                       <input
@@ -693,7 +686,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                         value={customHouseOfPrayer}
                         onChange={(e) => setCustomHouseOfPrayer(e.target.value)}
                         placeholder="e.g. Mount Horeb Sanctuary of Grace"
-                        className="w-full px-4 py-3 bg-slate-950/80 border border-amber-500/50 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all font-medium"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-amber-500/50 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 outline-none transition-all font-medium"
                       />
                     </div>
                   )}
@@ -703,23 +696,23 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               {/* 5. Passport Photo Upload Preview */}
               <div className="space-y-2 pt-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Passport Photo (White Robing Attire)
                   </label>
-                  <span className="text-[11px] text-slate-400">Optional / Can upload later</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Optional / Can upload later</span>
                 </div>
-                <div className="flex items-center gap-4 p-4 bg-slate-950/60 border border-slate-800/80 rounded-2xl">
+                <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-2xl">
                   {passportPhotoUrl ? (
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-400/60 shrink-0 shadow-md">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-amber-500/60 shrink-0 shadow-md">
                       <img src={passportPhotoUrl} alt="Passport" className="w-full h-full object-cover" />
                     </div>
                   ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 shrink-0">
+                    <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 shrink-0">
                       <Camera className="w-7 h-7 text-slate-400" />
                     </div>
                   )}
                   <div className="flex-1 space-y-1">
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-xs font-semibold text-amber-300 border border-slate-700/80 transition-all shadow-sm">
+                    <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-amber-700 dark:text-amber-300 border border-slate-300 dark:border-slate-700 transition-all shadow-sm">
                       <Camera className="w-4 h-4" />
                       <span>{passportPhotoUrl ? 'Change Photo' : 'Select Photo File'}</span>
                       <input type="file" accept="image/*" onChange={handlePassportUpload} className="hidden" />
@@ -736,16 +729,16 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             <form onSubmit={handleNextStep} id="reg-step-2" className="space-y-5 animate-in fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Current Confirmed Rank <span className="text-amber-400">*</span>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Current Confirmed Rank <span className="text-amber-500">*</span>
                   </label>
                   <select
                     value={currentRank}
                     onChange={(e) => setCurrentRank(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl text-sm text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all font-medium"
+                    className="w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm text-slate-900 dark:text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 outline-none transition-all font-medium"
                   >
                     {availableRanks.map((r) => (
-                      <option key={r.id} value={r.name}>
+                      <option key={r.id} value={r.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                         {r.name}
                       </option>
                     ))}
@@ -753,18 +746,18 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Year Conferred Current Rank <span className="text-amber-400">*</span>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Year Conferred Current Rank <span className="text-amber-500">*</span>
                   </label>
                   <div className="relative">
                     <Calendar className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                     <select
                       value={currentRankYear}
                       onChange={(e) => setCurrentRankYear(Number(e.target.value))}
-                      className="w-full pl-11 pr-4 py-3.5 bg-slate-950/70 border border-slate-800 rounded-2xl text-sm text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-400 focus:outline-none transition-all font-medium"
+                      className="w-full pl-11 pr-4 py-3.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 rounded-2xl text-sm text-slate-900 dark:text-white focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 outline-none transition-all font-medium"
                     >
                       {YEARS_OPTIONS.map((year) => (
-                        <option key={year} value={year}>
+                        <option key={year} value={year} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                           {year} ({CURRENT_YEAR - year} years tenure)
                         </option>
                       ))}
@@ -776,14 +769,14 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               {/* Target Rank Selection with Visual Color & Insignia Badge */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    Target Ordination Rank <span className="text-amber-400">*</span>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Target Ordination Rank <span className="text-amber-500">*</span>
                   </label>
                   {validation.expectedNextRank && (
                     <button
                       type="button"
                       onClick={handleApplyCanonicalRecommendation}
-                      className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1.5 transition-colors"
+                      className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-600 font-semibold flex items-center gap-1.5 transition-colors"
                     >
                       <Sparkles className="w-3.5 h-3.5" /> Auto-select Eligible: {validation.expectedNextRank.name}
                     </button>
@@ -793,14 +786,14 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 <select
                   value={targetRankName}
                   onChange={(e) => setTargetRankName(e.target.value)}
-                  className={`w-full px-4 py-3.5 bg-slate-950/80 border rounded-2xl text-sm font-semibold transition-all focus:outline-none ${
+                  className={`w-full px-4 py-3.5 bg-slate-50 dark:bg-slate-950/80 border rounded-2xl text-sm font-semibold transition-all focus:outline-none ${
                     validation.isValid
-                      ? 'border-emerald-500/50 text-emerald-300 focus:ring-4 focus:ring-emerald-500/15'
-                      : 'border-rose-500/50 text-rose-300 focus:ring-4 focus:ring-rose-500/15'
+                      ? 'border-emerald-500/60 text-emerald-800 dark:text-emerald-300 focus:ring-4 focus:ring-emerald-500/15'
+                      : 'border-rose-500/60 text-rose-800 dark:text-rose-300 focus:ring-4 focus:ring-rose-500/15'
                   }`}
                 >
                   {availableRanks.map((r) => (
-                    <option key={r.id} value={r.name}>
+                    <option key={r.id} value={r.name} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
                       {r.name} ({r.liturgicalColor || r.robingCategory}) — Statutory: ₦{(r.levyBreakdown?.total || 0).toLocaleString()}
                     </option>
                   ))}
@@ -811,15 +804,15 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               <div
                 className={`p-4 rounded-2xl border text-xs sm:text-sm leading-relaxed space-y-2 transition-all ${
                   validation.isValid
-                    ? 'bg-emerald-950/30 border-emerald-800/80 text-emerald-200'
-                    : 'bg-rose-950/30 border-rose-800/80 text-rose-200'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-200'
+                    : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/80 text-rose-800 dark:text-rose-200'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   {validation.isValid ? (
-                    <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400 mt-0.5" />
+                    <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5" />
                   ) : (
-                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-400 mt-0.5" />
+                    <AlertCircle className="w-5 h-5 shrink-0 text-rose-600 dark:text-rose-400 mt-0.5" />
                   )}
                   <div className="space-y-1">
                     <p className="font-bold text-sm">
@@ -836,39 +829,39 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
 
               {/* Statutory Levies Summary */}
               {validation.targetRank && (
-                <div className="p-5 rounded-2xl bg-slate-950/70 border border-slate-800 space-y-3 text-xs">
-                  <div className="flex items-center justify-between text-slate-300">
+                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+                  <div className="flex items-center justify-between text-slate-800 dark:text-slate-300">
                     <span className="font-semibold flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-amber-400" />
+                      <CreditCard className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       Statutory Ordination Levies Breakdown:
                     </span>
-                    <span className="font-mono font-bold text-amber-400 text-sm sm:text-base">
+                    <span className="font-mono font-bold text-amber-700 dark:text-amber-400 text-sm sm:text-base">
                       {formatCurrency(validation.targetRank.levyBreakdown.total)}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs text-slate-400">
-                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs text-slate-600 dark:text-slate-400">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800">
                       <span className="block text-[10px] uppercase tracking-wider text-slate-500">Branch Share</span>
-                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
+                      <span className="font-mono font-medium text-slate-900 dark:text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.branchLevy)}
                       </span>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800">
                       <span className="block text-[10px] uppercase tracking-wider text-slate-500">District Quota</span>
-                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
+                      <span className="font-mono font-medium text-slate-900 dark:text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.districtLevy)}
                       </span>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800">
                       <span className="block text-[10px] uppercase tracking-wider text-slate-500">Provincial Dues</span>
-                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
+                      <span className="font-mono font-medium text-slate-900 dark:text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.provincialLevy)}
                       </span>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80">
+                    <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800">
                       <span className="block text-[10px] uppercase tracking-wider text-slate-500">Synod & Robing</span>
-                      <span className="font-mono font-medium text-slate-200 mt-0.5 block">
+                      <span className="font-mono font-medium text-slate-900 dark:text-slate-200 mt-0.5 block">
                         {formatCurrency(validation.targetRank.levyBreakdown.nationalFee)}
                       </span>
                     </div>
@@ -881,13 +874,13 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           {/* STEP 3: Security & 2FA Setup */}
           {currentStep === 3 && (
             <form onSubmit={handleSubmit} id="reg-step-3" className="space-y-5 animate-in fade-in">
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-amber-200 leading-relaxed">
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-amber-800 dark:text-amber-200 leading-relaxed">
                 Create a secure password to protect your ordination profile, clearance records, and admission pass.
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Account Password <span className="text-amber-400">*</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Account Password <span className="text-amber-500">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -897,12 +890,12 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full pl-11 pr-11 py-3.5 bg-slate-950/70 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-2xl text-sm text-white placeholder-slate-500 transition-all"
+                    className="w-full pl-11 pr-11 py-3.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -910,8 +903,8 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                  Confirm Password <span className="text-amber-400">*</span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Confirm Password <span className="text-amber-500">*</span>
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -921,19 +914,19 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter password"
-                    className="w-full pl-11 pr-11 py-3.5 bg-slate-950/70 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-2xl text-sm text-white placeholder-slate-500 transition-all"
+                    className="w-full pl-11 pr-11 py-3.5 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-2xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                   />
                 </div>
               </div>
 
               {/* 2FA Protection Toggle */}
-              <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 flex items-center justify-between gap-4">
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <span className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-amber-500" />
                     Two-Factor Authentication (2FA)
                   </span>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Require one-time authentication passcode for enhanced credential security.
                   </p>
                 </div>
@@ -941,7 +934,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   type="button"
                   onClick={() => setEnable2FA(!enable2FA)}
                   className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${
-                    enable2FA ? 'bg-amber-500' : 'bg-slate-800'
+                    enable2FA ? 'bg-amber-500' : 'bg-slate-300 dark:bg-slate-800'
                   }`}
                 >
                   <span
@@ -956,12 +949,12 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="p-5 sm:p-6 border-t border-slate-800/90 bg-slate-950/90 flex items-center justify-between gap-4 shrink-0">
+        <div className="p-5 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/90 flex items-center justify-between gap-4 shrink-0">
           {currentStep > 1 ? (
             <button
               type="button"
               onClick={handlePrevStep}
-              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-200/70 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Previous Step</span>
@@ -970,7 +963,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all"
+              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-all"
             >
               Cancel
             </button>
@@ -980,7 +973,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             <button
               type="submit"
               form={`reg-step-${currentStep}`}
-              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center gap-2"
+              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20 transition-all flex items-center gap-2"
             >
               <span>Continue Next</span>
               <ArrowRight className="w-4 h-4" />
@@ -990,7 +983,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               type="submit"
               form="reg-step-3"
               disabled={isLoading}
-              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
             >
               <span>{isLoading ? 'Submitting...' : 'Complete Registration'}</span>
               <CheckCircle2 className="w-4 h-4" />

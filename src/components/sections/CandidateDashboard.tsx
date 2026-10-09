@@ -41,9 +41,14 @@ import {
 interface CandidateDashboardProps {
   candidate: CandidateProfile;
   onUpdateCandidate?: (updated: CandidateProfile) => void;
+  onSwitchToConsecratedView?: () => void;
 }
 
-export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandidate }: CandidateDashboardProps) {
+export function CandidateDashboard({
+  candidate: initialCandidate,
+  onUpdateCandidate,
+  onSwitchToConsecratedView,
+}: CandidateDashboardProps) {
   const [candidate, setCandidate] = useState<CandidateProfile>(initialCandidate);
   const [showPassModal, setShowPassModal] = useState(false);
   const [showCertModal, setShowCertModal] = useState(false);
@@ -224,6 +229,19 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
               <Info className="w-3.5 h-3.5" />
               <span>Demo Account Mode</span>
             </button>
+
+            {onSwitchToConsecratedView && (
+              <Tooltip content="Preview post-ordination Consecrated Clergy records and official gazette">
+                <button
+                  type="button"
+                  onClick={onSwitchToConsecratedView}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/40 inline-flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Consecrated Clergy Record</span>
+                </button>
+              </Tooltip>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

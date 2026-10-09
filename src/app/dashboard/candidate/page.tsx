@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { DashboardLayout } from '@/components/shared/DashboardLayout';
 import { CandidateDashboard } from '@/components/sections/CandidateDashboard';
+import { ConsecratedClergyDashboard } from '@/components/sections/ConsecratedClergyDashboard';
 import { useAuth } from '@/context/AuthContext';
 import { CandidateProfile } from '@/types';
 import { api } from '@/services/api';
@@ -14,6 +15,7 @@ export default function CandidateDashboardPage() {
   const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'clearance' | 'consecrated'>('clearance');
 
   useEffect(() => {
     async function loadData() {
@@ -26,6 +28,9 @@ export default function CandidateDashboardPage() {
           const candidateData = await api.getCandidateById(user.candidateId);
           if (candidateData) {
             setCandidate(candidateData);
+            if (candidateData.stage === 'ordained') {
+              setViewMode('consecrated');
+            }
             return;
           }
         }
@@ -35,6 +40,9 @@ export default function CandidateDashboardPage() {
           const candidates = await api.getCandidates({ email: user.email });
           if (candidates && candidates.length > 0) {
             setCandidate(candidates[0]);
+            if (candidates[0].stage === 'ordained') {
+              setViewMode('consecrated');
+            }
             return;
           }
         }
@@ -82,10 +90,24 @@ export default function CandidateDashboardPage() {
     );
   }
 
+  const isConsecrated = viewMode === 'consecrated';
+
   return (
     <AuthGuard allowedRoles={['candidate', 'super_admin']}>
-      <DashboardLayout activeSectionTitle="My Profile & Credentials">
-        <CandidateDashboard candidate={candidate} />
+      <DashboardLayout activeSectionTitle={isConsecrated ? 'Consecrated Minister Record' : 'My Profile & Credentials'}>
+        {isConsecrated ? (
+          <ConsecratedClergyDashboard
+            candidate={candidate}
+            onUpdateCandidate={(updated) => setCandidate(updated)}
+            onSwitchToClearanceView={() => setViewMode('clearance')}
+          />
+        ) : (
+          <CandidateDashboard
+            candidate={candidate}
+            onUpdateCandidate={(updated) => setCandidate(updated)}
+            onSwitchToConsecratedView={() => setViewMode('consecrated')}
+          />
+        )}
       </DashboardLayout>
     </AuthGuard>
   );
