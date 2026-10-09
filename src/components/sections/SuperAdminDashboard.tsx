@@ -13,6 +13,7 @@ import { validateRankProgression, getRobingSpecifications } from '@/utils/ranks'
 import { CertificateModal } from '@/components/shared/CertificateModal';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
 import { LiveAccreditationDesk } from './LiveAccreditationDesk';
+import { HierarchyManager } from './HierarchyManager';
 import { api } from '@/services/api';
 import {
   Crown,
@@ -56,7 +57,7 @@ interface SuperAdminDashboardProps {
   onBatchGenerateCerts: () => void;
 }
 
-type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs' | 'accreditation_live';
+type AdminTab = 'master' | 'branch_tier' | 'district_tier' | 'province_tier' | 'cmc_tier' | 'synod_tier' | 'financials' | 'audit_logs' | 'accreditation_live' | 'hierarchy_manager';
 
 export function SuperAdminDashboard({
   session,
@@ -446,6 +447,17 @@ export function SuperAdminDashboard({
         </button>
 
         <button
+          onClick={() => setActiveTab('hierarchy_manager')}
+          className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
+            activeTab === 'hierarchy_manager'
+              ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+              : 'text-amber-500 dark:text-amber-400 hover:bg-amber-500/10'
+          }`}
+        >
+          <Building className="w-3.5 h-3.5" /> 🏛️ Church Parishes & Provinces
+        </button>
+
+        <button
           onClick={() => setActiveTab('audit_logs')}
           className={`px-4 py-2 rounded-xl font-semibold transition-colors shrink-0 flex items-center gap-1.5 ${
             activeTab === 'audit_logs'
@@ -639,8 +651,16 @@ export function SuperAdminDashboard({
         </Card>
       )}
 
+      {/* Tab: Live Ecclesiastical Structure & Hierarchy Manager */}
+      {activeTab === 'hierarchy_manager' && (
+        <HierarchyManager session={session} onHierarchyUpdated={() => {}} />
+      )}
+
       {/* Main Candidate Table (For All Tier Queues) */}
-      {activeTab !== 'audit_logs' && activeTab !== 'accreditation_live' && (
+      {activeTab !== 'audit_logs' &&
+        activeTab !== 'accreditation_live' &&
+        activeTab !== 'financials' &&
+        activeTab !== 'hierarchy_manager' && (
         <Card>
           <CardHeader
             title={
@@ -834,33 +854,34 @@ export function SuperAdminDashboard({
 
       {/* Candidate Dossier & Multi-Tier Inspection Drawer */}
       {inspectingCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-premium overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-church-900 text-gold-400">
-                  <ShieldCheck className="w-5 h-5" />
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
+              <div className="flex items-center gap-3.5">
+                <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-serif text-base sm:text-lg font-bold text-church-950 dark:text-white">
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
                     Canonical Dossier & 5-Tier Vetting Inspection
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {inspectingCandidate.fullName} • {inspectingCandidate.regNumber}
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {inspectingCandidate.fullName} • <span className="font-mono">{inspectingCandidate.regNumber}</span>
+                    {inspectingCandidate.houseOfPrayer ? ` • ${inspectingCandidate.houseOfPrayer}` : ''} • {inspectingCandidate.parish} ({inspectingCandidate.province})
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setInspectingCandidate(null)}
-                className="p-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
+            <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto text-xs">
               {/* 5-Tier Governance Visual Progression Track */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
                 <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs">

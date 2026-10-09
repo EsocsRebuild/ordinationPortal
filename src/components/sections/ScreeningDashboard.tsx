@@ -264,152 +264,183 @@ export function ScreeningDashboard({
 
       {/* Assessment Modal */}
       {selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full p-6 sm:p-8 my-8 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  Record Theological Marks & Vetting Decision
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Ordinand: <strong>{selectedCandidate.fullName}</strong> ({selectedCandidate.regNumber})
-                </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-2xl w-full overflow-hidden my-6 text-slate-900 dark:text-slate-100">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
+              <div className="flex items-center gap-3.5">
+                <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <Award className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                    Record Theological Marks & Vetting Decision
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Ordinand: <strong className="text-slate-900 dark:text-slate-200">{selectedCandidate.fullName}</strong> • {selectedCandidate.regNumber}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedCandidate(null)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg"
+                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Prerequisites Checklist */}
-            <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
-              <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Prerequisite Canonical Documents Verification
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={docsVerified.baptismCert}
-                    onChange={(e) => setDocsVerified({ ...docsVerified, baptismCert: e.target.checked })}
-                    className="w-4 h-4 text-church-600 rounded"
-                  />
-                  <span>Original Holy Baptismal Certificate</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={docsVerified.priorOrdination}
-                    onChange={(e) => setDocsVerified({ ...docsVerified, priorOrdination: e.target.checked })}
-                    className="w-4 h-4 text-church-600 rounded"
-                  />
-                  <span>Prior Holy Order Ordination Scroll</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={docsVerified.marriageLetter}
-                    onChange={(e) => setDocsVerified({ ...docsVerified, marriageLetter: e.target.checked })}
-                    className="w-4 h-4 text-church-600 rounded"
-                  />
-                  <span>Holy Matrimony / Church Vow Attestation</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={docsVerified.parishStanding}
-                    onChange={(e) => setDocsVerified({ ...docsVerified, parishStanding: e.target.checked })}
-                    className="w-4 h-4 text-church-600 rounded"
-                  />
-                  <span>Parish Priest Clean Standing Letter</span>
-                </label>
+            {/* Modal Body */}
+            <div className="p-6 sm:p-8 space-y-6 max-h-[78vh] overflow-y-auto">
+              {/* Ordinand Quick Overview */}
+              <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-400/5 border border-amber-500/20 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block font-medium">Target Sacred Order</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400">{selectedCandidate.targetRankName}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 dark:text-slate-400 block font-medium">Current Conferred Rank</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedCandidate.currentRank}</span>
+                </div>
+                <div className="col-span-2 sm:col-span-1">
+                  <span className="text-slate-500 dark:text-slate-400 block font-medium">Jurisdiction</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedCandidate.parish}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Scores Input Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Doctrinal & Bible Hermeneutics Exam Score (0 - 100)
-                </label>
-                <div className="flex items-center gap-2">
+              {/* Prerequisites Checklist */}
+              <div className="space-y-3 bg-slate-50 dark:bg-slate-950/40 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  Prerequisite Canonical Documents Verification
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer select-none hover:border-slate-400 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={docsVerified.baptismCert}
+                      onChange={(e) => setDocsVerified({ ...docsVerified, baptismCert: e.target.checked })}
+                      className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded"
+                    />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Original Holy Baptismal Certificate</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer select-none hover:border-slate-400 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={docsVerified.priorOrdination}
+                      onChange={(e) => setDocsVerified({ ...docsVerified, priorOrdination: e.target.checked })}
+                      className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded"
+                    />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Prior Holy Order Scroll</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer select-none hover:border-slate-400 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={docsVerified.marriageLetter}
+                      onChange={(e) => setDocsVerified({ ...docsVerified, marriageLetter: e.target.checked })}
+                      className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded"
+                    />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Holy Matrimony / Church Vow Attestation</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer select-none hover:border-slate-400 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={docsVerified.parishStanding}
+                      onChange={(e) => setDocsVerified({ ...docsVerified, parishStanding: e.target.checked })}
+                      className="w-4 h-4 text-amber-600 focus:ring-amber-500 rounded"
+                    />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Parish Priest Clean Standing Letter</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Scores Input Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div className="space-y-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Theological Exam (55%)
+                    </label>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${calculateGrade(theologyScore).color}`}>
+                      {calculateGrade(theologyScore).label}
+                    </span>
+                  </div>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={theologyScore}
                     onChange={(e) => setTheologyScore(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-lg"
+                    className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl font-mono text-xl font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
                   />
-                  <span className={`px-2.5 py-1 rounded text-xs font-semibold border shrink-0 ${calculateGrade(theologyScore).color}`}>
-                    {calculateGrade(theologyScore).label}
-                  </span>
                 </div>
-              </div>
 
-              <div>
-                <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Oral Liturgical & Conduct Defense Score (0 - 100)
-                </label>
-                <div className="flex items-center gap-2">
+                <div className="space-y-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Oral Liturgy Defense (45%)
+                    </label>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${calculateGrade(interviewScore).color}`}>
+                      {calculateGrade(interviewScore).label}
+                    </span>
+                  </div>
                   <input
                     type="number"
                     min="0"
                     max="100"
                     value={interviewScore}
                     onChange={(e) => setInterviewScore(Number(e.target.value))}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-lg"
+                    className="w-full px-4 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-2xl font-mono text-xl font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
                   />
-                  <span className={`px-2.5 py-1 rounded text-xs font-semibold border shrink-0 ${calculateGrade(interviewScore).color}`}>
-                    {calculateGrade(interviewScore).label}
-                  </span>
                 </div>
               </div>
-            </div>
 
-            {/* Committee Notes */}
-            <div className="text-xs">
-              <label className="block font-medium text-slate-700 dark:text-slate-300 mb-1">
-                National Screening Directorate Confidential Review Remarks
-              </label>
-              <textarea
-                rows={3}
-                value={committeeComments}
-                onChange={(e) => setCommitteeComments(e.target.value)}
-                placeholder="Detail candidate's depth in holy scriptures, liturgical proficiency, and moral standing..."
-                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
-              />
-            </div>
+              {/* Committee Notes */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Screening Committee Confidential Review Remarks
+                </label>
+                <textarea
+                  rows={3}
+                  value={committeeComments}
+                  onChange={(e) => setCommitteeComments(e.target.value)}
+                  placeholder="Detail candidate's depth in holy scriptures, liturgical proficiency, and sanctuary demeanor..."
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl text-xs font-medium text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all leading-relaxed"
+                />
+              </div>
 
-            {/* Decision Trigger Buttons */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleSaveAssessment('defer')}
-                className="text-orange-700 border-orange-300 hover:bg-orange-50"
-              >
-                Defer for Next Synod
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setSelectedCandidate(null)}>
-                  Cancel
-                </Button>
+              {/* Decision Trigger Buttons */}
+              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
                 <Button
-                  variant="primary"
-                  size="sm"
-                  icon={<UserCheck className="w-4 h-4" />}
-                  onClick={() => handleSaveAssessment('recommend')}
+                  variant="outline"
+                  size="lg"
+                  onClick={() => handleSaveAssessment('defer')}
+                  className="w-full sm:w-auto text-amber-700 dark:text-amber-400 border-amber-400/40 hover:bg-amber-500/10"
                 >
-                  Pass & Recommend to Advisory Board
+                  Defer for Next Synod
                 </Button>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    onClick={() => setSelectedCandidate(null)}
+                    className="flex-1 sm:flex-none"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    icon={<UserCheck className="w-4 h-4" />}
+                    onClick={() => handleSaveAssessment('recommend')}
+                    className="flex-1 sm:flex-none bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-3.5"
+                  >
+                    Pass & Recommend to Advisory Board
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

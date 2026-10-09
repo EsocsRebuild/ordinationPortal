@@ -17,12 +17,13 @@ RUN npm ci
 # Copy source files with node ownership
 COPY --chown=node:node . .
 
-# Ensure .next and data directories are owned by node
-RUN mkdir -p /app/.next/cache /app/data && chown -R node:node /app
+# Ensure .next and data directories are owned by node and fully writable
+RUN mkdir -p /app/.next/cache /app/data && chown -R node:node /app && chmod -R 777 /app/.next /app/data
 
 # Environment configuration
 ENV NODE_ENV=development
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 
 EXPOSE 3000

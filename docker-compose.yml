@@ -29,6 +29,8 @@ services:
       - .:/app:delegated
       # Isolated volume for container node_modules preventing host overrides
       - portal_dev_node_modules:/app/node_modules
+      # Dedicated volume for container .next build cache preventing host permission and EROFS errors
+      - portal_dev_next:/app/.next
     restart: unless-stopped
     stdin_open: true
     tty: true
@@ -36,3 +38,5 @@ services:
 volumes:
   portal_dev_node_modules:
     name: esocs_portal_dev_node_modules
+  portal_dev_next:
+    name: esocs_portal_dev_next

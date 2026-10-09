@@ -559,8 +559,12 @@ export function LiveAccreditationDesk({ officerName = 'Accreditation Marshal' }:
                     <span className="text-[10px] font-mono text-amber-400 font-bold">{scannedCandidate.regNumber}</span>
                     <h3 className="text-xl font-bold text-white tracking-tight">{scannedCandidate.fullName}</h3>
                     <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                      <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                      {scannedCandidate.parish}, {scannedCandidate.province}
+                      <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>
+                        {scannedCandidate.houseOfPrayer ? `${scannedCandidate.houseOfPrayer} • ` : ''}
+                        {scannedCandidate.parish}
+                        {scannedCandidate.district ? ` (${scannedCandidate.district})` : ''}, {scannedCandidate.province}
+                      </span>
                     </p>
                   </div>
                 </div>

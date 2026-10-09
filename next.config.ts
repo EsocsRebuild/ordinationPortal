@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ['lucide-react'],
   webpack: (config, { dev }) => {
     if (dev) {
       config.watchOptions = {
