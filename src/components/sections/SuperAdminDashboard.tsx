@@ -16,6 +16,7 @@ import { LiveAccreditationDesk } from './LiveAccreditationDesk';
 import { HierarchyManager } from './HierarchyManager';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { api } from '@/services/api';
+import { useRealtimeEvent } from '@/services/realtime';
 import {
   Crown,
   Download,
@@ -94,6 +95,25 @@ export function SuperAdminDashboard({
         .finally(() => setIsLoadingLogs(false));
     }
   }, [activeTab]);
+
+  // Live real-time update listeners
+  useRealtimeEvent('CANDIDATE_UPDATED', (event) => {
+    if (event.payload && event.payload.id) {
+      onUpdateCandidate(event.payload);
+    }
+  });
+
+  useRealtimeEvent('CHECK_IN_ACCREDITED', (event) => {
+    if (event.payload && event.payload.id) {
+      onUpdateCandidate(event.payload);
+    }
+  });
+
+  useRealtimeEvent('AUDIT_LOG_ADDED', (event) => {
+    if (event.payload) {
+      setAuditLogs((prev) => [event.payload, ...prev]);
+    }
+  });
 
   const filteredCandidates = candidates.filter((c) => {
     const matchesSearch =

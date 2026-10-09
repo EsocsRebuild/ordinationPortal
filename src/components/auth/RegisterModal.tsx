@@ -146,6 +146,59 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [enable2FA, setEnable2FA] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
+
+  // Draft recovery on mount
+  useEffect(() => {
+    if (isOpen && typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('esocs_reg_draft');
+        if (saved) {
+          const draft = JSON.parse(saved);
+          if (draft.firstName) setFirstName(draft.firstName);
+          if (draft.middleName) setMiddleName(draft.middleName);
+          if (draft.lastName) setLastName(draft.lastName);
+          if (draft.preferredName) setPreferredName(draft.preferredName);
+          if (draft.email) setEmail(draft.email);
+          if (draft.phone) setPhone(draft.phone);
+          if (draft.gender) setGender(draft.gender);
+          if (draft.currentRank) setCurrentRank(draft.currentRank);
+          if (draft.currentRankYear) setCurrentRankYear(draft.currentRankYear);
+          if (draft.targetRankName) setTargetRankName(draft.targetRankName);
+          if (draft.province) setProvince(draft.province);
+          if (draft.district) setDistrict(draft.district);
+          if (draft.parish) setParish(draft.parish);
+          if (draft.houseOfPrayer) setHouseOfPrayer(draft.houseOfPrayer);
+          setHasRestoredDraft(true);
+        }
+      } catch (e) {}
+    }
+  }, [isOpen]);
+
+  // Auto-save draft on changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && (firstName || lastName || email || phone)) {
+      try {
+        const draft = {
+          firstName,
+          middleName,
+          lastName,
+          preferredName,
+          email,
+          phone,
+          gender,
+          currentRank,
+          currentRankYear,
+          targetRankName,
+          province,
+          district,
+          parish,
+          houseOfPrayer,
+        };
+        localStorage.setItem('esocs_reg_draft', JSON.stringify(draft));
+      } catch (e) {}
+    }
+  }, [firstName, middleName, lastName, preferredName, email, phone, gender, currentRank, currentRankYear, targetRankName, province, district, parish, houseOfPrayer]);
 
   // Filter available ranks by gender dynamically
   const availableRanks = useMemo(() => {
@@ -376,6 +429,9 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         password,
         enable2FA,
       });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('esocs_reg_draft');
+      }
       onClose();
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to submit ordination registration.');

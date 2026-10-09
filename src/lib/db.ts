@@ -10,6 +10,7 @@ import {
   GenderType,
 } from './server/canonicalEngine';
 import { ESOCS_HIERARCHY, ESOCS_RANKS } from './constants';
+import { realtimeHub } from './server/realtimeHub';
 import fs from 'fs';
 import path from 'path';
 
@@ -693,6 +694,7 @@ export const db = {
       });
 
       writeDb(data);
+      realtimeHub.publish('CANDIDATE_UPDATED', merged, { actor: actorName, candidateId: merged.id });
       return merged;
     },
   },
@@ -997,6 +999,7 @@ export const db = {
       if (!data.messages) data.messages = [];
       data.messages.push(newMsg);
       writeDb(data);
+      realtimeHub.publish('MESSAGE_SENT', newMsg, { actor: entry.senderName, candidateId: entry.candidateId });
       return newMsg;
     },
   },

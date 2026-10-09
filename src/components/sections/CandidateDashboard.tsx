@@ -10,6 +10,7 @@ import { CandidateLearnerTour } from '@/components/shared/CandidateLearnerTour';
 import { DemoAccountModal } from '@/components/shared/DemoAccountModal';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { api } from '@/services/api';
+import { useRealtimeCandidate, useRealtimeMessages, realtimeClient } from '@/services/realtime';
 import Link from 'next/link';
 import {
   ShieldCheck,
@@ -62,7 +63,8 @@ export function CandidateDashboard({
   onUpdateCandidate,
   onSwitchToConsecratedView,
 }: CandidateDashboardProps) {
-  const [candidate, setCandidate] = useState<CandidateProfile>(initialCandidate);
+  const [candidate, setCandidate] = useRealtimeCandidate(initialCandidate.id, initialCandidate);
+  const [messages, setMessages] = useRealtimeMessages(initialCandidate.id, []);
   const [currentTab, setCurrentTab] = useState<'overview' | 'clearance' | 'payments' | 'pass' | 'support'>(activeTab);
   
   // Modals
@@ -87,11 +89,10 @@ export function CandidateDashboard({
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(candidate.passportPhotoUrl || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(candidate?.passportPhotoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // In-app messaging state
-  const [messages, setMessages] = useState<InAppMessage[]>([]);
   const [newMessageText, setNewMessageText] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -101,23 +102,33 @@ export function CandidateDashboard({
   }, [activeTab]);
 
   useEffect(() => {
-    setCandidate(initialCandidate);
-    if (initialCandidate.passportPhotoUrl) {
-      setPhotoPreview(initialCandidate.passportPhotoUrl);
+    if (candidate?.passportPhotoUrl) {
+      setPhotoPreview(candidate.passportPhotoUrl);
     }
-  }, [initialCandidate]);
+  }, [candidate?.passportPhotoUrl]);
 
   useEffect(() => {
-    api.getMessages(candidate.id)
-      .then((data) => setMessages(data))
-      .catch((err) => console.error('Error fetching messages:', err));
-  }, [candidate.id]);
+    if (candidate) {
+      onUpdateCandidate?.(candidate);
+    }
+  }, [candidate]);
 
-  const isInvestitureReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(candidate.stage);
-  const isOrdained = candidate.stage === 'ordained';
+  useEffect(() => {
+    if (initialCandidate.id) {
+      api.getMessages(initialCandidate.id)
+        .then((data) => {
+          if (Array.isArray(data)) setMessages(data);
+        })
+        .catch((err) => console.error('Error fetching messages:', err));
+    }
+  }, [initialCandidate.id, setMessages]);
+
+  const currentCandidate = candidate || initialCandidate;
+  const isInvestitureReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(currentCandidate.stage);
+  const isOrdained = currentCandidate.stage === 'ordained';
 
   const handleCopyReg = () => {
-    navigator.clipboard.writeText(candidate.regNumber);
+    navigator.clipboard.writeText(currentCandidate.regNumber);
     setCopiedReg(true);
     setTimeout(() => setCopiedReg(false), 2000);
   };
@@ -167,7 +178,18 @@ export function CandidateDashboard({
         category: 'general',
       });
 
-      setMessages((prev) => [...prev, sent]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === sent.id)) return prev;
+        return [...prev, sent];
+      });
+      realtimeClient.broadcastLocal({
+        id: `evt_${Date.now()}`,
+        type: 'MESSAGE_SENT',
+        timestamp: new Date().toISOString(),
+        payload: sent,
+        actor: currentCandidate.fullName,
+        candidateId: currentCandidate.id,
+      });
       setNewMessageText('');
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (err) {

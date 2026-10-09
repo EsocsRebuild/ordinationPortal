@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
 import { NotificationCenter } from '@/components/shared/NotificationCenter';
 import { AccountSettingsModal } from '@/components/shared/AccountSettingsModal';
+import { LiveSyncStatus } from '@/components/shared/LiveSyncStatus';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
   LogOut,
@@ -428,6 +429,8 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab }: Da
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Session 2026 Active</span>
             </div>
+
+            <LiveSyncStatus />
 
             <NotificationCenter />
 
