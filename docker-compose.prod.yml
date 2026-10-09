@@ -3,8 +3,6 @@
 # Usage: docker compose -f docker-compose.prod.yml up -d --build
 # =========================================================================
 
-version: '3.8'
-
 services:
   portal-prod:
     container_name: esocs-ordination-portal-prod

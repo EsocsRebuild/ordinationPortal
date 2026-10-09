@@ -3,8 +3,6 @@
 # Usage: docker compose up --build
 # =========================================================================
 
-version: '3.8'
-
 services:
   portal-dev:
     container_name: esocs-ordination-portal-dev
