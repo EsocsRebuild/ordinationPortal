@@ -1,19 +1,14 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
   eslint: {
     ignoreDuringBuilds: true,
   },
-  webpack: (config, { dev }) => {
-    if (dev) {
-      config.watchOptions = {
-        poll: 800,
-        aggregateTimeout: 300,
-      };
-    }
-    return config;
+  typescript: {
+    ignoreBuildErrors: false,
   },
+  transpilePackages: ['lucide-react'],
 };
 
 export default nextConfig;
