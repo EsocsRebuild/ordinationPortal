@@ -92,6 +92,103 @@ body {
   background: #334155;
 }
 
+/* ========================================================================= */
+/* FLUID WATER, WAVE & CAUSTICS EFFECTS                                      */
+/* ========================================================================= */
+
+@keyframes waterWave1 {
+  0% {
+    transform: translateX(0) scaleY(1) translateY(0);
+  }
+  50% {
+    transform: translateX(-20%) scaleY(1.18) translateY(-4px);
+  }
+  100% {
+    transform: translateX(-40%) scaleY(1) translateY(0);
+  }
+}
+
+@keyframes waterWave2 {
+  0% {
+    transform: translateX(-35%) scaleY(1) translateY(0);
+  }
+  50% {
+    transform: translateX(-15%) scaleY(0.88) translateY(6px);
+  }
+  100% {
+    transform: translateX(0%) scaleY(1) translateY(0);
+  }
+}
+
+@keyframes waterWave3 {
+  0% {
+    transform: translateX(0%) scaleY(1.05);
+  }
+  50% {
+    transform: translateX(-25%) scaleY(0.92);
+  }
+  100% {
+    transform: translateX(-50%) scaleY(1.05);
+  }
+}
+
+@keyframes waterCausticsGlow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+  33% {
+    opacity: 0.35;
+    transform: scale(1.06) translateY(-8px) rotate(1deg);
+  }
+  66% {
+    opacity: 0.22;
+    transform: scale(0.98) translateY(4px) rotate(-1deg);
+  }
+}
+
+@keyframes waterGleamFlow {
+  0% {
+    transform: translateX(-100%) skewX(-15deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.25;
+  }
+  70% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateX(200%) skewX(-15deg);
+    opacity: 0;
+  }
+}
+
+.animate-wave-1 {
+  animation: waterWave1 14s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-wave-2 {
+  animation: waterWave2 10s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-wave-3 {
+  animation: waterWave3 16s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.animate-caustics {
+  animation: waterCausticsGlow 7s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-gleam {
+  animation: waterGleamFlow 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
 /* Continuous Marquee Ticker */
 @keyframes marqueeScroll {
   0% {

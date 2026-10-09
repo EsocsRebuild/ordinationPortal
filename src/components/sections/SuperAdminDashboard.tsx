@@ -14,6 +14,7 @@ import { CertificateModal } from '@/components/shared/CertificateModal';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
 import { LiveAccreditationDesk } from './LiveAccreditationDesk';
 import { HierarchyManager } from './HierarchyManager';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { api } from '@/services/api';
 import {
   Crown,
