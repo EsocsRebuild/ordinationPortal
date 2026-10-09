@@ -16,7 +16,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: '1',
     title: 'CMC Screening Ratified',
-    description: 'Special Senior Apostle investiture clearance approved for Lagos Central Province.',
+    description: 'Special Senior Apostle ordination clearance approved for Lagos Central Province.',
     time: '12m ago',
     read: false,
     type: 'approval',
@@ -143,7 +143,7 @@ export function NotificationCenter() {
             {/* Footer */}
             <div className="p-2.5 border-t border-slate-800 bg-slate-950 text-center">
               <span className="text-[10px] text-slate-500 font-mono">
-                Canonical Automated Push Network Active
+                Church Notification Network Active
               </span>
             </div>
           </div>

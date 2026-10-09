@@ -15,7 +15,7 @@ export function VideoModal({
   isOpen,
   onClose,
   title = '2026 Holy Ordination & Solemn Consecration Documentary',
-  category = 'Canonical Protocol & Sanctuary Walkthrough',
+  category = 'Ordination Protocol & Sanctuary Walkthrough',
 }: VideoModalProps) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(false);
@@ -62,7 +62,7 @@ export function VideoModal({
 
             <div className="space-y-1">
               <h4 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-wide">
-                Mount Zion Cathedral Holy Investiture
+                Mount Zion Cathedral Holy Ordination Ceremony
               </h4>
               <p className="text-xs text-gold-300 font-serif italic">
                 “Upon this Holy Mountain, the Lord shall establish His covenant.”
@@ -107,7 +107,7 @@ export function VideoModal({
           </div>
         </div>
 
-        {/* Chapters & Canonical Notes */}
+        {/* Chapters & Ordination Notes */}
         <div className="p-6 bg-slate-900 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
           <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
             <span className="text-[10px] font-bold text-gold-400 uppercase">Chapter 1</span>
@@ -117,14 +117,14 @@ export function VideoModal({
 
           <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
             <span className="text-[10px] font-bold text-gold-400 uppercase">Chapter 2</span>
-            <p className="font-semibold text-white">Canonical Vows & Laying of Hands</p>
+            <p className="font-semibold text-white">Ordination Vows & Laying of Hands</p>
             <p className="text-[11px] text-slate-400">Consecration prayer by the Prelate.</p>
           </div>
 
           <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
             <span className="text-[10px] font-bold text-gold-400 uppercase">Chapter 3</span>
-            <p className="font-semibold text-white">Robing & Insignia Investiture</p>
-            <p className="text-[11px] text-slate-400">Conferment of stoles, mitres, and staffs.</p>
+            <p className="font-semibold text-white">Robing & Insignia Presentation</p>
+            <p className="text-[11px] text-slate-400">Conferment of stoles, caps, and robes.</p>
           </div>
         </div>
       </div>

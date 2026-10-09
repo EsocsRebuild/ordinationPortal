@@ -31,7 +31,7 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
           <div className="flex items-center gap-2.5">
             <Shield className="w-5 h-5 text-gold-400" />
             <span className="text-sm font-semibold tracking-wide text-slate-200">
-              Canonical Ordination Credential Certificate Viewer
+              Official Ordination Certificate Viewer
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -91,7 +91,7 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
               </div>
 
               <p className="font-serif text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed">
-                having satisfied all canonical inquiries, spiritual examinations, and council requirements, has this day been solemnly consecrated and ordained into the sacred ecclesiastical order of:
+                having satisfied all ordination requirements, spiritual examinations, and council reviews, has this day been solemnly consecrated and ordained into the sacred order of:
               </p>
 
               <div className="py-2">
@@ -101,7 +101,7 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
               </div>
 
               <p className="font-serif text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                With full canonical authority to minister in the sanctuary, proclaim the Word of Truth, conduct divine services, and shepherd the flock under the divine Constitution and Holy Ordinances of the Holy Order.
+                With full ecclesiastical authority to minister in the sanctuary, proclaim the Word of Truth, conduct divine services, and shepherd the flock under the Constitution and Ordinances of the Holy Order.
               </p>
             </div>
 

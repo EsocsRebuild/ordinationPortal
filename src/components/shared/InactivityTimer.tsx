@@ -104,7 +104,7 @@ export function InactivityTimer({
             Session Inactivity Warning
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-xs mx-auto">
-            For ecclesiastical data protection and canonical security, your session will automatically terminate in:
+            For data protection and portal security, your session will automatically terminate in:
           </p>
           <div className="text-4xl font-mono font-extrabold text-amber-600 dark:text-amber-400 py-2 tracking-widest">
             00:{secondsLeft < 10 ? `0${secondsLeft}` : secondsLeft}

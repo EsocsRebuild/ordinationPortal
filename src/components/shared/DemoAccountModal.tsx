@@ -40,7 +40,7 @@ export function DemoAccountModal({
                 Demonstration Mode Active
               </h2>
               <p className="text-[11px] text-amber-400 font-mono">
-                Canonical Session 2026 Sandbox
+                Ordination Session 2026 Sandbox
               </p>
             </div>
           </div>

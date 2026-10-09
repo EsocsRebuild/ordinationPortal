@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  transpilePackages: ['lucide-react'],
+  transpilePackages: ['lucide-react', 'libphonenumber-js'],
   webpack: (config, { dev }) => {
     if (dev) {
       // Use in-memory cache in development to prevent Docker volume stat/ENOENT sync collisions

@@ -41,9 +41,10 @@ import { InactivityTimer } from './InactivityTimer';
 interface DashboardLayoutProps {
   children: React.ReactNode;
   activeSectionTitle: string;
+  currentTab?: string;
 }
 
-export function DashboardLayout({ children, activeSectionTitle }: DashboardLayoutProps) {
+export function DashboardLayout({ children, activeSectionTitle, currentTab }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer
@@ -67,39 +68,48 @@ export function DashboardLayout({ children, activeSectionTitle }: DashboardLayou
     : 'ES';
 
   const isCandidate = user.role === 'candidate';
+  const effectiveTab = currentTab || 'overview';
 
   const navItems = isCandidate
     ? [
         {
-          id: 'dashboard',
-          title: 'My Dashboard & Records',
-          href: '/dashboard/candidate',
+          id: 'overview',
+          title: 'My Overview & Records',
+          href: '/dashboard/candidate?tab=overview',
           icon: LayoutDashboard,
-          badge: 'Active',
-          isActive: true, // Only the primary workspace is active by default
+          badge: 'Home',
+          isActive: effectiveTab === 'overview',
+        },
+        {
+          id: 'clearance',
+          title: 'Ordination Clearance',
+          href: '/dashboard/candidate?tab=clearance',
+          icon: CheckSquare,
+          badge: '5 of 5',
+          isActive: effectiveTab === 'clearance',
+        },
+        {
+          id: 'payments',
+          title: 'Payment & Fee Receipts',
+          href: '/dashboard/candidate?tab=payments',
+          icon: Receipt,
+          badge: 'Cleared',
+          isActive: effectiveTab === 'payments',
         },
         {
           id: 'pass',
           title: 'Ceremony Pass & Seating',
-          href: '#ceremony-details',
+          href: '/dashboard/candidate?tab=pass',
           icon: QrCode,
           badge: 'Nov 14',
-          isActive: false,
-        },
-        {
-          id: 'receipt',
-          title: 'Payment & Fee Receipts',
-          href: '#payment-summary',
-          icon: Receipt,
-          badge: 'Cleared',
-          isActive: false,
+          isActive: effectiveTab === 'pass',
         },
         {
           id: 'support',
-          title: 'Support & Inquiries',
-          href: '#help-desk',
+          title: 'Support & Help Desk',
+          href: '/dashboard/candidate?tab=support',
           icon: MessageSquare,
-          isActive: false,
+          isActive: effectiveTab === 'support',
         },
       ]
     : [
@@ -181,16 +191,6 @@ export function DashboardLayout({ children, activeSectionTitle }: DashboardLayou
             )}
           </Link>
 
-          {/* Desktop Toggle in Sidebar */}
-          <button
-            type="button"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="hidden lg:flex p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            {isCollapsed ? <PanelLeftOpen className="w-4 h-4 text-amber-500" /> : <PanelLeftClose className="w-4 h-4" />}
-          </button>
-
           {/* Mobile Close Button */}
           <button
             type="button"
@@ -232,7 +232,7 @@ export function DashboardLayout({ children, activeSectionTitle }: DashboardLayou
           <div>
             {!isCollapsed && (
               <p className="px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-                {isCandidate ? 'MY WORKSPACE' : 'CANONICAL WORKSPACE'}
+                {isCandidate ? 'MY WORKSPACE' : 'ORDINATION WORKSPACE'}
               </p>
             )}
             <nav className="space-y-1">

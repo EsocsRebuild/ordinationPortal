@@ -25,7 +25,7 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-gold-400 border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs text-slate-400 font-mono">Authenticating Canonical Session...</p>
+          <p className="text-xs text-slate-400 font-mono">Authenticating Portal Session...</p>
         </div>
       </div>
     );
@@ -37,7 +37,7 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
         <div className="max-w-md w-full bg-slate-950 border border-rose-900/60 p-8 rounded-2xl text-center space-y-4 shadow-2xl">
           <h2 className="text-lg font-bold text-rose-400">Restricted Ecclesiastical Jurisdiction</h2>
           <p className="text-xs text-slate-400">
-            Your current role (<strong className="text-white">{user.roleTitle}</strong>) does not have canonical clearance to view this directory.
+            Your current role (<strong className="text-white">{user.roleTitle}</strong>) does not have authorization to view this section.
           </p>
           <button
             onClick={() => router.push('/')}

@@ -55,7 +55,7 @@ export function PaymentClearanceSlipModal({
                 Official Payment & Clearance Slip
               </h2>
               <p className="text-[11px] text-amber-400 font-mono">
-                Canonical Session 2026 &bull; {receiptNo}
+                Ordination Session 2026 &bull; {receiptNo}
               </p>
             </div>
           </div>
@@ -115,7 +115,7 @@ export function PaymentClearanceSlipModal({
           {/* Itemized Assessment Breakdown */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-              Canonical Levies & Quota Breakdown
+              Ordination Levies & Quota Breakdown
             </h3>
 
             <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden text-xs">

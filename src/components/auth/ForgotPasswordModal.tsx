@@ -216,7 +216,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
           {step === 'identify' && (
             <form onSubmit={handleRequestOtp} className="space-y-6">
               <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-400/5 border border-amber-500/20 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                Provide your Canonical Registration Number (e.g. <code>ESOCS/ORD/2026/0481</code>) or official Church Email address. We will verify your ordination record and generate an immediate security reset token.
+                Provide your Ordination Registration Number (e.g. <code>ESOCS/ORD/2026/0481</code>) or official Church Email address. We will verify your ordination record and generate an immediate security reset token.
               </div>
 
               <div className="space-y-2">
@@ -273,7 +273,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
                   {simulatedOtp && (
                     <div className="flex items-center justify-between pt-1">
                       <span className="font-mono text-xs">
-                        Canonical Token: <strong className="text-sm font-bold text-amber-600 dark:text-amber-400">{simulatedOtp}</strong>
+                        Security Code: <strong className="text-sm font-bold text-amber-600 dark:text-amber-400">{simulatedOtp}</strong>
                       </span>
                       <button
                         type="button"

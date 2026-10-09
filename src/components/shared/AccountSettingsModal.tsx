@@ -98,16 +98,16 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
       <div className="relative w-full max-w-2xl bg-white dark:bg-[#090e1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-4 text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-200">
         
         {/* Top Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-slate-50/90 dark:bg-slate-900/90 px-6 py-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 transition-colors">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 text-slate-950 font-bold text-sm flex items-center justify-center shadow-md">
               {initials}
             </div>
             <div>
-              <h2 className="text-sm sm:text-base font-bold text-white font-['Raleway']">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-serif">
                 Account Settings & Profile
               </h2>
-              <p className="text-[11px] text-amber-400 font-mono">
+              <p className="text-[11px] text-amber-700 dark:text-amber-400 font-mono">
                 {user.role === 'candidate' ? 'Ordination Candidate' : user.role.toUpperCase()} &bull; {user.email}
               </p>
             </div>
@@ -115,14 +115,14 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-6 pt-2 gap-2 text-xs">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 px-6 pt-2 gap-2 text-xs">
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
@@ -172,7 +172,7 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 block">
-                    Full Legal / Canonical Name
+                    Full Legal / Member Name
                   </label>
                   <input
                     type="text"

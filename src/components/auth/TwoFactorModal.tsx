@@ -103,7 +103,7 @@ export function TwoFactorModal() {
 
     const fullOtp = digits.join('');
     if (fullOtp.length < 6) {
-      setErrorMsg('Please enter the complete 6-digit canonical authentication code.');
+      setErrorMsg('Please enter the complete 6-digit authentication code.');
       return;
     }
 

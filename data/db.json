@@ -79,6 +79,10 @@
       "investitureSession": "Saturday Morning Session (09:00 AM)",
       "seatNumber": "Zone A - Pew 14 (Chancel Wing)",
       "robingOfficer": "Apostle General J. K. Coker",
+      "ordinationDate": "Saturday, November 14, 2026",
+      "ordinationTime": "09:00 AM (West Africa Time)",
+      "ordinationVenue": "Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State",
+      "emailDispatchDate": "Friday, November 6, 2026",
       "certificateNumber": "CERT-2026-SSA_BLUE-0481",
       "verificationHash": "ESOCS-AUTH-2026-7578EDA0-D9EB",
       "dateOrdained": "November 14, 2026"
@@ -113,6 +117,10 @@
       "interviewScore": 92,
       "attendanceRecordPercentage": 98,
       "conductRating": "exemplary",
+      "ordinationDate": "Saturday, November 14, 2026",
+      "ordinationTime": "09:00 AM (West Africa Time)",
+      "ordinationVenue": "Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State",
+      "emailDispatchDate": "Friday, November 6, 2026",
       "screeningNotes": [
         "Passed CMC Vetting with high commendation in Women Fellowship Leadership & Liturgical Conduct."
       ],
@@ -188,6 +196,10 @@
       "interviewScore": 80,
       "attendanceRecordPercentage": 92,
       "conductRating": "exemplary",
+      "ordinationDate": "Saturday, November 14, 2026",
+      "ordinationTime": "09:00 AM (West Africa Time)",
+      "ordinationVenue": "Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State",
+      "emailDispatchDate": "Friday, November 6, 2026",
       "screeningNotes": [
         "Theological written test completed. Awaiting National Screening Board ratification."
       ],
@@ -256,6 +268,10 @@
       "tenureValid": true,
       "attendanceRecordPercentage": 94,
       "conductRating": "exemplary",
+      "ordinationDate": "Saturday, November 14, 2026",
+      "ordinationTime": "09:00 AM (West Africa Time)",
+      "ordinationVenue": "Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State",
+      "emailDispatchDate": "Friday, November 6, 2026",
       "screeningNotes": [
         "Parish chairman approved. Forwarded to District Vetting Committee."
       ],
@@ -320,6 +336,10 @@
       "interviewScore": 96,
       "attendanceRecordPercentage": 99,
       "conductRating": "exemplary",
+      "ordinationDate": "Saturday, November 14, 2026",
+      "ordinationTime": "09:00 AM (West Africa Time)",
+      "ordinationVenue": "Mount Zion Cathedral Worldwide Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State",
+      "emailDispatchDate": "Friday, November 6, 2026",
       "screeningNotes": [
         "Holy Synod Advisory Board unanimously ratified appointment to Apostle General."
       ],
@@ -467,105 +487,52 @@
   ],
   "auditLogs": [
     {
-      "id": "log-1791545370169-812",
-      "timestamp": "2026-10-09T11:29:30.169Z",
+      "id": "log-1791552167303-512",
+      "timestamp": "2026-10-09T13:22:47.303Z",
       "performedBy": "Lady Leader Grace Folashade Williams",
       "action": "USER_LOGIN",
       "candidateId": "cand-002",
       "details": "Successful login by candidate (g.williams@esocs.church)."
     },
     {
-      "id": "log-1791544422896-219",
-      "timestamp": "2026-10-09T11:13:42.897Z",
+      "id": "log-1791548465384-513",
+      "timestamp": "2026-10-09T12:21:05.384Z",
       "performedBy": "Lady Leader Grace Folashade Williams",
       "action": "USER_LOGIN",
       "candidateId": "cand-002",
       "details": "Successful login by candidate (g.williams@esocs.church)."
     },
     {
-      "id": "log-1791544116231-93",
-      "timestamp": "2026-10-09T11:08:36.231Z",
-      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
-      "action": "USER_LOGIN",
-      "candidateId": "cand-001",
-      "details": "Successful login by candidate (e.adeleke@esocs.church)."
-    },
-    {
-      "id": "log-1791543646919-255",
-      "timestamp": "2026-10-09T11:00:46.919Z",
+      "id": "log-1791547958794-643",
+      "timestamp": "2026-10-09T12:12:38.794Z",
       "performedBy": "Lady Leader Grace Folashade Williams",
       "action": "USER_LOGIN",
       "candidateId": "cand-002",
       "details": "Successful login by candidate (g.williams@esocs.church)."
     },
     {
-      "id": "log-1791543329301-182",
-      "timestamp": "2026-10-09T10:55:29.301Z",
+      "id": "log-1791547957087-683",
+      "timestamp": "2026-10-09T12:12:37.087Z",
       "performedBy": "Lady Leader Grace Folashade Williams",
       "action": "USER_LOGIN",
       "candidateId": "cand-002",
       "details": "Successful login by candidate (g.williams@esocs.church)."
     },
     {
-      "id": "log-1791543248264-957",
-      "timestamp": "2026-10-09T10:54:08.264Z",
-      "performedBy": "Senior Apostle Festus N. Okon",
-      "action": "USER_LOGIN",
-      "details": "Successful login by parish_leader (f.okon@esocs.church)."
-    },
-    {
-      "id": "log-1791542336580-540",
-      "timestamp": "2026-10-09T10:38:56.580Z",
+      "id": "log-1791547955058-746",
+      "timestamp": "2026-10-09T12:12:35.058Z",
       "performedBy": "Lady Leader Grace Folashade Williams",
       "action": "USER_LOGIN",
       "candidateId": "cand-002",
       "details": "Successful login by candidate (g.williams@esocs.church)."
     },
     {
-      "id": "log-1791541946801-246",
-      "timestamp": "2026-10-09T10:32:26.801Z",
-      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
+      "id": "log-1791547955036-654",
+      "timestamp": "2026-10-09T12:12:35.036Z",
+      "performedBy": "Lady Leader Grace Folashade Williams",
       "action": "USER_LOGIN",
-      "candidateId": "cand-001",
-      "details": "Successful login by candidate (e.adeleke@esocs.church)."
-    },
-    {
-      "id": "log-1791540839209-537",
-      "timestamp": "2026-10-09T10:13:59.210Z",
-      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
-      "action": "USER_LOGIN",
-      "candidateId": "cand-001",
-      "details": "Successful login by candidate (e.adeleke@esocs.church)."
-    },
-    {
-      "id": "log-1791396812235-808",
-      "timestamp": "2026-10-07T18:13:32.235Z",
-      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
-      "action": "USER_LOGIN",
-      "candidateId": "cand-001",
-      "details": "Successful login by candidate (e.adeleke@esocs.church)."
-    },
-    {
-      "id": "log-1791396804191-679",
-      "timestamp": "2026-10-07T18:13:24.191Z",
-      "performedBy": "Special Senior Apostle Dr. Godwin I. Bassey",
-      "action": "USER_LOGIN",
-      "details": "Successful login by screening_officer (screening@esocs.church)."
-    },
-    {
-      "id": "log-1791396793086-137",
-      "timestamp": "2026-10-07T18:13:13.086Z",
-      "performedBy": "Senior Apostle Festus N. Okon",
-      "action": "USER_LOGIN",
-      "details": "Successful login by parish_leader (f.okon@esocs.church)."
-    },
-    {
-      "id": "log-1791396723779-46",
-      "timestamp": "2026-10-07T18:12:03.779Z",
-      "performedBy": "Senior Apostle Emmanuel O. Adeleke",
-      "action": "USER_LOGIN",
-      "candidateId": "cand-001",
-      "details": "Successful login by candidate (e.adeleke@esocs.church)."
+      "candidateId": "cand-002",
+      "details": "Successful login by candidate (g.williams@esocs.church)."
     },
     {
       "id": "log-001",
@@ -573,6 +540,41 @@
       "performedBy": "Supervising Apostle General Prof. David A. Oladele",
       "action": "SYSTEM_INITIALIZATION",
       "details": "Sovereign database initialized for General Conference 2026 Ordination Cohort."
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-001",
+      "candidateId": "cand-001",
+      "senderId": "user-admin-main",
+      "senderName": "Central Secretariat Desk",
+      "senderRole": "super_admin",
+      "content": "Grace and Peace, Senior Apostle Adeleke. Your canonical elevation to Special Senior Apostle (Blue) has passed all 5 vetting tiers and is ratified for investiture at the 2026 General Conference.",
+      "timestamp": "2026-09-28T10:00:00Z",
+      "isRead": true,
+      "category": "secretariat"
+    },
+    {
+      "id": "msg-002",
+      "candidateId": "cand-001",
+      "senderId": "user-screen-01",
+      "senderName": "Dr. Godwin Bassey (CMC)",
+      "senderRole": "screening_officer",
+      "content": "Congratulations on scoring 92% in the Doctrinal & Liturgical Governance assessment. Your distinction certificate is queued for robing.",
+      "timestamp": "2026-09-28T11:30:00Z",
+      "isRead": true,
+      "category": "screening"
+    },
+    {
+      "id": "msg-003",
+      "candidateId": "cand-002",
+      "senderId": "user-leader-01",
+      "senderName": "Senior Apostle Festus Okon",
+      "senderRole": "parish_leader",
+      "content": "Beloved Lady Leader Grace, your nomination to Mother in Israel has been certified by the Parish and Provincial Women Guild.",
+      "timestamp": "2026-09-29T09:15:00Z",
+      "isRead": false,
+      "category": "general"
     }
   ],
   "hierarchy": [

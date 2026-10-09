@@ -114,7 +114,7 @@ export function ConsecratedClergyDashboard({
               </div>
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">
-                  Canonical Access Gateway
+                  Ordination Access Gateway
                 </span>
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">
                   Consecrated Clergy Record Locked
@@ -185,7 +185,7 @@ export function ConsecratedClergyDashboard({
                   <span className="text-amber-600 dark:text-amber-400">Nov 14, 2026</span>
                 </div>
                 <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Laying of hands and investiture of the {candidate.targetRankName} order.
+                  Laying of hands and ordination into the {candidate.targetRankName} order.
                 </p>
               </div>
 

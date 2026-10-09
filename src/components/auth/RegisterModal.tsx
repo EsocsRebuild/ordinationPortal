@@ -326,7 +326,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
       setCurrentStep(2);
     } else if (currentStep === 2) {
       if (!validation.isValid) {
-        setSubmitError(validation.errorReason || 'Canonical hierarchy rule violation. Please select an eligible target rank.');
+        setSubmitError(validation.errorReason || 'Ordination progression rule violation. Please select an eligible target rank.');
         return;
       }
       setCurrentStep(3);
@@ -395,10 +395,10 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
-                  Canonical Ordination Registration
+                  Ordination Portal Registration
                 </h3>
                 <p className="text-xs text-amber-700 dark:text-amber-400 font-medium mt-0.5">
-                  Holy Order General Conference 2026 Ordinand Portal
+                  Holy Order General Conference 2026 Candidate Portal
                 </p>
               </div>
             </div>
@@ -724,7 +724,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             </form>
           )}
 
-          {/* STEP 2: Canonical Progression & Levies Breakdown */}
+          {/* STEP 2: Promotion Pathway & Levies Breakdown */}
           {currentStep === 2 && (
             <form onSubmit={handleNextStep} id="reg-step-2" className="space-y-5 animate-in fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -816,7 +816,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   )}
                   <div className="space-y-1">
                     <p className="font-bold text-sm">
-                      {validation.isValid ? 'Canonical Progression Validated' : 'Canonical Rule Invalidation'}
+                      {validation.isValid ? 'Promotion Pathway Validated' : 'Progression Rule Issue'}
                     </p>
                     <p className="text-xs opacity-90">
                       {validation.isValid

@@ -32,13 +32,13 @@ const TOUR_STEPS = [
     icon: User,
     color: 'from-amber-500 to-amber-600',
     description:
-      'Your profile displays your full canonical name, current ecclesiastical rank, target ascending rank, and ministry tenure. You can hover over your avatar to upload or update your official ordination passport photograph anytime.',
+      'Your profile displays your full official name, current church rank, target elevation rank, and ministry tenure. You can hover over your avatar to upload or update your official ordination passport photograph anytime.',
     tip: 'Make sure your photo has a plain white background for the official consecration register.',
   },
   {
     step: 2,
     title: '5-Step Sequential Approval Tracker',
-    subtitle: 'Hierarchical Canonical Clearance',
+    subtitle: '5-Tier Ordination Clearance',
     icon: ShieldCheck,
     color: 'from-emerald-500 to-emerald-600',
     description:

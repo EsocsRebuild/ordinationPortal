@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AuthGuard } from '@/components/shared/AuthGuard';
 import { DashboardLayout } from '@/components/shared/DashboardLayout';
 import { CandidateDashboard } from '@/components/sections/CandidateDashboard';
@@ -10,8 +11,11 @@ import { CandidateProfile } from '@/types';
 import { api } from '@/services/api';
 import { AppLoader } from '@/components/ui/AppLoader';
 
-export default function CandidateDashboardPage() {
+function CandidateDashboardContent() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const tabParam = (searchParams.get('tab') as 'overview' | 'clearance' | 'payments' | 'pass' | 'support') || 'overview';
+
   const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -69,7 +73,7 @@ export default function CandidateDashboardPage() {
   if (errorMessage || !candidate) {
     return (
       <AuthGuard allowedRoles={['candidate', 'super_admin']}>
-        <DashboardLayout activeSectionTitle="My Profile & Clearance">
+        <DashboardLayout activeSectionTitle="My Profile & Clearance" currentTab={tabParam}>
           <div className="p-8 text-center max-w-lg mx-auto my-12 bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
             <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
               !
@@ -92,9 +96,24 @@ export default function CandidateDashboardPage() {
 
   const isConsecrated = viewMode === 'consecrated';
 
+  const sectionTitles: Record<string, string> = {
+    overview: 'My Overview & Records',
+    clearance: 'Ordination Clearance',
+    payments: 'Payment & Fee Receipts',
+    pass: 'Ceremony Pass & Seating',
+    support: 'Support & Help Desk',
+  };
+
+  const currentSectionTitle = isConsecrated
+    ? 'Consecrated Minister Record'
+    : sectionTitles[tabParam] || 'My Overview & Records';
+
   return (
     <AuthGuard allowedRoles={['candidate', 'super_admin']}>
-      <DashboardLayout activeSectionTitle={isConsecrated ? 'Consecrated Minister Record' : 'My Profile & Credentials'}>
+      <DashboardLayout
+        activeSectionTitle={currentSectionTitle}
+        currentTab={tabParam}
+      >
         {isConsecrated ? (
           <ConsecratedClergyDashboard
             candidate={candidate}
@@ -104,11 +123,26 @@ export default function CandidateDashboardPage() {
         ) : (
           <CandidateDashboard
             candidate={candidate}
+            activeTab={tabParam}
             onUpdateCandidate={(updated) => setCandidate(updated)}
             onSwitchToConsecratedView={() => setViewMode('consecrated')}
           />
         )}
       </DashboardLayout>
     </AuthGuard>
+  );
+}
+
+export default function CandidateDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+          <AppLoader message="Loading workspace..." />
+        </div>
+      }
+    >
+      <CandidateDashboardContent />
+    </Suspense>
   );
 }
