@@ -64,7 +64,7 @@ export function CandidateDashboard({
   onSwitchToConsecratedView,
 }: CandidateDashboardProps) {
   const [candidate, setCandidate] = useRealtimeCandidate(initialCandidate.id, initialCandidate);
-  const [messages, setMessages] = useRealtimeMessages(initialCandidate.id, []);
+  const [messages, setMessages] = useRealtimeMessages(initialCandidate.id);
   const [currentTab, setCurrentTab] = useState<'overview' | 'clearance' | 'payments' | 'pass' | 'support'>(activeTab);
   
   // Modals
@@ -113,18 +113,8 @@ export function CandidateDashboard({
     }
   }, [candidate]);
 
-  useEffect(() => {
-    if (initialCandidate.id) {
-      api.getMessages(initialCandidate.id)
-        .then((data) => {
-          if (Array.isArray(data)) setMessages(data);
-        })
-        .catch((err) => console.error('Error fetching messages:', err));
-    }
-  }, [initialCandidate.id, setMessages]);
-
   const currentCandidate = candidate || initialCandidate;
-  const isInvestitureReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(currentCandidate.stage);
+  const isCeremonyReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(currentCandidate.stage);
   const isOrdained = currentCandidate.stage === 'ordained';
 
   const handleCopyReg = () => {
@@ -212,7 +202,7 @@ export function CandidateDashboard({
       officer: candidate.branchPriestName || 'Snr. Apostle Festus N. Okon',
       date: 'April 14, 2026',
       desc: 'Verified active church membership, local parish tithes, and exemplary moral standing.',
-      isCompleted: candidate.tierApprovals?.branch?.approved || currentTierIndex > 0 || isInvestitureReady,
+      isCompleted: candidate.tierApprovals?.branch?.approved || currentTierIndex > 0 || isCeremonyReady,
       statusLabel: 'Approved ✓',
       sealBadge: 'Parish Seal Confirmed',
       comments: 'Nomination verified with highest recommendation from Mount Zion Parish.',
@@ -225,7 +215,7 @@ export function CandidateDashboard({
       officer: 'Special Snr. Apostle E. O. Johnson (District Leader)',
       date: 'May 02, 2026',
       desc: 'Zonal background check cleared, constitutional ordination quota certified within district.',
-      isCompleted: candidate.tierApprovals?.district?.approved || currentTierIndex > 1 || isInvestitureReady,
+      isCompleted: candidate.tierApprovals?.district?.approved || currentTierIndex > 1 || isCeremonyReady,
       statusLabel: 'Approved ✓',
       sealBadge: 'District Quota Cleared',
       comments: 'No disciplinary history on record. Meritorious service verified across branches.',
@@ -238,7 +228,7 @@ export function CandidateDashboard({
       officer: 'Apostle General G. A. Adebayo (Provincial Secretary)',
       date: 'June 18, 2026',
       desc: 'Provincial diocesan registry validated and passed forward to the National Screening Board.',
-      isCompleted: candidate.tierApprovals?.province?.approved || currentTierIndex > 2 || isInvestitureReady,
+      isCompleted: candidate.tierApprovals?.province?.approved || currentTierIndex > 2 || isCeremonyReady,
       statusLabel: 'Approved ✓',
       sealBadge: 'Diocesan Quota Allotted',
       comments: 'Candidate allocation slot #14 of 25 in Lagos Western Province ratified.',
@@ -251,7 +241,7 @@ export function CandidateDashboard({
       officer: 'Special Snr. Apostle Dr. G. Bassey (Screening Director)',
       date: 'July 29, 2026',
       desc: 'Oral interview, written theology assessment, and Liturgical governance examination passed.',
-      isCompleted: candidate.tierApprovals?.cmc?.approved || currentTierIndex > 3 || isInvestitureReady,
+      isCompleted: candidate.tierApprovals?.cmc?.approved || currentTierIndex > 3 || isCeremonyReady,
       statusLabel: 'Passed (89%) ✓',
       sealBadge: 'CMC Distinction Certified',
       comments: 'Scored 89% in Church Liturgy, Biblical Hermeneutics, and Pastoral Administration.',
@@ -264,7 +254,7 @@ export function CandidateDashboard({
       officer: 'Prof. David A. Oladele (Supervising Apostle General / Super Admin)',
       date: 'August 15, 2026',
       desc: 'Supreme ratification concluded. Ceremony seating and gazetted ordination pass generated.',
-      isCompleted: candidate.tierApprovals?.national?.approved || isInvestitureReady,
+      isCompleted: candidate.tierApprovals?.national?.approved || isCeremonyReady,
       statusLabel: 'Ratified & Sealed ✓',
       sealBadge: 'Supreme Consecration Seal',
       comments: 'Certified for solemn consecration by His Most Eminence, Baba Aladura.',
@@ -311,7 +301,7 @@ export function CandidateDashboard({
 
             <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isInvestitureReady ? 'All 5 Approvals Cleared' : 'Approvals in Progress'}</span>
+              <span className="hidden sm:inline">{isCeremonyReady ? 'All 5 Approvals Cleared' : 'Approvals in Progress'}</span>
               <span className="sm:hidden">5/5 Cleared</span>
             </span>
           </div>
@@ -438,7 +428,7 @@ export function CandidateDashboard({
 
           {/* Right: Key Action Buttons (Clean Grid on Mobile, Column on Desktop) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5 w-full lg:w-56 shrink-0 pt-2 lg:pt-0">
-            {isInvestitureReady && (
+            {isCeremonyReady && (
               <Tooltip content="Open your digital accreditation pass with QR verification" position="left" className="w-full">
                 <Button
                   variant="gold"
@@ -452,7 +442,7 @@ export function CandidateDashboard({
               </Tooltip>
             )}
 
-            {(isOrdained || isInvestitureReady) && (
+            {(isOrdained || isCeremonyReady) && (
               <Tooltip content="View and print your official certificate of ordination" position="left" className="w-full">
                 <Button
                   variant="outline"

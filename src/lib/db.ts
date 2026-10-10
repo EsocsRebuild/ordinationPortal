@@ -431,7 +431,7 @@ const INITIAL_MESSAGES: InAppMessage[] = [
     senderId: 'user-admin-main',
     senderName: 'Central Secretariat Desk',
     senderRole: 'super_admin',
-    content: 'Grace and Peace, Senior Apostle Adeleke. Your canonical elevation to Special Senior Apostle (Blue) has passed all 5 vetting tiers and is ratified for investiture at the 2026 General Conference.',
+    content: 'Grace and Peace, Senior Apostle Adeleke. Your ordination elevation to Special Senior Apostle (Blue) has passed all 5 vetting tiers and is ratified for the 2026 General Conference Ordination Ceremony.',
     timestamp: '2026-09-28T10:00:00Z',
     isRead: true,
     category: 'secretariat',

@@ -487,6 +487,22 @@
   ],
   "auditLogs": [
     {
+      "id": "log-1791574835336-496",
+      "timestamp": "2026-10-09T19:40:35.336Z",
+      "performedBy": "Lady Leader Grace Folashade Williams",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-002",
+      "details": "Successful login by candidate (g.williams@esocs.church)."
+    },
+    {
+      "id": "log-1791556780373-81",
+      "timestamp": "2026-10-09T14:39:40.373Z",
+      "performedBy": "Lady Leader Grace Folashade Williams",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-002",
+      "details": "Successful login by candidate (g.williams@esocs.church)."
+    },
+    {
       "id": "log-1791552167303-512",
       "timestamp": "2026-10-09T13:22:47.303Z",
       "performedBy": "Lady Leader Grace Folashade Williams",

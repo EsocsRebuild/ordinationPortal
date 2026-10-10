@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { createJwtToken } from '@/lib/server/jwt';
 import { validateLoginInput } from '@/lib/server/validators';
 import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
 
@@ -27,17 +28,14 @@ export async function POST(request: Request) {
 
     const { candidate, ...user } = authResult;
 
-    // Generate authenticated session token
-    const token = `esocs_jwt_${Buffer.from(
-      JSON.stringify({
-        userId: user.userId,
-        role: user.role,
-        email: user.email,
-        candidateId: user.candidateId,
-        issuedAt: Date.now(),
-        expiresIn: '7d',
-      })
-    ).toString('base64')}`;
+    // Generate authenticated session token in standard JWS compact format
+    const token = createJwtToken({
+      userId: user.userId,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+      candidateId: user.candidateId,
+    });
 
     db.auditLogs.add({
       performedBy: user.name,
