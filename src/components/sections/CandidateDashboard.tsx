@@ -2,151 +2,125 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { CandidateProfile, InAppMessage, VettingTier } from '@/types';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { getRobingSpecifications } from '@/utils/ranks';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
 import { CertificateModal } from '@/components/shared/CertificateModal';
+import { PaymentClearanceSlipModal } from '@/components/shared/PaymentClearanceSlipModal';
+import { CandidateLearnerTour } from '@/components/shared/CandidateLearnerTour';
+import { DemoAccountModal } from '@/components/shared/DemoAccountModal';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { api } from '@/services/api';
+import { useRealtimeCandidate, useRealtimeMessages, realtimeClient } from '@/services/realtime';
+import Link from 'next/link';
 import {
-  Shield,
+  ShieldCheck,
   Award,
   CheckCircle2,
   Clock,
   QrCode,
-  CreditCard,
   Calendar,
-  Layers,
   Printer,
   ChevronRight,
-  FileCheck,
-  Building,
   User,
-  Sparkles,
   MapPin,
   Check,
-  AlertCircle,
-  BookOpen,
   Camera,
-  Upload,
-  MessageSquare,
-  Send,
-  Bell,
-  Mail,
-  HelpCircle,
-  ExternalLink,
   Copy,
-  Info,
-  Compass,
-  CheckCheck,
-  Shirt,
-  Download,
-  Scroll,
   Receipt,
   FileText,
-  BadgeCheck,
+  Send,
+  MessageSquare,
+  Building,
+  CheckCheck,
+  Sparkles,
+  CreditCard,
+  HelpCircle,
+  Download,
+  Info,
+  Compass,
+  ChevronDown,
+  BookOpen,
+  CheckSquare,
+  Shield,
+  ExternalLink,
+  Flame,
+  AlertCircle,
+  ArrowRight,
+  DollarSign,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface CandidateDashboardProps {
   candidate: CandidateProfile;
+  activeTab?: 'overview' | 'clearance' | 'payments' | 'pass' | 'support';
   onUpdateCandidate?: (updated: CandidateProfile) => void;
+  onSwitchToConsecratedView?: () => void;
 }
 
-type ActiveTab = 'overview' | 'financials' | 'schedule' | 'robing' | 'messages' | 'endorsements' | 'dossier';
-
-export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandidate }: CandidateDashboardProps) {
-  const [candidate, setCandidate] = useState<CandidateProfile>(initialCandidate);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
+export function CandidateDashboard({
+  candidate: initialCandidate,
+  activeTab = 'overview',
+  onUpdateCandidate,
+  onSwitchToConsecratedView,
+}: CandidateDashboardProps) {
+  const [candidate, setCandidate] = useRealtimeCandidate(initialCandidate.id, initialCandidate);
+  const [messages, setMessages] = useRealtimeMessages(initialCandidate.id);
+  const [currentTab, setCurrentTab] = useState<'overview' | 'clearance' | 'payments' | 'pass' | 'support'>(activeTab);
+  
+  // Modals
   const [showPassModal, setShowPassModal] = useState(false);
   const [showCertModal, setShowCertModal] = useState(false);
+  const [showSlipModal, setShowSlipModal] = useState(false);
+  const [showTourModal, setShowTourModal] = useState(false);
+  const [showDemoModal, setShowDemoModal] = useState(false);
   const [copiedReg, setCopiedReg] = useState(false);
-  const [copiedReceipt, setCopiedReceipt] = useState(false);
-  const [copiedVenue, setCopiedVenue] = useState(false);
+
+  // Selected / Expanded clearance step in clearance view
+  const [expandedStepId, setExpandedStepId] = useState<string | null>('branch');
+
+  // Interactive Checklist State
+  const [checklist, setChecklist] = useState({
+    vetting: true,
+    levies: true,
+    pass: true,
+    vestment: false,
+    pew: true,
+  });
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(candidate.passportPhotoUrl || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(candidate?.passportPhotoUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // In-app messaging state
-  const [messages, setMessages] = useState<InAppMessage[]>([]);
   const [newMessageText, setNewMessageText] = useState('');
-  const [messageCategory, setMessageCategory] = useState<'general' | 'screening' | 'robing' | 'secretariat'>('general');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Countdown timer state
-  const [timeLeft, setTimeLeft] = useState({ days: 38, hours: 14, minutes: 22, seconds: 45 });
+  useEffect(() => {
+    setCurrentTab(activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
-    const targetDate = new Date('2026-11-14T09:00:00+01:00').getTime();
-    const timer = setInterval(() => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        setTimeLeft({ days, hours, minutes, seconds });
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    setCandidate(initialCandidate);
-    if (initialCandidate.passportPhotoUrl) {
-      setPhotoPreview(initialCandidate.passportPhotoUrl);
+    if (candidate?.passportPhotoUrl) {
+      setPhotoPreview(candidate.passportPhotoUrl);
     }
-  }, [initialCandidate]);
+  }, [candidate?.passportPhotoUrl]);
 
   useEffect(() => {
-    api.getMessages(candidate.id)
-      .then((data) => setMessages(data))
-      .catch((err) => console.error('Error fetching messages:', err));
-  }, [candidate.id]);
-
-  useEffect(() => {
-    if (activeTab === 'messages') {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (candidate) {
+      onUpdateCandidate?.(candidate);
     }
-  }, [messages, activeTab]);
+  }, [candidate]);
 
-  const isInvestitureReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(candidate.stage);
-  const isOrdained = candidate.stage === 'ordained';
-
-  const totalLevy = candidate.levyBreakdown?.total || 80000;
-  const duesPaid = candidate.duesAmountPaid || totalLevy;
-  const balanceRemaining = Math.max(0, totalLevy - duesPaid);
-  const paymentPercentage = Math.min(100, Math.round((duesPaid / totalLevy) * 100));
-
-  const robingSpecs = getRobingSpecifications(candidate.targetRankId);
+  const currentCandidate = candidate || initialCandidate;
+  const isCeremonyReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(currentCandidate.stage);
+  const isOrdained = currentCandidate.stage === 'ordained';
 
   const handleCopyReg = () => {
-    navigator.clipboard.writeText(candidate.regNumber);
+    navigator.clipboard.writeText(currentCandidate.regNumber);
     setCopiedReg(true);
     setTimeout(() => setCopiedReg(false), 2000);
-  };
-
-  const handleCopyReceipt = () => {
-    if (candidate.receiptNumber) {
-      navigator.clipboard.writeText(candidate.receiptNumber);
-      setCopiedReceipt(true);
-      setTimeout(() => setCopiedReceipt(false), 2000);
-    }
-  };
-
-  const handleCopyVenue = () => {
-    const venueText = `${candidate.ordinationVenue || 'Mount Zion Cathedral Worldwide Headquarters'}, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos`;
-    navigator.clipboard.writeText(venueText);
-    setCopiedVenue(true);
-    setTimeout(() => setCopiedVenue(false), 2000);
-  };
-
-  const handlePrint = () => {
-    window.print();
   };
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,12 +153,6 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
     reader.readAsDataURL(file);
   };
 
-  const sendQuickPrompt = (prompt: string, category: 'general' | 'screening' | 'robing' | 'secretariat') => {
-    setNewMessageText(prompt);
-    setMessageCategory(category);
-    setActiveTab('messages');
-  };
-
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessageText.trim() || isSendingMessage) return;
@@ -197,11 +165,23 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
         senderName: candidate.fullName,
         senderRole: 'candidate',
         content: newMessageText.trim(),
-        category: messageCategory,
+        category: 'general',
       });
 
-      setMessages((prev) => [...prev, sent]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === sent.id)) return prev;
+        return [...prev, sent];
+      });
+      realtimeClient.broadcastLocal({
+        id: `evt_${Date.now()}`,
+        type: 'MESSAGE_SENT',
+        timestamp: new Date().toISOString(),
+        payload: sent,
+        actor: currentCandidate.fullName,
+        candidateId: currentCandidate.id,
+      });
       setNewMessageText('');
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     } catch (err) {
       console.error('Failed to send message:', err);
     } finally {
@@ -209,99 +189,171 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
     }
   };
 
-  // 5-Tier Jurisdictional Steps
+  // 5-Step Rich Interactive Clearance Progression Data
   const tierOrder: VettingTier[] = ['branch', 'district', 'province', 'cmc', 'national'];
   const currentTierIndex = tierOrder.indexOf(candidate.currentVettingTier);
 
-  const tierSteps = [
+  const approvalSteps = [
     {
       id: 'branch',
-      title: 'Branch Parish',
-      subtitle: 'Parish Rector Endorsement',
-      isCompleted: candidate.tierApprovals?.branch?.approved || currentTierIndex > 0 || isInvestitureReady,
-      isCurrent: candidate.currentVettingTier === 'branch' && !candidate.tierApprovals?.branch?.approved,
-      stamp: candidate.tierApprovals?.branch,
-      jurisdiction: candidate.parish,
+      stepNumber: '01',
+      title: 'Parish Priest Nomination & Endorsement',
+      authority: 'Branch Parish Rector & Leadership Committee',
+      officer: candidate.branchPriestName || 'Snr. Apostle Festus N. Okon',
+      date: 'April 14, 2026',
+      desc: 'Verified active church membership, local parish tithes, and exemplary moral standing.',
+      isCompleted: candidate.tierApprovals?.branch?.approved || currentTierIndex > 0 || isCeremonyReady,
+      statusLabel: 'Approved ✓',
+      sealBadge: 'Parish Seal Confirmed',
+      comments: 'Nomination verified with highest recommendation from Mount Zion Parish.',
     },
     {
       id: 'district',
-      title: 'District Council',
-      subtitle: 'District Superintendent Vetting',
-      isCompleted: candidate.tierApprovals?.district?.approved || currentTierIndex > 1 || isInvestitureReady,
-      isCurrent: candidate.currentVettingTier === 'district' && !candidate.tierApprovals?.district?.approved,
-      stamp: candidate.tierApprovals?.district,
-      jurisdiction: candidate.district || 'Surulere District',
+      stepNumber: '02',
+      title: 'District Council Vetting & Ratification',
+      authority: 'District Superintendent Council',
+      officer: 'Special Snr. Apostle E. O. Johnson (District Leader)',
+      date: 'May 02, 2026',
+      desc: 'Zonal background check cleared, constitutional ordination quota certified within district.',
+      isCompleted: candidate.tierApprovals?.district?.approved || currentTierIndex > 1 || isCeremonyReady,
+      statusLabel: 'Approved ✓',
+      sealBadge: 'District Quota Cleared',
+      comments: 'No disciplinary history on record. Meritorious service verified across branches.',
     },
     {
       id: 'province',
-      title: 'Provincial Diocese',
-      subtitle: 'Diocesan Quota & Credentials',
-      isCompleted: candidate.tierApprovals?.province?.approved || currentTierIndex > 2 || isInvestitureReady,
-      isCurrent: candidate.currentVettingTier === 'province' && !candidate.tierApprovals?.province?.approved,
-      stamp: candidate.tierApprovals?.province,
-      jurisdiction: candidate.province,
+      stepNumber: '03',
+      title: 'Provincial Diocese Clearance & Quotas',
+      authority: 'Lagos Western Provincial Secretariat',
+      officer: 'Apostle General G. A. Adebayo (Provincial Secretary)',
+      date: 'June 18, 2026',
+      desc: 'Provincial diocesan registry validated and passed forward to the National Screening Board.',
+      isCompleted: candidate.tierApprovals?.province?.approved || currentTierIndex > 2 || isCeremonyReady,
+      statusLabel: 'Approved ✓',
+      sealBadge: 'Diocesan Quota Allotted',
+      comments: 'Candidate allocation slot #14 of 25 in Lagos Western Province ratified.',
     },
     {
       id: 'cmc',
-      title: 'CMC Screening',
-      subtitle: 'Theological & Liturgical Board',
-      isCompleted: candidate.tierApprovals?.cmc?.approved || currentTierIndex > 3 || isInvestitureReady,
-      isCurrent: candidate.currentVettingTier === 'cmc' && !candidate.tierApprovals?.cmc?.approved,
-      stamp: candidate.tierApprovals?.cmc,
-      jurisdiction: 'Church Management Committee',
+      stepNumber: '04',
+      title: 'Ordination Screening & Doctrinal Examination',
+      authority: 'Central Ministerial Committee (CMC Examination Directorate)',
+      officer: 'Special Snr. Apostle Dr. G. Bassey (Screening Director)',
+      date: 'July 29, 2026',
+      desc: 'Oral interview, written theology assessment, and Liturgical governance examination passed.',
+      isCompleted: candidate.tierApprovals?.cmc?.approved || currentTierIndex > 3 || isCeremonyReady,
+      statusLabel: 'Passed (89%) ✓',
+      sealBadge: 'CMC Distinction Certified',
+      comments: 'Scored 89% in Church Liturgy, Biblical Hermeneutics, and Pastoral Administration.',
     },
     {
       id: 'national',
-      title: 'Holy Synod Ratification',
-      subtitle: 'Supreme Apex Consecration',
-      isCompleted: candidate.tierApprovals?.national?.approved || isInvestitureReady,
-      isCurrent: candidate.currentVettingTier === 'national' && !isInvestitureReady,
-      stamp: candidate.tierApprovals?.national,
-      jurisdiction: 'Holy Order Supreme Synod',
+      stepNumber: '05',
+      title: 'Holy Synod & Church Supreme Council Final Seal',
+      authority: 'Holy Order Supreme Advisory Council & Office of the Prelate',
+      officer: 'Prof. David A. Oladele (Supervising Apostle General / Super Admin)',
+      date: 'August 15, 2026',
+      desc: 'Supreme ratification concluded. Ceremony seating and gazetted ordination pass generated.',
+      isCompleted: candidate.tierApprovals?.national?.approved || isCeremonyReady,
+      statusLabel: 'Ratified & Sealed ✓',
+      sealBadge: 'Supreme Consecration Seal',
+      comments: 'Certified for solemn consecration by His Most Eminence, Baba Aladura.',
     },
   ];
 
-  // Statutory Financial Breakdown Items
-  const statutorySplit = [
-    {
-      authority: 'Branch Parish Share',
-      purpose: 'Parish Liturgical Assessment & Welfare',
-      amount: candidate.levyBreakdown?.branchLevy || 15000,
-      cleared: true,
-    },
-    {
-      authority: 'District Council Share',
-      purpose: 'District Jurisdictional Administration',
-      amount: candidate.levyBreakdown?.districtLevy || 15000,
-      cleared: true,
-    },
-    {
-      authority: 'Provincial Diocese Quota',
-      purpose: 'Diocesan Examination & Secretariat Vetting',
-      amount: candidate.levyBreakdown?.provincialLevy || 20000,
-      cleared: true,
-    },
-    {
-      authority: 'Holy Synod Apex Levies',
-      purpose: 'Apex Consecration, Sacred Scroll & Robing Seal',
-      amount: candidate.levyBreakdown?.nationalFee || 30000,
-      cleared: true,
-    },
-  ];
+  const completedCount = approvalSteps.filter((s) => s.isCompleted).length;
+  const progressPercent = Math.round((completedCount / approvalSteps.length) * 100);
+
+  const toggleChecklist = (key: keyof typeof checklist) => {
+    setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Banner: Canonical Elevation Master Hero */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-7 md:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-church-500/10 rounded-full blur-2xl pointer-events-none" />
+    <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-300">
+      
+      {/* ========================================================================= */}
+      {/* 1. CANDIDATE PROFILE HERO CARD (MODERN, RESPONSIVE, APP-LIKE)             */}
+      {/* ========================================================================= */}
+      <div className="bg-white dark:bg-[#090e1c] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 sm:p-7 lg:p-8 shadow-xl relative overflow-hidden transition-colors duration-200">
+        
+        {/* Subtle Ambient Glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          {/* Left: Avatar & Personal Metadata */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full lg:w-auto">
-            {/* Passport Photo */}
-            <div className="relative group shrink-0 mx-auto sm:mx-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-slate-800/90 border-2 border-amber-500/40 shadow-xl flex items-center justify-center relative">
+        {/* Top Reference & Quick Utility Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5 mb-5 pb-3.5 border-b border-slate-100 dark:border-slate-800/80">
+          
+          {/* Left: Reg ID & Clearance status */}
+          <div className="flex items-center gap-2">
+            <Tooltip content="Click to Copy Registration ID">
+              <button
+                type="button"
+                onClick={handleCopyReg}
+                className="px-2.5 py-1 text-xs font-mono font-bold bg-slate-100 dark:bg-slate-900 text-amber-700 dark:text-amber-300 border border-slate-300 dark:border-slate-700 rounded-xl inline-flex items-center gap-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all shadow-xs cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5 text-amber-500" />
+                <span>{candidate.regNumber}</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal hidden sm:inline">
+                  {copiedReg ? '✓ Copied' : 'Copy'}
+                </span>
+              </button>
+            </Tooltip>
+
+            <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isCeremonyReady ? 'All 5 Approvals Cleared' : 'Approvals in Progress'}</span>
+              <span className="sm:hidden">5/5 Cleared</span>
+            </span>
+          </div>
+
+          {/* Right: Quick actions (Demo, Tour, Clergy View) */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setShowDemoModal(true)}
+              className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 inline-flex items-center gap-1 transition-colors cursor-pointer"
+            >
+              <Info className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Demo Mode</span>
+              <span className="sm:hidden">Demo</span>
+            </button>
+
+            {onSwitchToConsecratedView && (
+              <Tooltip content="Preview post-ordination Consecrated Clergy records and official gazette">
+                <button
+                  type="button"
+                  onClick={onSwitchToConsecratedView}
+                  className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/40 inline-flex items-center gap-1 transition-all shadow-xs active:scale-95 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="hidden sm:inline">Consecrated Clergy</span>
+                  <span className="sm:hidden">Clergy</span>
+                </button>
+              </Tooltip>
+            )}
+
+            <Tooltip content="Interactive Portal Tour">
+              <button
+                type="button"
+                onClick={() => setShowTourModal(true)}
+                className="px-2.5 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 inline-flex items-center gap-1 transition-all shadow-xs active:scale-95 cursor-pointer"
+              >
+                <Compass className="w-3.5 h-3.5 text-amber-500" />
+                <span className="hidden md:inline">Portal Guide</span>
+              </button>
+            </Tooltip>
+          </div>
+        </div>
+
+        {/* Main Identity Core (Passport Photo + Details + Actions) */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 sm:gap-7">
+          
+          {/* Left: Avatar & Candidate Info */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start lg:items-center gap-4 sm:gap-6 w-full lg:w-auto">
+            
+            {/* Circular Avatar / Passport with Upload Option */}
+            <div className="relative group shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl sm:rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-900 border-2 border-amber-500/80 ring-4 ring-amber-500/10 shadow-lg flex items-center justify-center relative">
                 {photoPreview ? (
                   <img
                     src={photoPreview}
@@ -309,26 +361,26 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center text-slate-500">
-                    <User className="w-10 h-10 text-slate-400" />
-                    <span className="text-[10px] text-slate-400 mt-1">Upload Photo</span>
+                  <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                    <User className="w-8 h-8 text-slate-400" />
+                    <span className="text-[9px] text-slate-400 mt-1 font-mono font-bold">PHOTO</span>
                   </div>
                 )}
 
-                <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 bg-slate-950/80 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-amber-300 transition-all cursor-pointer p-1 text-center"
-                  title="Upload / Change Official Passport Photo"
-                >
-                  <Camera className="w-5 h-5 mb-1" />
-                  <span className="text-[9px] font-bold uppercase tracking-wider">
-                    {isUploadingPhoto ? 'Uploading...' : 'Update Photo'}
-                  </span>
-                </div>
-              </div>
+                {isUploadingPhoto && (
+                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
 
-              <div className="absolute -bottom-2 -right-2 bg-emerald-500 text-slate-950 p-1 rounded-full border-2 border-slate-900 shadow-md">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold cursor-pointer"
+                >
+                  <Camera className="w-4 h-4 mb-0.5" />
+                  <span>Update</span>
+                </button>
               </div>
 
               <input
@@ -340,1005 +392,973 @@ export function CandidateDashboard({ candidate: initialCandidate, onUpdateCandid
               />
             </div>
 
-            {/* Candidate Info */}
-            <div className="space-y-2 flex-1 text-center sm:text-left min-w-0">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <button
-                  onClick={handleCopyReg}
-                  className="px-2.5 py-1 text-xs font-mono font-semibold bg-slate-800/90 text-amber-300 border border-slate-700/80 rounded-lg inline-flex items-center gap-1.5 hover:bg-slate-700 transition-all shadow-sm"
-                  title="Click to copy official registration number"
-                >
-                  <Copy className="w-3 h-3 text-amber-400" />
-                  <span>{candidate.regNumber}</span>
-                  <span className="text-[10px] text-slate-400 font-sans">
-                    ({copiedReg ? 'Copied!' : 'Copy'})
+            {/* Candidate Identity Text */}
+            <div className="space-y-1.5 flex-1 text-center sm:text-left min-w-0">
+              
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+                {candidate.fullName}
+              </h1>
+
+              <div className="flex items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span className="font-semibold text-slate-900 dark:text-white">{candidate.parish}</span>
+                <span className="text-slate-400">&bull;</span>
+                <span className="text-slate-600 dark:text-slate-400">{candidate.province}</span>
+              </div>
+
+              {/* Rank Progression Path */}
+              <div className="pt-1">
+                <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium shadow-xs">
+                    Current: <strong className="text-slate-900 dark:text-white ml-0.5">{candidate.currentRank}</strong>
                   </span>
-                </button>
-
-                <Badge
-                  variant={isInvestitureReady ? 'success' : 'warning'}
-                  size="sm"
-                  className={
-                    isInvestitureReady
-                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
-                      : 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                  }
-                >
-                  {isInvestitureReady ? '✓ Duly Approved for Investiture' : '⏳ Canonical Clearance in Progress'}
-                </Badge>
-
-                <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider rounded bg-church-500/20 text-church-300 border border-church-500/30">
-                  {candidate.gender === 'male' ? 'Brethren Order' : 'Sisters Order'}
-                </span>
-              </div>
-
-              <div>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight break-words">
-                  {candidate.fullName}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1 flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                  {candidate.houseOfPrayer && (
-                    <>
-                      <span className="text-amber-200/90 font-medium">{candidate.houseOfPrayer}</span>
-                      <span className="text-slate-600">•</span>
-                    </>
-                  )}
-                  <span>{candidate.parish}</span>
-                  {candidate.district && (
-                    <>
-                      <span className="text-slate-600">•</span>
-                      <span className="text-slate-400">{candidate.district}</span>
-                    </>
-                  )}
-                  <span className="text-slate-600">•</span>
-                  <span className="text-slate-300 font-medium">{candidate.province}</span>
-                </p>
-              </div>
-
-              {/* Rank Progression Step Indicator */}
-              <div className="inline-flex flex-wrap items-center gap-2 p-2 bg-slate-950/70 border border-slate-800/90 rounded-xl text-xs w-full sm:w-auto">
-                <span className="text-slate-400">Current:</span>
-                <span className="font-semibold text-slate-200">{candidate.currentRank} ({candidate.currentRankYear})</span>
-                <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-slate-400">Elevation:</span>
-                <span className="font-bold text-amber-300">{candidate.targetRankName}</span>
-                <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                  {candidate.tenureYears || 4} Yrs Served ✓
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Quick Action Buttons */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto shrink-0 pt-2 lg:pt-0">
-            {isInvestitureReady && (
-              <Button
-                variant="gold"
-                size="md"
-                icon={<QrCode className="w-4 h-4" />}
-                onClick={() => setShowPassModal(true)}
-                className="w-full sm:w-auto shadow-lg shadow-amber-500/10 font-bold justify-center"
-              >
-                Admission Pass
-              </Button>
-            )}
-
-            {(isOrdained || isInvestitureReady) && (
-              <Button
-                variant="outline"
-                size="md"
-                icon={<Award className="w-4 h-4" />}
-                onClick={() => setShowCertModal(true)}
-                className="w-full sm:w-auto bg-slate-800/80 border-slate-700 text-white hover:bg-slate-700 justify-center"
-              >
-                Certificate
-              </Button>
-            )}
-
-            <Button
-              variant="outline"
-              size="md"
-              icon={<Printer className="w-4 h-4" />}
-              onClick={handlePrint}
-              className="w-full sm:w-auto bg-slate-800/80 border-slate-700 text-slate-200 hover:bg-slate-700 justify-center"
-            >
-              Clearance Slip
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Live Consecration Countdown & Service Directive Summary Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Countdown Card */}
-        <div className="bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-amber-500/20">
-            <span className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
-              Solemn Investiture Countdown
-            </span>
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 my-4 text-center">
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
-              <span className="text-xl sm:text-2xl font-bold font-mono text-white block">{timeLeft.days}</span>
-              <span className="text-[10px] text-slate-400 uppercase">Days</span>
-            </div>
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
-              <span className="text-xl sm:text-2xl font-bold font-mono text-white block">{timeLeft.hours}</span>
-              <span className="text-[10px] text-slate-400 uppercase">Hours</span>
-            </div>
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
-              <span className="text-xl sm:text-2xl font-bold font-mono text-white block">{timeLeft.minutes}</span>
-              <span className="text-[10px] text-slate-400 uppercase">Mins</span>
-            </div>
-            <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-2">
-              <span className="text-xl sm:text-2xl font-bold font-mono text-amber-400 block">{timeLeft.seconds}</span>
-              <span className="text-[10px] text-slate-400 uppercase">Secs</span>
-            </div>
-          </div>
-
-          <p className="text-[11px] text-slate-400 text-center">
-            Saturday, November 14, 2026 • 09:00 AM WAT
-          </p>
-        </div>
-
-        {/* Cathedral Venue Details */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
-                Cathedral Venue
-              </span>
-              <button
-                onClick={handleCopyVenue}
-                className="text-[11px] text-amber-400 hover:text-amber-300 inline-flex items-center gap-1"
-                title="Copy Cathedral Address"
-              >
-                <Copy className="w-3 h-3" />
-                {copiedVenue ? 'Copied!' : 'Copy'}
-              </button>
-            </div>
-
-            <div className="space-y-1.5 mt-3">
-              <p className="text-sm font-bold text-white">
-                {candidate.ordinationVenue || 'Mount Zion Cathedral Worldwide Headquarters'}
-              </p>
-              <p className="text-xs text-slate-400">
-                11/13 Hughes Avenue, Alagomeji, Yaba, Lagos, Nigeria
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-800/80 mt-3 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Gate Access:</span>
-            <span className="font-semibold text-amber-300">Gate 2 • East Portico</span>
-          </div>
-        </div>
-
-        {/* Pew & Robing Prelate */}
-        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-purple-400" />
-                Chancel & Prelate
-              </span>
-              <Badge variant="purple" size="sm" className="bg-purple-500/10 text-purple-300 border-purple-500/20">
-                Confirmed
-              </Badge>
-            </div>
-
-            <div className="space-y-2 mt-3 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Assigned Pew:</span>
-                <span className="font-bold text-white">{candidate.seatNumber || 'Zone A - Chancel Pew 14'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Presiding Prelate:</span>
-                <span className="font-bold text-amber-300">{candidate.robingOfficer || 'Apostle General J. K. Coker'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Robing Session:</span>
-                <span className="text-slate-200">{candidate.investitureSession || 'Morning Investiture'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-800/80 mt-3 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Roll Call:</span>
-            <span className="text-amber-300 font-semibold">07:30 AM Sharp</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 5-Tier Canonical Vetting Progress Stepper (Responsive) */}
-      <div className="bg-slate-900/80 border border-slate-800/90 rounded-2xl p-5 sm:p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
-          <div>
-            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-              <Shield className="w-4 h-4 text-amber-400" />
-              5-Tier Canonical Approval Progression
-            </h3>
-            <p className="text-xs text-slate-400">
-              Sequential ecclesiastical clearance through Branch, District, Province, CMC & Holy Synod
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono font-bold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-              Level {Math.min(5, currentTierIndex + (candidate.tierApprovals?.[candidate.currentVettingTier]?.approved ? 1 : 1))} of 5 Cleared
-            </span>
-          </div>
-        </div>
-
-        {/* Stepper Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {tierSteps.map((step, idx) => (
-            <div
-              key={step.id}
-              className={`p-3.5 rounded-xl border transition-all flex flex-col justify-between ${
-                step.isCompleted
-                  ? 'bg-emerald-950/20 border-emerald-700/40 text-emerald-300'
-                  : step.isCurrent
-                  ? 'bg-amber-950/20 border-amber-500/50 text-amber-200 ring-1 ring-amber-500/20'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-500'
-              }`}
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-mono uppercase font-bold text-slate-400">Tier 0{idx + 1}</span>
-                  {step.isCompleted ? (
-                    <span className="p-1 bg-emerald-500/20 text-emerald-400 rounded-full">
-                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    </span>
-                  ) : step.isCurrent ? (
-                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                    </span>
-                  ) : (
-                    <Clock className="w-3.5 h-3.5 text-slate-600" />
-                  )}
-                </div>
-                <p className="text-xs font-bold text-white leading-tight">{step.title}</p>
-                <p className="text-[11px] text-slate-400 truncate mt-0.5">{step.subtitle}</p>
-              </div>
-
-              <div className="mt-3 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between">
-                <span>{step.isCompleted ? 'Approved' : step.isCurrent ? 'Under Review' : 'Pending'}</span>
-                {step.stamp?.date && (
-                  <span className="font-mono text-slate-400">{step.stamp.date}</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Navigation Tabs (Fully Responsive with smooth horizontal scroll) */}
-      <div className="border-b border-slate-800/80 -mx-4 sm:mx-0 px-4 sm:px-0">
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 no-scrollbar">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'overview'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Overview & Status
-          </button>
-
-          <button
-            onClick={() => setActiveTab('financials')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'financials'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            Canonical Levies & Receipt
-          </button>
-
-          <button
-            onClick={() => setActiveTab('schedule')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'schedule'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <Calendar className="w-3.5 h-3.5" />
-            Service Timetable
-          </button>
-
-          <button
-            onClick={() => setActiveTab('robing')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'robing'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <Shirt className="w-3.5 h-3.5" />
-            Liturgical Vestments
-          </button>
-
-          <button
-            onClick={() => setActiveTab('messages')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'messages'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            Secretariat Messages
-            {messages.length > 0 && (
-              <span className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full ${activeTab === 'messages' ? 'bg-slate-950 text-amber-400' : 'bg-amber-500 text-slate-950'}`}>
-                {messages.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('endorsements')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'endorsements'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <Scroll className="w-3.5 h-3.5" />
-            Endorsements Log
-          </button>
-
-          <button
-            onClick={() => setActiveTab('dossier')}
-            className={`px-4 py-2 text-xs sm:text-sm font-semibold rounded-xl transition-all whitespace-nowrap flex items-center gap-1.5 ${
-              activeTab === 'dossier'
-                ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 bg-slate-900/50 border border-slate-800'
-            }`}
-          >
-            <FileCheck className="w-3.5 h-3.5" />
-            Dossier & Credentials
-          </button>
-        </div>
-      </div>
-
-      {/* Tab 1: Clean Overview & Status */}
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Consecration Admission Summary Card */}
-          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
-                <BadgeCheck className="w-5 h-5 text-emerald-400" />
-                <span>Investiture Readiness Status</span>
-              </div>
-              <Badge variant="success" size="sm" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                Accreditation Approved
-              </Badge>
-            </div>
-
-            <div className="space-y-3">
-              <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <span className="text-slate-400 text-xs block">Elevation Order</span>
-                  <span className="font-bold text-amber-300 text-base">{candidate.targetRankName}</span>
-                </div>
-                <span className="text-xs text-slate-400">Tenure: {candidate.tenureYears || 4} Yrs</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
-                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                  <span className="text-slate-400 text-[11px] block">Pew Allocation</span>
-                  <span className="font-bold text-white">{candidate.seatNumber || 'Zone A - Pew 14'}</span>
-                </div>
-                <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80">
-                  <span className="text-slate-400 text-[11px] block">Robing Prelate</span>
-                  <span className="font-bold text-amber-300 truncate block">{candidate.robingOfficer || 'Apostle Gen. Coker'}</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold border border-amber-500/30 shadow-xs">
+                    Target: {candidate.targetRankName}
+                  </span>
+                  <span className="hidden md:inline-flex text-[11px] text-emerald-700 dark:text-emerald-400 font-mono px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    {candidate.tenureYears || 5} Yrs Ministry ✓
+                  </span>
                 </div>
               </div>
 
-              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-start gap-2.5">
-                <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-semibold text-white">Cathedral Consecration Directives:</p>
-                  <p className="leading-relaxed text-slate-300">
-                    Arrive at <strong>07:30 AM</strong> via <strong>Gate 2 (East Portico)</strong>. Present your Digital Admission Pass QR code at the optical accreditation desk for entrance marshaling.
-                  </p>
-                </div>
-              </div>
+            </div>
 
-              <div className="pt-2">
+          </div>
+
+          {/* Right: Key Action Buttons (Clean Grid on Mobile, Column on Desktop) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5 w-full lg:w-56 shrink-0 pt-2 lg:pt-0">
+            {isCeremonyReady && (
+              <Tooltip content="Open your digital accreditation pass with QR verification" position="left" className="w-full">
                 <Button
                   variant="gold"
                   size="md"
                   icon={<QrCode className="w-4 h-4" />}
                   onClick={() => setShowPassModal(true)}
-                  className="w-full justify-center font-bold"
+                  className="w-full justify-center shadow-md font-bold text-xs h-10 sm:h-11"
                 >
-                  View Digital Admission Pass (QR)
+                  Digital Ceremony Pass
                 </Button>
-              </div>
-            </div>
-          </div>
+              </Tooltip>
+            )}
 
-          {/* Treasury Snapshot & Quick Clearance */}
-          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-                <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
-                  <CreditCard className="w-5 h-5 text-emerald-400" />
-                  <span>Canonical Treasury Clearance</span>
-                </div>
-                <Badge variant="success" size="sm" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                  {paymentPercentage}% Settled
-                </Badge>
-              </div>
+            {(isOrdained || isCeremonyReady) && (
+              <Tooltip content="View and print your official certificate of ordination" position="left" className="w-full">
+                <Button
+                  variant="outline"
+                  size="md"
+                  icon={<Award className="w-4 h-4" />}
+                  onClick={() => setShowCertModal(true)}
+                  className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                >
+                  Ordination Certificate
+                </Button>
+              </Tooltip>
+            )}
 
-              <div className="grid grid-cols-2 gap-3 my-3 text-xs sm:text-sm">
-                <div className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800/80">
-                  <span className="text-slate-400 text-xs block">Total Levies</span>
-                  <span className="text-lg font-bold text-white">{formatCurrency(totalLevy)}</span>
-                </div>
-                <div className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800/80">
-                  <span className="text-slate-400 text-xs block">Amount Cleared</span>
-                  <span className="text-lg font-bold text-emerald-400">{formatCurrency(duesPaid)}</span>
-                </div>
-              </div>
-
-              {candidate.receiptNumber && (
-                <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 text-xs flex items-center justify-between">
-                  <span className="text-slate-400">Canonical Receipt:</span>
-                  <span className="font-mono font-bold text-amber-400">{candidate.receiptNumber}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2 pt-3 border-t border-slate-800">
-              <button
-                onClick={() => setActiveTab('financials')}
-                className="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-xs text-amber-300 font-semibold flex items-center justify-center gap-2 transition-colors"
-              >
-                <Receipt className="w-4 h-4" />
-                View Itemized 4-Tier Canonical Ledger
-              </button>
-            </div>
-          </div>
-
-          {/* Theological Exam Scores (Linear Responsive Meters) */}
-          <div className="lg:col-span-2 bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-white font-bold text-sm sm:text-base">
-                <BookOpen className="w-4 h-4 text-purple-400" />
-                <span>CMC Theological Examination & Liturgical Scores</span>
-              </div>
-              <Badge variant="purple" size="sm" className="bg-purple-500/15 text-purple-300 border-purple-500/30">
-                Passed with Distinction
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs sm:text-sm">
-              <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800/80 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Doctrinal Governance</span>
-                  <span className="font-bold text-white">{candidate.theologyScore || 92}%</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 rounded-full" style={{ width: `${candidate.theologyScore || 92}%` }} />
-                </div>
-                <p className="text-[11px] text-slate-400">Weighted: 55% • Distinction</p>
-              </div>
-
-              <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800/80 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Oral Vetting & Liturgy</span>
-                  <span className="font-bold text-white">{candidate.interviewScore || 88}%</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-400 rounded-full" style={{ width: `${candidate.interviewScore || 88}%` }} />
-                </div>
-                <p className="text-[11px] text-slate-400">Weighted: 45% • Cleared</p>
-              </div>
-
-              <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800/80 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Attendance & Conduct</span>
-                  <span className="font-bold text-emerald-400">{candidate.attendanceRecordPercentage || 96}%</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${candidate.attendanceRecordPercentage || 96}%` }} />
-                </div>
-                <p className="text-[11px] text-slate-400">Spotless Parish Attestation</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 2: Financial Ledger & Official Receipt */}
-      {activeTab === 'financials' && (
-        <div className="space-y-6">
-          {/* Main Financial Card */}
-          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-7 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-emerald-400" />
-                  <span>Canonical Financial Clearance Ledger</span>
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Statutory 4-tier ecclesiastical levies required for the order of <strong>{candidate.targetRankName}</strong>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {candidate.receiptNumber && (
-                  <button
-                    onClick={handleCopyReceipt}
-                    className="px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-lg text-xs font-mono font-bold text-amber-300 hover:bg-slate-800 transition-colors flex items-center gap-1.5"
-                    title="Copy Official Canonical Receipt"
-                  >
-                    <Receipt className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{candidate.receiptNumber}</span>
-                    <span className="text-[10px] text-slate-400 font-sans">({copiedReceipt ? 'Copied!' : 'Copy'})</span>
-                  </button>
-                )}
-                <Badge variant="success" size="sm" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                  100% Cleared
-                </Badge>
-              </div>
-            </div>
-
-            {/* Financial Overview Metrics */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
-                <span className="text-xs text-slate-400 block uppercase font-medium tracking-wider">Total Statutory Levies</span>
-                <p className="text-2xl font-bold text-white">{formatCurrency(totalLevy)}</p>
-                <p className="text-[11px] text-slate-400">4-Tier Combined Assessment</p>
-              </div>
-
-              <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
-                <span className="text-xs text-slate-400 block uppercase font-medium tracking-wider">Total Amount Cleared</span>
-                <p className="text-2xl font-bold text-emerald-400">{formatCurrency(duesPaid)}</p>
-                <p className="text-[11px] text-emerald-400 font-medium">Verified by Central Secretariat</p>
-              </div>
-
-              <div className="p-4 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-1">
-                <span className="text-xs text-slate-400 block uppercase font-medium tracking-wider">Outstanding Balance</span>
-                <p className="text-2xl font-bold text-slate-300">{formatCurrency(balanceRemaining)}</p>
-                <p className="text-[11px] text-slate-400">Zero Outstanding Balance</p>
-              </div>
-            </div>
-
-            {/* Itemized 4-Tier Statutory Ledger (Responsive Table/List) */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Itemized Statutory Allocation Schedule:
-              </h4>
-
-              <div className="space-y-2.5">
-                {statutorySplit.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-slate-950/70 border border-slate-800/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-mono font-bold text-amber-300 shrink-0 mt-0.5 sm:mt-0">
-                        0{idx + 1}
-                      </div>
-                      <div>
-                        <p className="text-xs sm:text-sm font-bold text-white">{item.authority}</p>
-                        <p className="text-xs text-slate-400">{item.purpose}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between sm:justify-end gap-4 text-left sm:text-right shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/60">
-                      <span className="text-sm sm:text-base font-mono font-bold text-white">{formatCurrency(item.amount)}</span>
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-semibold">
-                        <Check className="w-3 h-3" /> Cleared
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Print Clearance Action */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div className="text-xs text-slate-400 flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-amber-400" />
-                <span>Statutory Treasury Compliance Rule: Act 4, Section 12 ratified</span>
-              </div>
+            <Tooltip content="Open and print your official itemized payment and clearance receipt" position="left" className="w-full">
               <Button
                 variant="outline"
                 size="md"
-                icon={<Printer className="w-4 h-4" />}
-                onClick={handlePrint}
-                className="w-full sm:w-auto bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
+                icon={<Receipt className="w-4 h-4 text-emerald-500" />}
+                onClick={() => setShowSlipModal(true)}
+                className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
               >
-                Print Official Financial Clearance
+                Official Payment Slip
               </Button>
-            </div>
+            </Tooltip>
           </div>
+
         </div>
-      )}
 
-      {/* Tab 3: Service Schedule & Venue */}
-      {activeTab === 'schedule' && (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/15 border border-amber-500/30 rounded-full text-amber-300 text-xs font-bold">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>General Conference 2026 Solemn Investiture</span>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 2. SECTION NAVIGATOR TABS (Overview, Clearance, Payments, Pass, Support)  */}
+      {/* ========================================================================= */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs font-bold overflow-x-auto">
+        <Link
+          href="/dashboard/candidate?tab=overview"
+          onClick={() => setCurrentTab('overview')}
+          className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            currentTab === 'overview'
+              ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <LayoutDashboard className="w-4 h-4 text-amber-500" />
+          <span>My Overview & Records</span>
+        </Link>
+
+        <Link
+          href="/dashboard/candidate?tab=clearance"
+          onClick={() => setCurrentTab('clearance')}
+          className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            currentTab === 'clearance'
+              ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <CheckSquare className="w-4 h-4 text-emerald-500" />
+          <span>Ordination Clearance (5/5)</span>
+        </Link>
+
+        <Link
+          href="/dashboard/candidate?tab=payments"
+          onClick={() => setCurrentTab('payments')}
+          className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            currentTab === 'payments'
+              ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Receipt className="w-4 h-4 text-amber-500" />
+          <span>Payment & Fee Receipts</span>
+        </Link>
+
+        <Link
+          href="/dashboard/candidate?tab=pass"
+          onClick={() => setCurrentTab('pass')}
+          className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            currentTab === 'pass'
+              ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <QrCode className="w-4 h-4 text-blue-500" />
+          <span>Ceremony Pass & Seating</span>
+        </Link>
+
+        <Link
+          href="/dashboard/candidate?tab=support"
+          onClick={() => setCurrentTab('support')}
+          className={`py-2.5 px-4 rounded-xl transition-all flex items-center gap-2 shrink-0 ${
+            currentTab === 'support'
+              ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4 text-purple-500" />
+          <span>Support & Help Desk</span>
+        </Link>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. DEDICATED TAB VIEWS                                                    */}
+      {/* ========================================================================= */}
+
+      {/* ========================================================================= */}
+      {/* TAB 1: OVERVIEW & RECORDS (MODEST, CLEAN, UNCLUTTERED)                     */}
+      {/* ========================================================================= */}
+      {currentTab === 'overview' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          {/* Quick Summary KPI Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <Link href="/dashboard/candidate?tab=clearance" className="group">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-emerald-500/60 transition-all cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                  <CheckCheck className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Clearance Progress</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">5 of 5 Approved</p>
+                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">100% Cleared →</p>
+                </div>
               </div>
+            </Link>
 
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">
-                Official Ordination & Consecration Service Schedule
-              </h2>
-
-              <p className="text-xs sm:text-sm text-slate-300 max-w-3xl leading-relaxed">
-                By order of the Holy Synod of the Eternal Sacred Order of the Cherubim and Seraphim Worldwide, all qualified ordinands are hereby invited to the annual solemn consecration and investiture services.
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-3">
-                <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-amber-400 uppercase">Stage 01 • Spiritual Prep</span>
-                  <h4 className="text-sm font-bold text-white">Pre-Ordination Fasting & Sanctification</h4>
-                  <p className="text-xs text-slate-400">Nov 10 – 12, 2026</p>
-                  <p className="text-[11px] text-slate-500">3-Day corporate prayers across all Diocesan cathedrals.</p>
+            <Link href="/dashboard/candidate?tab=payments" className="group">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-amber-500/60 transition-all cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
+                  <CreditCard className="w-5 h-5" />
                 </div>
-
-                <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-purple-400 uppercase">Stage 02 • Physical Review</span>
-                  <h4 className="text-sm font-bold text-white">Vestment & Robing Inspection</h4>
-                  <p className="text-xs text-slate-400">Friday, Nov 13, 2026 • 4:00 PM</p>
-                  <p className="text-[11px] text-slate-500">Physical verification of liturgical cassock, stole & cap.</p>
-                </div>
-
-                <div className="p-4 bg-amber-950/20 border border-amber-500/40 rounded-2xl space-y-1.5 ring-1 ring-amber-500/20">
-                  <span className="text-[10px] font-mono font-bold text-amber-300 uppercase">Stage 03 • Consecration Day</span>
-                  <h4 className="text-sm font-bold text-white">Holy Investiture Service</h4>
-                  <p className="text-xs text-amber-300 font-bold">Saturday, Nov 14, 2026 • 09:00 AM</p>
-                  <p className="text-[11px] text-slate-300">Supreme laying of hands & official scroll presentation.</p>
-                </div>
-
-                <div className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-1.5">
-                  <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase">Stage 04 • Celebration</span>
-                  <h4 className="text-sm font-bold text-white">Thanksgiving & Holy Communion</h4>
-                  <p className="text-xs text-slate-400">Sunday, Nov 15, 2026 • 10:00 AM</p>
-                  <p className="text-[11px] text-slate-500">Worldwide General Conference Thanksgiving Service.</p>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Payment Status</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">₦80,000 Paid</p>
+                  <p className="text-[11px] text-amber-600 dark:text-amber-400 font-mono">Receipt Confirmed →</p>
                 </div>
               </div>
-            </div>
+            </Link>
+
+            <Link href="/dashboard/candidate?tab=pass" className="group">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-blue-500/60 transition-all cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-105 transition-transform">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ceremony Date</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">Sat, Nov 14, 2026</p>
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400">09:00 AM Prompt →</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link href="/dashboard/candidate?tab=pass" className="group">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-purple-500/60 transition-all cursor-pointer">
+                <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
+                  <Building className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Assigned Seating</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">Zone A &bull; Pew 14</p>
+                  <p className="text-[11px] text-purple-600 dark:text-purple-400">Gate 2 Entrance →</p>
+                </div>
+              </div>
+            </Link>
+
           </div>
 
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-md">
-            <div className="p-3.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-2xl shrink-0">
-              <Mail className="w-6 h-6" />
-            </div>
-            <div className="space-y-1 flex-1">
-              <h4 className="text-sm sm:text-base font-bold text-white flex flex-wrap items-center gap-2">
-                <span>Official Email Dispatch Alert</span>
-                <span className="px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 rounded font-mono font-bold">
-                  {candidate.emailDispatchDate || 'Friday, November 6, 2026'}
+          {/* Readiness Checklist & Quick Access Hub */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left 2 Cols: Interactive Pre-Ordination Readiness Checklist */}
+            <div className="lg:col-span-2 bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <CheckSquare className="w-5 h-5 text-amber-500" />
+                  <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                    Candidate Ordination Readiness Checklist
+                  </h3>
+                </div>
+                <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-lg">
+                  4 of 5 Ready
                 </span>
-              </h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Your official printable PDF Admission Pass, Liturgical Robing Color Chart, and Cathedral Access Barcode will be automatically dispatched to <strong className="text-white font-mono">{candidate.email}</strong> on {candidate.emailDispatchDate || 'Friday, November 6, 2026'}. Please verify your inbox and check spam/promotions folders.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 4: Robing & Vestments Guide */}
-      {activeTab === 'robing' && (
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-7 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
-            <div>
-              <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <Shirt className="w-5 h-5 text-amber-400" />
-                <span>Canonical Robing & Vestment Specifications</span>
-              </h3>
-              <p className="text-xs text-slate-400">
-                Official statutory vestment requirements for <strong>{candidate.targetRankName}</strong>
-              </p>
-            </div>
-            <Badge variant="gold" size="sm">
-              Constitutionally Mandated
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">Sacred Robe / Cassock</span>
-              <p className="text-sm font-semibold text-white">{robingSpecs.vestmentColor}</p>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Must be tailored according to canonical length, reaching the ankles with tailored liturgical cuffs.
-              </p>
-            </div>
-
-            <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">Liturgical Stole & Band</span>
-              <p className="text-sm font-semibold text-white">{robingSpecs.stoleType}</p>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Worn across both shoulders for apostolic orders or diagonal for ministerial orders.
-              </p>
-            </div>
-
-            <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">Headwear / Mitre / Cap</span>
-              <p className="text-sm font-semibold text-white">{robingSpecs.capOrCrown}</p>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Sanctified liturgical headgear bearing the holy cross of Zion.
-              </p>
-            </div>
-
-            <div className="p-4 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-2">
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">Insignia & Holy Staff</span>
-              <p className="text-sm font-semibold text-white">{robingSpecs.insigniaNotes}</p>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Official liturgical regalia presented during the sacred ordination ceremony.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 5: In-App Secretariat Desk */}
-      {activeTab === 'messages' && (
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-amber-400" />
-                <span>Canonical In-App Secretariat Desk</span>
-              </h3>
-              <p className="text-xs text-slate-400">
-                Direct encrypted channel with Branch Rector, CMC Screening Directorate & Holy Synod Secretariat
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Channel:</span>
-              <select
-                value={messageCategory}
-                onChange={(e) => setMessageCategory(e.target.value as any)}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-medium"
-              >
-                <option value="general">General Inquiries</option>
-                <option value="screening">Theological Screening & Exam</option>
-                <option value="robing">Robing & Vestment Specs</option>
-                <option value="secretariat">Central Secretariat Clearance</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <span className="text-[11px] text-slate-400 font-medium">Suggested Quick Inquiries:</span>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => sendQuickPrompt('When is the physical vestment inspection scheduled for my province?', 'robing')}
-                className="px-2.5 py-1 text-xs bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 transition-colors text-left"
-              >
-                🪡 Vestment inspection timing?
-              </button>
-              <button
-                onClick={() => sendQuickPrompt('How do I confirm my allocated pew seating in Zone A?', 'general')}
-                className="px-2.5 py-1 text-xs bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 transition-colors text-left"
-              >
-                🪑 Seating & Pew confirmation
-              </button>
-              <button
-                onClick={() => sendQuickPrompt('Request assistance regarding my CMC theological exam score certificate.', 'screening')}
-                className="px-2.5 py-1 text-xs bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-300 transition-colors text-left"
-              >
-                📖 Theological certificate copy
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-4 max-h-[440px] overflow-y-auto p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80">
-            {messages.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-xs">
-                <MessageSquare className="w-8 h-8 text-slate-600 mx-auto mb-2" />
-                No messages in this channel yet. Type below to ask a question to the Secretariat.
               </div>
-            ) : (
-              messages.map((msg) => {
-                const isMe = msg.senderRole === 'candidate';
+
+              <div className="space-y-3 text-xs">
+                <label
+                  onClick={() => toggleChecklist('vetting')}
+                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checklist.vetting}
+                    onChange={() => {}}
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                  />
+                  <div className="space-y-0.5 flex-1">
+                    <span className={`font-semibold text-sm ${checklist.vetting ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Ordination Clearance & Screening (5/5 Approved)
+                    </span>
+                    <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                      All parish, district, provincial, and national screening requirements ratified.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/candidate?tab=clearance" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
+                    Details →
+                  </Link>
+                </label>
+
+                <label
+                  onClick={() => toggleChecklist('levies')}
+                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checklist.levies}
+                    onChange={() => {}}
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                  />
+                  <div className="space-y-0.5 flex-1">
+                    <span className={`font-semibold text-sm ${checklist.levies ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Statutory Levies & Ordination Dues (₦80,000 Cleared)
+                    </span>
+                    <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                      Branch, district, province, and national ordination fees fully paid.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/candidate?tab=payments" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
+                    Receipt →
+                  </Link>
+                </label>
+
+                <label
+                  onClick={() => toggleChecklist('pass')}
+                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checklist.pass}
+                    onChange={() => {}}
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                  />
+                  <div className="space-y-0.5 flex-1">
+                    <span className={`font-semibold text-sm ${checklist.pass ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Digital Ceremony Pass with Gate 2 QR Code
+                    </span>
+                    <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                      Pass contains your Gate 2 QR barcode required for chancel entry.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/candidate?tab=pass" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
+                    View Pass →
+                  </Link>
+                </label>
+
+                <label
+                  onClick={() => toggleChecklist('vestment')}
+                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checklist.vestment}
+                    onChange={() => {}}
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                  />
+                  <div className="space-y-0.5 flex-1">
+                    <span className={`font-semibold text-sm ${checklist.vestment ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Ordination Robes & Vestments Tailored to Standard
+                    </span>
+                    <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                      Sacred cassock, stole, and liturgical cap ready for chancel inspection.
+                    </p>
+                  </div>
+                  <span className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
+                    {checklist.vestment ? 'Ready ✓' : 'Click to confirm'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Right 1 Col: Quick Links Card */}
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-500" />
+                  <span>Quick Navigation</span>
+                </h4>
+
+                <div className="space-y-2 text-xs">
+                  <Link
+                    href="/dashboard/candidate?tab=clearance"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <CheckSquare className="w-4 h-4 text-emerald-500" />
+                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Ordination Clearance Records</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+
+                  <Link
+                    href="/dashboard/candidate?tab=payments"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Receipt className="w-4 h-4 text-amber-500" />
+                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Payment & Slip Breakdown</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+
+                  <Link
+                    href="/dashboard/candidate?tab=pass"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <QrCode className="w-4 h-4 text-blue-500" />
+                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Ceremony Pass & Itinerary</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+
+                  <Link
+                    href="/dashboard/candidate?tab=support"
+                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <MessageSquare className="w-4 h-4 text-purple-500" />
+                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Parish Priest Help Desk</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: DEDICATED ORDINATION CLEARANCE PAGE                                */}
+      {/* ========================================================================= */}
+      {currentTab === 'clearance' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          {/* Main Clearance Roadmap */}
+          <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-amber-500" />
+                  <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
+                    5-Tier Ordination Clearance Roadmap
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Detailed ecclesiastical vetting records, signing officers, and ratification seals.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
+                  5 of 5 Ratified (100% Cleared) ✓
+                </span>
+              </div>
+            </div>
+
+            {/* Step-by-Step Interactive Cards */}
+            <div className="space-y-3">
+              {approvalSteps.map((step) => {
+                const isExpanded = expandedStepId === step.id;
                 return (
                   <div
-                    key={msg.id}
-                    className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} space-y-1`}
-                  >
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400 px-1">
-                      <span className="font-semibold text-slate-300">{msg.senderName}</span>
-                      <span className="text-slate-500">•</span>
-                      <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-
-                    <div
-                      className={`p-3.5 rounded-2xl text-xs sm:text-sm max-w-lg leading-relaxed shadow-sm ${
-                        isMe
-                          ? 'bg-amber-500 text-slate-950 font-semibold rounded-tr-none'
-                          : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
-                      }`}
-                    >
-                      {msg.content}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <form onSubmit={handleSendMessage} className="flex items-center gap-2 pt-2">
-            <input
-              type="text"
-              value={newMessageText}
-              onChange={(e) => setNewMessageText(e.target.value)}
-              placeholder={`Send message to Secretariat regarding ${messageCategory}...`}
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-            />
-            <Button
-              type="submit"
-              variant="gold"
-              size="md"
-              disabled={!newMessageText.trim() || isSendingMessage}
-              icon={<Send className="w-4 h-4" />}
-              className="py-3"
-            >
-              {isSendingMessage ? 'Sending...' : 'Send'}
-            </Button>
-          </form>
-        </div>
-      )}
-
-      {/* Tab 6: Endorsements Log */}
-      {activeTab === 'endorsements' && (
-        <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-4">
-          <div className="pb-3 border-b border-slate-800">
-            <h3 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-              <Scroll className="w-4 h-4 text-amber-400" />
-              Hierarchical Canonical Clearance Log
-            </h3>
-            <p className="text-xs text-slate-400">
-              Formal endorsement stamps recorded sequentially from Branch through Holy Synod
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {tierSteps.map((step, idx) => (
-              <div
-                key={step.id}
-                className="p-4 bg-slate-950/70 border border-slate-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                      step.isCompleted
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-slate-800 text-slate-500'
+                    key={step.id}
+                    className={`rounded-2xl border transition-all overflow-hidden ${
+                      isExpanded
+                        ? 'border-amber-500/50 bg-amber-500/[0.03] dark:bg-amber-500/[0.04] ring-1 ring-amber-500/20 shadow-md'
+                        : 'border-slate-200 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
-                    {step.isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : `0${idx + 1}`}
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-white">{step.title} Endorsement</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {step.stamp?.approverName ? `Approved by ${step.stamp.approverName}` : 'Under Jurisdictional Review'}
-                    </p>
-                    {step.stamp?.comments && (
-                      <p className="text-xs text-slate-300 italic mt-1.5 bg-slate-900/80 p-2.5 rounded-lg border border-slate-800/80">
-                        &quot;{step.stamp.comments}&quot;
-                      </p>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedStepId(isExpanded ? null : step.id)}
+                      className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 text-left cursor-pointer select-none"
+                    >
+                      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-amber-700 dark:text-amber-400 font-mono font-bold text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-inner">
+                          {step.stepNumber}
+                        </div>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-serif font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
+                              {step.title}
+                            </h3>
+                            <span className="hidden md:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              {step.sealBadge}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                            {step.desc}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>{step.statusLabel}</span>
+                        </span>
+
+                        <div className={`p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-transform ${
+                          isExpanded ? 'rotate-180 text-amber-500' : ''
+                        }`}>
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/40 text-xs space-y-4 animate-in fade-in duration-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Vetting Authority</span>
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs">{step.authority}</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Signing Officer</span>
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs">{step.officer}</span>
+                          </div>
+                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date Ratified</span>
+                            <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 text-xs">{step.date}</span>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300">
+                          <span className="font-bold text-amber-800 dark:text-amber-300 mr-1.5">Official Vetting Remarks:</span>
+                          {step.comments}
+                        </div>
+                      </div>
                     )}
                   </div>
-                </div>
-
-                <div className="text-left sm:text-right shrink-0">
-                  <span className="text-xs font-mono text-slate-400 block">{step.stamp?.date || 'Pending'}</span>
-                  <Badge variant={step.isCompleted ? 'success' : 'warning'} size="sm" className="mt-1">
-                    {step.isCompleted ? '✓ Cleared' : '⏳ Pending'}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+                );
+              })}
+            </div>
           </div>
+
+          {/* Doctrinal Exam Scorecard */}
+          <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <BookOpen className="w-5 h-5 text-blue-500" />
+                <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                  CMC Doctrinal Screening & Exam Scorecard
+                </h3>
+              </div>
+              <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                Grade: A (89% Passed)
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Scripture & Theology</span>
+                <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">92%</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Distinction</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Liturgy & Church Doctrine</span>
+                <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">88%</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Oral Examination</span>
+                <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">87%</span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Recommended</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Conduct & Rating</span>
+                <span className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 mt-1 block">Exemplary</span>
+                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Clear Record</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
 
-      {/* Tab 7: Dossier & Verified Documents */}
-      {activeTab === 'dossier' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-4">
-            <h3 className="text-sm sm:text-base font-bold text-white pb-3 border-b border-slate-800 flex items-center gap-2">
-              <User className="w-4 h-4 text-amber-400" />
-              Ecclesiastical Registry Dossier
-            </h3>
-            <div className="space-y-3 text-xs sm:text-sm">
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Full Canonical Name:</span>
-                <span className="font-semibold text-white">{candidate.fullName}</span>
+      {/* ========================================================================= */}
+      {/* TAB 3: DEDICATED PAYMENT & FEE RECEIPTS PAGE                              */}
+      {/* ========================================================================= */}
+      {currentTab === 'payments' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+            
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Receipt className="w-5 h-5 text-emerald-500" />
+                  <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
+                    Official Payment & Statutory Fee Receipts
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400">
+                  Itemized ordination statutory levies, payment references, and digital receipt generation.
+                </p>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Canonical Email:</span>
-                <span className="font-semibold text-white">{candidate.email}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Telephone Number:</span>
-                <span className="font-semibold text-white">{candidate.phone}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Church Baptism Date:</span>
-                <span className="font-semibold text-white">{formatDate(candidate.baptismDate)}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Marital Status:</span>
-                <span className="font-semibold text-white capitalize">{candidate.maritalStatus || 'Married'}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Current Rank Tenure:</span>
-                <span className="font-semibold text-emerald-400">{candidate.tenureYears || 4} Years (Statutory Minimum Satisfied)</span>
+
+              <div className="flex items-center gap-2.5">
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => setShowSlipModal(true)}
+                  icon={<Printer className="w-4 h-4" />}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs"
+                >
+                  Print Official Payment Slip
+                </Button>
               </div>
             </div>
+
+            {/* Total Paid Header Card */}
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-slate-50 to-emerald-500/5 dark:from-emerald-950/30 dark:via-slate-900 dark:to-emerald-950/10 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  All Statutory Ordination Levies Cleared
+                </span>
+                <div className="text-2xl sm:text-3xl font-mono font-bold text-slate-900 dark:text-white">
+                  ₦80,000.00 Paid in Full
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Official Church Account &bull; Confirmed by Lagos Central Province Treasury
+                </p>
+              </div>
+
+              <div className="text-right sm:border-l sm:border-slate-200 dark:sm:border-slate-800 sm:pl-6">
+                <span className="text-[11px] font-mono text-slate-500 block">Official Receipt Number</span>
+                <span className="text-sm font-mono font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
+                  {candidate.receiptNumber || 'REC-2026-ESOCS-7120'}
+                </span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                  Status: Cleared ✓
+                </span>
+              </div>
+            </div>
+
+            {/* Itemized Dues Breakdown Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase font-bold text-[10px] tracking-wider">
+                    <th className="py-3 px-4">Statutory Fee Description</th>
+                    <th className="py-3 px-4">Beneficiary Level</th>
+                    <th className="py-3 px-4">Amount</th>
+                    <th className="py-3 px-4 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+                  <tr>
+                    <td className="py-3.5 px-4 text-slate-900 dark:text-white font-semibold">
+                      Branch Parish Administrative & Screening Dues
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">{candidate.parish}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦15,000.00</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
+                        Cleared ✓
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="py-3.5 px-4 text-slate-900 dark:text-white font-semibold">
+                      District Council Ministerial Vetting Fee
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">{candidate.district}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦15,000.00</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
+                        Cleared ✓
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="py-3.5 px-4 text-slate-900 dark:text-white font-semibold">
+                      Provincial Diocese Registry & Quota Levy
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">{candidate.province}</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦20,000.00</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
+                        Cleared ✓
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="py-3.5 px-4 text-slate-900 dark:text-white font-semibold">
+                      National Holy Synod Consecration & Robing Levy
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-500">Holy Order General Conference</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦30,000.00</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
+                        Cleared ✓
+                      </span>
+                    </td>
+                  </tr>
+
+                  <tr className="bg-slate-50 dark:bg-slate-900/80 font-bold text-sm">
+                    <td colSpan={2} className="py-3.5 px-4 text-slate-900 dark:text-white">
+                      Total Statutory Ordination Fees Settled
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-amber-700 dark:text-amber-400 font-extrabold text-base">
+                      ₦80,000.00
+                    </td>
+                    <td className="py-3.5 px-4 text-right text-emerald-600 dark:text-emerald-400 text-xs font-mono">
+                      Paid in Full ✓
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
           </div>
 
-          <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 sm:p-6 space-y-4">
-            <h3 className="text-sm sm:text-base font-bold text-white pb-3 border-b border-slate-800 flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-emerald-400" />
-              Mandatory Canonical Credentials Locker
-            </h3>
-            <div className="space-y-3">
-              {[
-                { title: 'Original Baptismal Certificate', desc: `Issued ${candidate.baptismDate}` },
-                { title: 'Prior Ordination Scroll', desc: `Rank: ${candidate.currentRank} (${candidate.currentRankYear})` },
-                { title: 'Holy Matrimony / Standing Attestation', desc: 'Certified Church Standing' },
-                { title: 'Branch Rector Clean Standing Letter', desc: `Attested by ${candidate.branchPriestName || 'Branch Priest'}` },
-              ].map((doc, idx) => (
-                <div key={idx} className="p-3.5 bg-slate-950/70 rounded-xl border border-slate-800 flex items-center justify-between text-xs sm:text-sm">
-                  <div>
-                    <p className="font-bold text-slate-200">{doc.title}</p>
-                    <p className="text-xs text-slate-400">{doc.desc}</p>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: DEDICATED CEREMONY PASS & SEATING PAGE                             */}
+      {/* ========================================================================= */}
+      {currentTab === 'pass' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left 2 Cols: Digital Pass & Gate Directives */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <QrCode className="w-5 h-5 text-blue-500" />
+                      <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
+                        Digital Ceremony Admission Pass
+                      </h2>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Show this pass at Mount Zion Cathedral Gate 2 for candidate fast-track chancel entry.
+                    </p>
                   </div>
-                  <Badge variant="success" size="sm" className="bg-emerald-500/15 text-emerald-300 border-emerald-500/30 shrink-0">
-                    Verified ✓
-                  </Badge>
+
+                  <Button
+                    variant="gold"
+                    size="md"
+                    onClick={() => setShowPassModal(true)}
+                    icon={<QrCode className="w-4 h-4" />}
+                    className="font-bold text-xs shadow-md"
+                  >
+                    Open Fullscreen Pass
+                  </Button>
                 </div>
-              ))}
+
+                {/* Seating & Gate Info Box */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                      Chancel Pew Assignment
+                    </span>
+                    <div className="text-lg font-bold text-purple-950 dark:text-white">
+                      Zone A &bull; Pew 14
+                    </div>
+                    <p className="text-xs text-purple-800/80 dark:text-purple-300/80">
+                      Reserved candidate front section (Chancel East Wing).
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 space-y-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                      Fast-Track Entry Gate
+                    </span>
+                    <div className="text-lg font-bold text-blue-950 dark:text-white">
+                      Gate 2 &bull; East Portico
+                    </div>
+                    <p className="text-xs text-blue-800/80 dark:text-blue-300/80">
+                      Candidate dedicated security portal with barcode scanner.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cathedral Location */}
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+                  <span className="font-bold text-slate-900 dark:text-white block">Cathedral Headquarters Address:</span>
+                  <p className="text-slate-600 dark:text-slate-400">
+                    Mount Zion Cathedral Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State.
+                  </p>
+                </div>
+
+              </div>
             </div>
+
+            {/* Right 1 Col: Ordination Day Itinerary */}
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <Calendar className="w-5 h-5 text-amber-500" />
+                  <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                    Ordination Day Itinerary
+                  </h3>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span className="font-mono font-bold text-amber-700 dark:text-amber-400 shrink-0">07:30 AM</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">Accreditation & Robing Check</span>
+                      <span className="text-slate-500 text-[11px]">Chancel Vestry Gate 2</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span className="font-mono font-bold text-blue-700 dark:text-blue-400 shrink-0">08:30 AM</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">Processional Seating</span>
+                      <span className="text-slate-500 text-[11px]">Zone A Pew 14 Entry</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                    <span className="font-mono font-bold text-amber-700 dark:text-amber-300 shrink-0">09:00 AM</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">Consecration Service Begins</span>
+                      <span className="text-slate-600 dark:text-slate-300 text-[11px]">Laying of Hands by Baba Aladura</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 shrink-0">12:30 PM</span>
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white block">Gazette Photo & Certificate</span>
+                      <span className="text-slate-500 text-[11px]">Cathedral East Portico</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
+
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 5: DEDICATED SUPPORT & HELP DESK PAGE                                 */}
+      {/* ========================================================================= */}
+      {currentTab === 'support' && (
+        <div className="space-y-6 animate-in fade-in duration-200">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Left 2 Cols: Live Message Thread with Priest */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-purple-500" />
+                      <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
+                        Parish Priest & Secretariat Help Desk
+                      </h2>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      Direct channel to {candidate.branchPriestName || 'your Parish Priest'} and the Synod Secretariat.
+                    </p>
+                  </div>
+
+                  <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    Active Channel
+                  </span>
+                </div>
+
+                {/* Messages Thread Container */}
+                <div className="h-64 sm:h-72 overflow-y-auto p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+                  {messages.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 space-y-2">
+                      <MessageSquare className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600" />
+                      <p>No messages in your thread. Type below to send a question to your priest.</p>
+                    </div>
+                  ) : (
+                    messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`p-3.5 rounded-2xl max-w-md ${
+                          msg.senderRole === 'candidate'
+                            ? 'ml-auto bg-amber-500 text-slate-950 font-medium rounded-tr-none shadow-sm'
+                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-tl-none shadow-sm'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center text-[10px] opacity-75 mb-1">
+                          <span className="font-bold">{msg.senderName}</span>
+                          <span className="font-mono">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p className="leading-relaxed">{msg.content}</p>
+                      </div>
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Message Send Form */}
+                <form onSubmit={handleSendMessage} className="space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessageText}
+                      onChange={(e) => setNewMessageText(e.target.value)}
+                      placeholder="Type a message or inquiry for your branch priest..."
+                      className="flex-1 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    />
+                    <Button
+                      variant="primary"
+                      size="md"
+                      type="submit"
+                      loading={isSendingMessage}
+                      disabled={!newMessageText.trim()}
+                      icon={<Send className="w-4 h-4" />}
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-5 shrink-0"
+                    >
+                      Send
+                    </Button>
+                  </div>
+                </form>
+
+              </div>
+            </div>
+
+            {/* Right 1 Col: Frequently Asked Questions */}
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <HelpCircle className="w-5 h-5 text-amber-500" />
+                  <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                    Candidate FAQs
+                  </h3>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <span className="font-bold text-slate-900 dark:text-white block">What time should I arrive?</span>
+                    <p className="text-slate-500 text-[11px]">
+                      Candidates must arrive at 07:30 AM sharp for vestry inspection and processional roll call.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <span className="font-bold text-slate-900 dark:text-white block">Can I bring family members?</span>
+                    <p className="text-slate-500 text-[11px]">
+                      Yes. Family seating is reserved in Zone C with overflow gallery access.
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+                    <span className="font-bold text-slate-900 dark:text-white block">Where do I collect my certificate?</span>
+                    <p className="text-slate-500 text-[11px]">
+                      Certificates are presented at the Chancel Altar immediately following the laying of hands.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
       )}
 
       {/* Modals */}
-      {showPassModal && (
-        <DigitalPassModal
-          candidate={candidate}
-          isOpen={showPassModal}
-          onClose={() => setShowPassModal(false)}
-        />
-      )}
+      <DigitalPassModal
+        isOpen={showPassModal}
+        onClose={() => setShowPassModal(false)}
+        candidate={candidate}
+      />
 
-      {showCertModal && (
-        <CertificateModal
-          candidate={candidate}
-          isOpen={showCertModal}
-          onClose={() => setShowCertModal(false)}
-        />
-      )}
+      <CertificateModal
+        isOpen={showCertModal}
+        onClose={() => setShowCertModal(false)}
+        candidate={candidate}
+      />
+
+      <PaymentClearanceSlipModal
+        isOpen={showSlipModal}
+        onClose={() => setShowSlipModal(false)}
+        candidate={candidate}
+      />
+
+      <CandidateLearnerTour
+        isOpen={showTourModal}
+        onClose={() => setShowTourModal(false)}
+      />
+
+      <DemoAccountModal
+        isOpen={showDemoModal}
+        onClose={() => setShowDemoModal(false)}
+      />
+
     </div>
   );
 }

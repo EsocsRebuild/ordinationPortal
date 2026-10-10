@@ -6,19 +6,15 @@ WORKDIR /app
 # Install libc6-compat for Alpine compatibility with Next.js SWC
 RUN apk add --no-cache libc6-compat
 
-# Pre-create directories and ensure ownership for node user
-RUN mkdir -p /app/.next /app/data /app/node_modules && \
-    chown -R node:node /app
-
 # Install dependencies based on package-lock.json
-COPY --chown=node:node package.json package-lock.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# Copy source files with node ownership
-COPY --chown=node:node . .
+# Copy source files
+COPY . .
 
-# Ensure .next and data directories are owned by node and fully writable
-RUN mkdir -p /app/.next/cache /app/data && chown -R node:node /app && chmod -R 777 /app/.next /app/data
+# Ensure data directory exists for database persistence
+RUN mkdir -p /app/data && chmod -R 777 /app/data
 
 # Environment configuration
 ENV NODE_ENV=development
@@ -28,6 +24,4 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 EXPOSE 3000
 
-USER node
-
-CMD ["npm", "run", "dev"]
+CMD ["npx", "next", "dev", "-H", "0.0.0.0", "-p", "3000"]

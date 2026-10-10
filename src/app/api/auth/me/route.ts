@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { verifyJwtToken } from '@/lib/server/jwt';
 import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
 
 export const dynamic = 'force-dynamic';
@@ -12,9 +13,9 @@ export async function GET(request: Request) {
     }
 
     const token = authHeader.substring(7);
-    let decoded: any = null;
+    let decoded: any = verifyJwtToken(token);
 
-    if (token.startsWith('esocs_jwt_')) {
+    if (!decoded && token.startsWith('esocs_jwt_')) {
       try {
         const jsonStr = Buffer.from(token.replace('esocs_jwt_', ''), 'base64').toString('utf-8');
         decoded = JSON.parse(jsonStr);

@@ -1,8 +1,5 @@
 import { CandidateProfile, UserRole, UserSession } from '@/types';
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -45,19 +42,42 @@ export interface AuthSessionResponse {
   candidate?: CandidateProfile;
 }
 
+// Helper to check if a token string is a valid 3-part JWS / JWE compact serialization format
+function isValidJwt(token: string | null): token is string {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.trim().split('.');
+  return parts.length === 3 && parts.every((p) => p.length > 0);
+}
+
 class ApiService {
   private getHeaders(): HeadersInit {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('esocs_auth_token') : null;
-    return {
+    let token: string | null = null;
+    if (typeof window !== 'undefined') {
+      token = localStorage.getItem('esocs_auth_token');
+      // If legacy malformed token exists, purge it to prevent IDX14100 exception
+      if (token && !isValidJwt(token)) {
+        localStorage.removeItem('esocs_auth_token');
+        token = null;
+      }
+    }
+
+    const tenant = process.env.NEXT_PUBLIC_TENANT_SLUG || 'esocs';
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      'X-Tenant': tenant,
     };
+
+    if (isValidJwt(token)) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return headers;
   }
 
   // Authentication Endpoints
   async login(credentials: LoginCredentials): Promise<AuthSessionResponse> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(credentials),
@@ -78,9 +98,9 @@ class ApiService {
   async getCurrentSession(): Promise<AuthSessionResponse | null> {
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('esocs_auth_token') : null;
-      if (!token) return null;
+      if (!token || !isValidJwt(token)) return null;
 
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const res = await fetch('/api/auth/me', {
         headers: this.getHeaders(),
       });
 
@@ -95,7 +115,7 @@ class ApiService {
   // Self-Registration / Application
   async registerCandidate(payload: RegisterCandidatePayload): Promise<AuthSessionResponse> {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -115,7 +135,7 @@ class ApiService {
 
   // Forgot Password / Self-Service Reset
   async requestPasswordOtp(identifier: string): Promise<{ success: boolean; message: string; simulatedOtp?: string }> {
-    const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+    const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'request_otp', identifier }),
@@ -129,7 +149,7 @@ class ApiService {
   }
 
   async resetPassword(identifier: string, newPassword: string, otp?: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
+    const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'reset_password', identifier, newPassword, otp }),
@@ -144,7 +164,7 @@ class ApiService {
 
   // Change Password
   async changePassword(userId: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+    const res = await fetch('/api/auth/change-password', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify({ userId, newPassword }),
@@ -159,7 +179,7 @@ class ApiService {
 
   // 2FA Verification
   async verify2FA(otp: string, rememberDevice: boolean = false): Promise<{ success: boolean; message: string }> {
-    const res = await fetch(`${API_BASE_URL}/api/auth/verify-2fa`, {
+    const res = await fetch('/api/auth/verify-2fa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ otp, rememberDevice }),
@@ -175,7 +195,7 @@ class ApiService {
   // Candidates & Nominations
   async getCandidates(params?: { province?: string; stage?: string; tier?: string; search?: string; email?: string }): Promise<CandidateProfile[]> {
     const query = new URLSearchParams(params as Record<string, string>).toString();
-    const res = await fetch(`${API_BASE_URL}/api/candidates?${query}`, {
+    const res = await fetch(`/api/candidates?${query}`, {
       headers: this.getHeaders(),
     });
 
@@ -185,7 +205,7 @@ class ApiService {
   }
 
   async getCandidateById(id: string): Promise<CandidateProfile> {
-    const res = await fetch(`${API_BASE_URL}/api/candidates/${id}`, {
+    const res = await fetch(`/api/candidates/${id}`, {
       headers: this.getHeaders(),
     });
 
@@ -195,7 +215,7 @@ class ApiService {
   }
 
   async updateCandidate(id: string, updates: Partial<CandidateProfile>, actorName?: string): Promise<CandidateProfile> {
-    const res = await fetch(`${API_BASE_URL}/api/candidates/${id}`, {
+    const res = await fetch(`/api/candidates/${id}`, {
       method: 'PATCH',
       headers: this.getHeaders(),
       body: JSON.stringify({ ...updates, actorName }),
@@ -207,7 +227,7 @@ class ApiService {
   }
 
   async createNomination(nominationData: Partial<CandidateProfile>): Promise<CandidateProfile> {
-    const res = await fetch(`${API_BASE_URL}/api/candidates`, {
+    const res = await fetch('/api/candidates', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(nominationData),
@@ -226,7 +246,7 @@ class ApiService {
     approverName?: string;
     approverRole?: string;
   }): Promise<{ success: boolean; count: number; candidates: CandidateProfile[]; message: string }> {
-    const res = await fetch(`${API_BASE_URL}/api/candidates/batch`, {
+    const res = await fetch('/api/candidates/batch', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
@@ -241,7 +261,7 @@ class ApiService {
 
   // Audit Logs
   async getAuditLogs(): Promise<any[]> {
-    const res = await fetch(`${API_BASE_URL}/api/audit-logs`, {
+    const res = await fetch('/api/audit-logs', {
       headers: this.getHeaders(),
     });
 
@@ -253,7 +273,7 @@ class ApiService {
   // In-App Messaging
   async getMessages(candidateId?: string): Promise<any[]> {
     const query = candidateId ? `?candidateId=${candidateId}` : '';
-    const res = await fetch(`${API_BASE_URL}/api/messages${query}`, {
+    const res = await fetch(`/api/messages${query}`, {
       headers: this.getHeaders(),
     });
 
@@ -270,7 +290,7 @@ class ApiService {
     content: string;
     category?: string;
   }): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/api/messages`, {
+    const res = await fetch('/api/messages', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
@@ -290,7 +310,7 @@ class ApiService {
     notes?: string;
     action?: 'check_in' | 'undo_check_in';
   }): Promise<{ candidate: CandidateProfile }> {
-    const res = await fetch(`${API_BASE_URL}/api/candidates/check-in`, {
+    const res = await fetch('/api/candidates/check-in', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
@@ -312,7 +332,7 @@ class ApiService {
     provinceBreakdown: { province: string; total: number; checkedIn: number }[];
     recentArrivals: any[];
   }> {
-    const res = await fetch(`${API_BASE_URL}/api/candidates/attendance`, {
+    const res = await fetch('/api/candidates/attendance', {
       headers: this.getHeaders(),
     });
 
@@ -323,7 +343,7 @@ class ApiService {
 
   // Live Ecclesiastical Hierarchy Management
   async getHierarchy(): Promise<{ hierarchy: any[]; provinces: string[] }> {
-    const res = await fetch(`${API_BASE_URL}/api/hierarchy`, {
+    const res = await fetch('/api/hierarchy', {
       headers: this.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch ecclesiastical hierarchy');
@@ -332,7 +352,7 @@ class ApiService {
   }
 
   async saveHierarchy(payload: { action: string; [key: string]: any }): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/api/hierarchy`, {
+    const res = await fetch('/api/hierarchy', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(payload),
@@ -346,7 +366,7 @@ class ApiService {
 
   // Ranks & Levies Schedule
   async getRanks(): Promise<{ ranks: any[] }> {
-    const res = await fetch(`${API_BASE_URL}/api/ranks`, {
+    const res = await fetch('/api/ranks', {
       headers: this.getHeaders(),
     });
     if (!res.ok) throw new Error('Failed to fetch ecclesiastical ranks');
@@ -355,7 +375,7 @@ class ApiService {
   }
 
   async saveRanks(payload: { action: string; [key: string]: any }): Promise<any> {
-    const res = await fetch(`${API_BASE_URL}/api/ranks`, {
+    const res = await fetch('/api/ranks', {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(payload),

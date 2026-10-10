@@ -10,6 +10,7 @@ import {
   GenderType,
 } from './server/canonicalEngine';
 import { ESOCS_HIERARCHY, ESOCS_RANKS } from './constants';
+import { realtimeHub } from './server/realtimeHub';
 import fs from 'fs';
 import path from 'path';
 
@@ -45,7 +46,7 @@ const DEFAULT_USERS: UserRecord[] = [
     name: 'Senior Apostle Emmanuel O. Adeleke',
     email: 'e.adeleke@esocs.church',
     role: 'candidate',
-    roleTitle: 'Ordinand Candidate (Ascending to SSA Blue)',
+    roleTitle: 'Candidate (Ascending to SSA Blue)',
     jurisdiction: 'Mount Zion Cathedral, Lagos Central Province',
     candidateId: 'cand-001',
     passwordHash: 'password123',
@@ -56,7 +57,7 @@ const DEFAULT_USERS: UserRecord[] = [
     name: 'Lady Leader Grace Folashade Williams',
     email: 'g.williams@esocs.church',
     role: 'candidate',
-    roleTitle: 'Ordinand Candidate (Ascending to Mother in Israel)',
+    roleTitle: 'Candidate (Ascending to Mother in Israel)',
     jurisdiction: 'Grace & Glory Cathedral, Lagos Western Province',
     candidateId: 'cand-002',
     passwordHash: 'password123',
@@ -67,7 +68,7 @@ const DEFAULT_USERS: UserRecord[] = [
     name: 'Pastor Daniel Kelechi Nwachukwu',
     email: 'd.nwachukwu@esocs.church',
     role: 'candidate',
-    roleTitle: 'Ordinand Candidate (Ascending to Evangelist)',
+    roleTitle: 'Candidate (Ascending to Evangelist)',
     jurisdiction: 'Holy Ghost Sanctuary, Eastern Province',
     candidateId: 'cand-003',
     passwordHash: 'password123',
@@ -78,7 +79,7 @@ const DEFAULT_USERS: UserRecord[] = [
     name: 'Aladura Samuel Ayomide Jegede',
     email: 's.jegede@esocs.church',
     role: 'candidate',
-    roleTitle: 'Ordinand Candidate (Ascending to Leader)',
+    roleTitle: 'Candidate (Ascending to Leader)',
     jurisdiction: 'Cathedral of Redemption, Northern Province',
     candidateId: 'cand-004',
     passwordHash: 'password123',
@@ -89,7 +90,7 @@ const DEFAULT_USERS: UserRecord[] = [
     name: 'Special Senior Apostle Victor E. Dan-Jumbo',
     email: 'v.danjumbo@esocs.church',
     role: 'candidate',
-    roleTitle: 'Ordinand Candidate (Ascending to Apostle General)',
+    roleTitle: 'Candidate (Ascending to Apostle General)',
     jurisdiction: 'Bethel Central Cathedral, Niger Delta Province',
     candidateId: 'cand-005',
     passwordHash: 'password123',
@@ -430,7 +431,7 @@ const INITIAL_MESSAGES: InAppMessage[] = [
     senderId: 'user-admin-main',
     senderName: 'Central Secretariat Desk',
     senderRole: 'super_admin',
-    content: 'Grace and Peace, Senior Apostle Adeleke. Your canonical elevation to Special Senior Apostle (Blue) has passed all 5 vetting tiers and is ratified for investiture at the 2026 General Conference.',
+    content: 'Grace and Peace, Senior Apostle Adeleke. Your ordination elevation to Special Senior Apostle (Blue) has passed all 5 vetting tiers and is ratified for the 2026 General Conference Ordination Ceremony.',
     timestamp: '2026-09-28T10:00:00Z',
     isRead: true,
     category: 'secretariat',
@@ -693,6 +694,7 @@ export const db = {
       });
 
       writeDb(data);
+      realtimeHub.publish('CANDIDATE_UPDATED', merged, { actor: actorName, candidateId: merged.id });
       return merged;
     },
   },
@@ -997,6 +999,7 @@ export const db = {
       if (!data.messages) data.messages = [];
       data.messages.push(newMsg);
       writeDb(data);
+      realtimeHub.publish('MESSAGE_SENT', newMsg, { actor: entry.senderName, candidateId: entry.candidateId });
       return newMsg;
     },
   },

@@ -22,7 +22,7 @@ export async function GET(
 
     return createSuccessResponse(
       { candidate },
-      'Candidate dossier retrieved successfully.',
+      'Candidate profile retrieved successfully.',
       200
     );
   } catch (error: any) {
@@ -53,12 +53,12 @@ export async function PATCH(
 
     return createSuccessResponse(
       { candidate },
-      'Candidate dossier updated successfully in canonical ledger.',
+      'Candidate profile updated successfully in canonical ledger.',
       200
     );
   } catch (error: any) {
     return createErrorResponse(
-      error.message || 'Failed to update candidate dossier.',
+      error.message || 'Failed to update candidate profile.',
       [error.message || 'Update processing error'],
       400
     );

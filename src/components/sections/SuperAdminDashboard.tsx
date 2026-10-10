@@ -14,7 +14,9 @@ import { CertificateModal } from '@/components/shared/CertificateModal';
 import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
 import { LiveAccreditationDesk } from './LiveAccreditationDesk';
 import { HierarchyManager } from './HierarchyManager';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { api } from '@/services/api';
+import { useRealtimeEvent } from '@/services/realtime';
 import {
   Crown,
   Download,
@@ -93,6 +95,25 @@ export function SuperAdminDashboard({
         .finally(() => setIsLoadingLogs(false));
     }
   }, [activeTab]);
+
+  // Live real-time update listeners
+  useRealtimeEvent('CANDIDATE_UPDATED', (event) => {
+    if (event.payload && event.payload.id) {
+      onUpdateCandidate(event.payload);
+    }
+  });
+
+  useRealtimeEvent('CHECK_IN_ACCREDITED', (event) => {
+    if (event.payload && event.payload.id) {
+      onUpdateCandidate(event.payload);
+    }
+  });
+
+  useRealtimeEvent('AUDIT_LOG_ADDED', (event) => {
+    if (event.payload) {
+      setAuditLogs((prev) => [event.payload, ...prev]);
+    }
+  });
 
   const filteredCandidates = candidates.filter((c) => {
     const matchesSearch =
@@ -316,25 +337,29 @@ export function SuperAdminDashboard({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<FileSpreadsheet className="w-4 h-4" />}
-            onClick={() => exportCandidatesToCSV(candidates)}
-            className="text-white border-church-700 hover:bg-church-850"
-          >
-            Export CSV
-          </Button>
+          <Tooltip content="Export filtered list of ordination candidates as spreadsheet CSV" position="bottom">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<FileSpreadsheet className="w-4 h-4" />}
+              onClick={() => exportCandidatesToCSV(candidates)}
+              className="text-white border-church-700 hover:bg-church-850"
+            >
+              Export CSV
+            </Button>
+          </Tooltip>
 
-          <Button
-            variant="gold"
-            size="sm"
-            icon={<Award className="w-4 h-4" />}
-            onClick={handleBatchGenerateQRCerts}
-            loading={isProcessingBatch}
-          >
-            Batch Generate QR Certs
-          </Button>
+          <Tooltip content="Issue cryptographically verified QR certificates for all cleared candidates" position="bottom">
+            <Button
+              variant="gold"
+              size="sm"
+              icon={<Award className="w-4 h-4" />}
+              onClick={handleBatchGenerateQRCerts}
+              loading={isProcessingBatch}
+            >
+              Batch Generate QR Certs
+            </Button>
+          </Tooltip>
         </div>
       </div>
 
@@ -800,41 +825,47 @@ export function SuperAdminDashboard({
 
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            icon={<Eye className="w-3.5 h-3.5" />}
-                            onClick={() => setInspectingCandidate(c)}
-                          >
-                            Inspect & Vet
-                          </Button>
+                          <Tooltip content="Inspect candidate profile, tier approvals, exam scores, and fees" position="left">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              icon={<Eye className="w-3.5 h-3.5" />}
+                              onClick={() => setInspectingCandidate(c)}
+                            >
+                              Inspect & Vet
+                            </Button>
+                          </Tooltip>
 
                           {c.stage === 'investiture_assigned' && (
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              icon={<QrCode className="w-3.5 h-3.5" />}
-                              onClick={() => {
-                                setActiveModalCandidate(c);
-                                setModalType('pass');
-                              }}
-                            >
-                              Pass
-                            </Button>
+                            <Tooltip content="View and print admission pass for this candidate" position="left">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                icon={<QrCode className="w-3.5 h-3.5" />}
+                                onClick={() => {
+                                  setActiveModalCandidate(c);
+                                  setModalType('pass');
+                                }}
+                              >
+                                Pass
+                              </Button>
+                            </Tooltip>
                           )}
 
                           {c.stage === 'ordained' && (
-                            <Button
-                              variant="gold"
-                              size="sm"
-                              icon={<Award className="w-3.5 h-3.5" />}
-                              onClick={() => {
-                                setActiveModalCandidate(c);
-                                setModalType('cert');
-                              }}
-                            >
-                              Certificate
-                            </Button>
+                            <Tooltip content="View official ordination certificate" position="left">
+                              <Button
+                                variant="gold"
+                                size="sm"
+                                icon={<Award className="w-3.5 h-3.5" />}
+                                onClick={() => {
+                                  setActiveModalCandidate(c);
+                                  setModalType('cert');
+                                }}
+                              >
+                                Certificate
+                              </Button>
+                            </Tooltip>
                           )}
                         </div>
                       </td>
@@ -852,7 +883,7 @@ export function SuperAdminDashboard({
         <LiveAccreditationDesk officerName={session.name} />
       )}
 
-      {/* Candidate Dossier & Multi-Tier Inspection Drawer */}
+      {/* Candidate Profile & Multi-Tier Inspection Drawer */}
       {inspectingCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
           <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6">
@@ -864,7 +895,7 @@ export function SuperAdminDashboard({
                 </div>
                 <div>
                   <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                    Canonical Dossier & 5-Tier Vetting Inspection
+                    Candidate Profile & 5-Tier Vetting Details
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     {inspectingCandidate.fullName} • <span className="font-mono">{inspectingCandidate.regNumber}</span>

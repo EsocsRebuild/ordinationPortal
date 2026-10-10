@@ -4,10 +4,8 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { UserRole } from '@/types';
-import { ROLE_CONFIGS } from '@/utils/security';
-import { Button } from '@/components/ui/Button';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { RegisterModal } from '@/components/auth/RegisterModal';
 import { ForgotPasswordModal } from '@/components/auth/ForgotPasswordModal';
 import { TwoFactorModal } from '@/components/auth/TwoFactorModal';
@@ -15,75 +13,73 @@ import {
   Shield,
   Lock,
   User,
+  AlertCircle,
   ArrowRight,
   ArrowLeft,
-  AlertCircle,
-  KeyRound,
-  UserPlus,
   Eye,
   EyeOff,
   Sparkles,
-  CheckCircle2,
+  KeyRound,
+  UserPlus,
   Crown,
   Church,
-  FileCheck,
-  Award,
+  ChevronRight,
 } from 'lucide-react';
 
-const DEMO_TEST_PERSONAS = [
+const DEMO_PERSONAS = [
   {
-    role: 'candidate' as UserRole,
-    name: 'Senior Apostle Emmanuel Adeleke',
+    role: 'candidate',
+    name: 'Snr. Apostle Emmanuel Adeleke',
     email: 'e.adeleke@esocs.church',
-    title: 'Male Ordinand (Yellow → Blue)',
-    status: 'Investiture Ready • Pass & Cert Issued',
+    title: 'Male Candidate (Yellow → Blue)',
+    badge: 'Candidate',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
     icon: '👨',
-    badgeColor: 'bg-blue-500/15 text-blue-300 border-blue-400/40',
   },
   {
-    role: 'candidate' as UserRole,
+    role: 'candidate',
     name: 'Lady Leader Grace Williams',
     email: 'g.williams@esocs.church',
-    title: 'Female Ordinand (Prophetess → Mother in Israel)',
-    status: 'CMC Approved • 100% Cleared',
+    title: 'Female Candidate (Prophetess → Mother in Israel)',
+    badge: 'Candidate',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
     icon: '👩',
-    badgeColor: 'bg-purple-500/15 text-purple-300 border-purple-400/40',
   },
   {
-    role: 'parish_leader' as UserRole,
-    name: 'Senior Apostle Festus Okon',
+    role: 'parish_leader',
+    name: 'Snr. Apostle Festus Okon',
     email: 'f.okon@esocs.church',
     title: 'Branch Rector & Parish Chairman',
-    status: 'Branch Endorsements Cockpit',
+    badge: 'Parish Leader',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
     icon: '⛪',
-    badgeColor: 'bg-indigo-500/15 text-indigo-300 border-indigo-400/40',
   },
   {
-    role: 'screening_officer' as UserRole,
-    name: 'Dr. Godwin Bassey (CMC)',
-    email: 'screening@esocs.church',
-    title: 'CMC National Screening Directorate',
-    status: 'Theology Exams & Doc Vetting',
+    role: 'screening_officer',
+    name: 'Special Snr. Apostle Dr. Bassey',
+    email: 'g.bassey@esocs.church',
+    title: 'CMC Screening & Examination Director',
+    badge: 'CMC Screener',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
     icon: '📋',
-    badgeColor: 'bg-amber-500/15 text-amber-300 border-amber-400/40',
   },
   {
-    role: 'advisory_board' as UserRole,
-    name: 'Apostle General J. K. Coker',
-    email: 'advisory@esocs.church',
-    title: 'Holy Synod Advisory Board',
-    status: 'Apex Synodical Ratification',
+    role: 'advisory_board',
+    name: 'Apostle General Elder M. Adebayo',
+    email: 'm.adebayo@esocs.church',
+    title: 'Holy Synod Advisory Board of Elders',
+    badge: 'Holy Synod',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
     icon: '👑',
-    badgeColor: 'bg-rose-500/15 text-rose-300 border-rose-400/40',
   },
   {
-    role: 'super_admin' as UserRole,
-    name: 'Supervising Apostle General Prof. Oladele',
+    role: 'admin',
+    name: 'Prof. David A. Oladele',
     email: 'admin@esocs.church',
-    title: 'Secretary General & Portal Sovereign',
-    status: '5-Tier Cockpit & Treasury Ledger',
-    icon: '🏛️',
-    badgeColor: 'bg-emerald-500/15 text-emerald-300 border-emerald-400/40',
+    title: 'Supervising Apostle General / Super Admin',
+    badge: 'Super Admin',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+    icon: '🛡️',
   },
 ];
 
@@ -91,225 +87,253 @@ export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const router = useRouter();
 
-  const [identifier, setIdentifier] = useState('admin@esocs.church');
-  const [password, setPassword] = useState('password123');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('super_admin');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [tab, setTab] = useState<'signin' | 'demo'>('signin');
 
-  // Modals
+  // Modals state
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     if (!identifier.trim()) {
-      setErrorMsg('Please enter your canonical email address or ordination registration code.');
+      setErrorMsg('Please enter your Registration Number or Church Email.');
       return;
     }
 
     try {
       await login({
         identifier: identifier.trim(),
-        password,
-        role: selectedRole,
+        password: password || 'password123',
       });
     } catch (err: any) {
-      setErrorMsg(err.message || 'Authentication failed. Please verify credentials.');
+      setErrorMsg(err.message || 'Unable to sign in. Please verify your credentials.');
     }
   };
 
-  const handleApplyPersona = (persona: typeof DEMO_TEST_PERSONAS[0]) => {
-    setSelectedRole(persona.role);
-    setIdentifier(persona.email);
-    setPassword('password123');
+  const handleDemoLogin = async (email: string) => {
     setErrorMsg(null);
+    setIdentifier(email);
+    setPassword('password123');
+    try {
+      await login({
+        identifier: email,
+        password: 'password123',
+      });
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Demo login failed.');
+    }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 md:p-8">
-      {/* Top Header */}
-      <div className="max-w-6xl w-full mx-auto flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-gold-400 hover:text-gold-300 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Portal Landing Page
-        </Link>
-        <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-gold-400" />
-          <span className="text-xs font-mono text-slate-400">ESOCS CANONICAL AUTH GATEWAY</span>
-        </div>
-      </div>
-
-      <div className="max-w-5xl w-full mx-auto my-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        {/* Left Side: 1-Click Fast Test Personas Deck */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gold-500/10 border border-gold-400/30 text-gold-300 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" /> Rapid Test Accounts Deck
-            </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Select a Canonical Role to Test Instantly
-            </h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Click any verified test persona below to instantly prefill credentials and inspect their dedicated dashboard workflows.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {DEMO_TEST_PERSONAS.map((p, idx) => {
-              const isSelected = identifier === p.email;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => handleApplyPersona(p)}
-                  className={`p-3 rounded-2xl text-left border transition-all flex items-start gap-2.5 ${
-                    isSelected
-                      ? 'bg-gold-500/15 border-gold-400/70 shadow-gold ring-1 ring-gold-400/40'
-                      : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 hover:bg-slate-800/80'
-                  }`}
-                >
-                  <span className="text-xl shrink-0 p-1.5 rounded-xl bg-slate-800/80">{p.icon}</span>
-                  <div className="space-y-0.5 min-w-0">
-                    <div className="flex items-center justify-between gap-1">
-                      <p className="font-bold text-xs text-white truncate">{p.name}</p>
-                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-gold-400 shrink-0" />}
-                    </div>
-                    <p className="text-[10px] text-gold-300 font-medium truncate">{p.title}</p>
-                    <span className="inline-block text-[9px] text-slate-400 font-mono">{p.status}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-            <span>Universal Dev Password: <strong className="font-mono text-white">password123</strong></span>
-            <span className="text-emerald-400 font-bold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Database Seeding Active
-            </span>
-          </div>
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] dark:bg-[#060913] text-slate-900 dark:text-slate-100 font-sans selection:bg-amber-500/20">
+      
+      {/* Top Bar */}
+      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a0f21] px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white mr-2">
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Back to Home</span>
+          </Link>
+          <EsocsLogo size={36} showText={true} />
         </div>
 
-        {/* Right Side: Main Login Card */}
-        <div className="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 relative overflow-hidden">
-          {/* Sacred Crest */}
-          <div className="text-center space-y-1.5">
-            <div className="flex justify-center mb-1">
-              <EsocsLogo size={46} showText={false} />
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsRegisterOpen(true)}
+            className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-amber-500 text-xs font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-all"
+          >
+            Apply for Ordination
+          </button>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Main Login Card */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6">
+        <div className="w-full max-w-md card-solid-elevated rounded-3xl p-6 sm:p-8 space-y-6">
+          
+          {/* Header */}
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+              <Shield className="w-3.5 h-3.5" />
+              <span>Canonical Access Portal</span>
             </div>
-            <h1 className="font-serif text-xl sm:text-2xl font-bold text-white tracking-tight">
-              Canonical Authentication Gateway
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
+              Sign In to Portal
             </h1>
-            <p className="text-xs text-slate-400">
-              Sign in to access your designated ecclesiastical dashboard
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Enter your ecclesiastical registration number or verified church email.
             </p>
+          </div>
+
+          {/* Tab Switcher */}
+          <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setTab('signin')}
+              className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                tab === 'signin'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Sign In</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('demo')}
+              className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                tab === 'demo'
+                  ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Demo Personas</span>
+            </button>
           </div>
 
           {errorMsg && (
-            <div className="p-3 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center gap-2">
+            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs rounded-xl flex items-center gap-2.5">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4 text-xs">
-            <div>
-              <label className="block font-medium text-slate-300 mb-1">
-                Membership Reg Number or Ecclesiastical Email *
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. e.adeleke@esocs.church or ESOCS/ORD/2026/0481"
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-gold-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="font-medium text-slate-300">
-                  Password / Access Key *
+          {tab === 'signin' && (
+            <form onSubmit={handleSignIn} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                  Registration Number or Church Email
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setIsForgotOpen(true)}
-                  className="text-[11px] text-gold-400 hover:underline flex items-center gap-1"
-                >
-                  <KeyRound className="w-3 h-3" /> Forgot Password?
-                </button>
+                <div className="relative">
+                  <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder="e.g. ESOCS/ORD/2026/0481 or e.adeleke@esocs.church"
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                  />
+                </div>
               </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="w-full pl-9 pr-8 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:ring-2 focus:ring-gold-500 font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
-                >
-                  {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                </button>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="font-semibold text-slate-700 dark:text-slate-300">
+                    Password / Access Key
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotOpen(true)}
+                    className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your security access key"
+                    className="w-full pl-10 pr-10 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs sm:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                {isLoading ? (
+                  <span className="inline-block w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>Sign In to Dashboard</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
+          {tab === 'demo' && (
+            <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1 text-xs">
+              {DEMO_PERSONAS.map((p, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleDemoLogin(p.email)}
+                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 hover:bg-amber-50 dark:bg-slate-900 dark:hover:bg-slate-800 transition-all flex items-center justify-between text-left group"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-base shrink-0">{p.icon}</span>
+                    <div className="min-w-0">
+                      <div className="font-bold text-xs text-slate-900 dark:text-white truncate group-hover:text-amber-600 dark:group-hover:text-amber-400">
+                        {p.name}
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        {p.title}
+                      </div>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border shrink-0 ${p.badgeColor}`}>
+                    {p.badge}
+                  </span>
+                </button>
+              ))}
             </div>
+          )}
 
-            <Button
-              variant="gold"
-              size="lg"
-              type="submit"
-              loading={isLoading}
-              className="w-full mt-2"
-              icon={<ArrowRight className="w-4 h-4" />}
-            >
-              Authenticate & Enter Portal
-            </Button>
-          </form>
-
-          {/* Self-registration action */}
-          <div className="pt-4 border-t border-slate-800 text-center space-y-2 text-xs">
-            <p className="text-slate-400">New Candidate seeking Holy Ordination?</p>
-            <button
-              type="button"
-              onClick={() => setIsRegisterOpen(true)}
-              className="w-full py-2.5 px-3 rounded-xl border border-gold-500/40 hover:border-gold-500 bg-gold-500/10 hover:bg-gold-500/20 text-gold-300 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <UserPlus className="w-3.5 h-3.5" /> Apply for Ordination (Self-Registration)
-            </button>
+          {/* Bottom Link */}
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              New Candidate for 2026?{' '}
+              <button
+                type="button"
+                onClick={() => setIsRegisterOpen(true)}
+                className="text-amber-600 dark:text-amber-400 font-bold hover:underline"
+              >
+                Apply for Ordination
+              </button>
+            </p>
           </div>
+
         </div>
-      </div>
+      </main>
 
       {/* Modals */}
-      <RegisterModal isOpen={isRegisterOpen} onClose={() => setIsRegisterOpen(false)} />
+      <RegisterModal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+      />
+
       <ForgotPasswordModal
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
-        onSuccessLogin={(id) => {
-          setIdentifier(id);
-          setPassword('password123');
-        }}
       />
+
       <TwoFactorModal />
 
-      {/* Bottom Footer */}
-      <div className="max-w-6xl w-full mx-auto text-center text-xs text-slate-500">
-        © 1925 – 2026 The Eternal Sacred Order of the Cherubim and Seraphim Worldwide.
-      </div>
     </div>
   );
 }

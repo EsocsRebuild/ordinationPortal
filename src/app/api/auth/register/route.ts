@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { createJwtToken } from '@/lib/server/jwt';
 import { validateCandidateRegistration } from '@/lib/server/validators';
 import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
 
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
     const existing = db.users.authenticate(email);
     if (existing) {
       return createErrorResponse(
-        'An ecclesiastical account or candidate dossier is already registered with this email address.',
+        'An account or candidate profile is already registered with this email address.',
         ['DUPLICATE_EMAIL_REGISTRATION'],
         409
       );
@@ -58,15 +59,13 @@ export async function POST(request: Request) {
       enable2FA,
     });
 
-    const token = `esocs_jwt_${Buffer.from(
-      JSON.stringify({
-        userId: user.userId,
-        role: user.role,
-        email: user.email,
-        candidateId: user.candidateId,
-        issuedAt: Date.now(),
-      })
-    ).toString('base64')}`;
+    const token = createJwtToken({
+      userId: user.userId,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+      candidateId: user.candidateId,
+    });
 
     return createSuccessResponse(
       {

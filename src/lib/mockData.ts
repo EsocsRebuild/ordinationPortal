@@ -7,7 +7,7 @@ export const INITIAL_USERS: UserSession[] = [
     name: 'Senior Apostle (Yellow) Emmanuel O. Adeleke',
     email: 'e.adeleke@esocs.church',
     role: 'candidate',
-    roleTitle: 'Ordinand Candidate (Ascending to SSA Blue)',
+    roleTitle: 'Candidate (Ascending to SSA Blue)',
     jurisdiction: 'Mount Zion Cathedral, Lagos Central Province',
     candidateId: 'cand-001',
   },
