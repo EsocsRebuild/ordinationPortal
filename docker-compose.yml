@@ -10,10 +10,10 @@ services:
       context: .
       dockerfile: Dockerfile.dev
     ports:
-      - "3010:3010"
+      - "3010:3000"          # Host 3010 forwards to Container 3000
     environment:
       - NODE_ENV=development
-      - PORT=3010
+      - PORT=3000
       - HOSTNAME=0.0.0.0
       - NEXT_TELEMETRY_DISABLED=1
       # Enable real-time file watcher polling across host-container boundary
@@ -21,7 +21,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=500
       - FAST_REFRESH=true
-      - WDS_SOCKET_PORT=3010
+      - WDS_SOCKET_PORT=3010 # Tells browser HMR client to reach host 3010
     volumes:
       # Live bind mount for the entire workspace
       - .:/app:delegated
