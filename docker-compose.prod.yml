@@ -11,7 +11,7 @@ services:
       dockerfile: Dockerfile
       target: runner
     ports:
-      - "3010:3010"
+      - "3011:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
