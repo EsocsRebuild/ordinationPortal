@@ -47,6 +47,7 @@ import {
   ArrowRight,
   DollarSign,
   LayoutDashboard,
+  Lock,
 } from 'lucide-react';
 
 interface CandidateDashboardProps {
@@ -113,8 +114,6 @@ export function CandidateDashboard({
   }, [candidate]);
 
   const currentCandidate = candidate || initialCandidate;
-  const isCeremonyReady = ['board_approved', 'investiture_assigned', 'ordained'].includes(currentCandidate.stage);
-  const isOrdained = currentCandidate.stage === 'ordained';
 
   const handleCopyReg = () => {
     navigator.clipboard.writeText(currentCandidate.regNumber);
@@ -271,10 +270,123 @@ export function CandidateDashboard({
   const completedCount = approvalSteps.filter((s) => s.isCompleted).length;
   const progressPercent = Math.round((completedCount / approvalSteps.length) * 100);
 
-  const isVettingCleared = completedCount === 5;
+  const isVettingCleared = completedCount === 5 || ['board_approved', 'investiture_assigned', 'ordained'].includes(candidate.stage);
   const isLeviesCleared = candidate.duesStatus === 'cleared';
+  const isCeremonyReady = isVettingCleared && isLeviesCleared;
   const isPassReady = Boolean(isCeremonyReady && candidate.seatNumber);
   const isPewReady = Boolean(isCeremonyReady && candidate.seatNumber);
+  const isOrdained = candidate.stage === 'ordained';
+
+  // 6-Stage Ecclesiastical Ordination Progression Stepper
+  const applicantStages = [
+    {
+      step: 1,
+      id: 'parish',
+      title: 'Parish Nomination',
+      subtitle: 'Local Rector Vetting',
+      isCompleted: branchApproved,
+      isActive: !branchApproved,
+    },
+    {
+      step: 2,
+      id: 'district',
+      title: 'District Council Vetting',
+      subtitle: 'Superintendent Council',
+      isCompleted: districtApproved,
+      isActive: branchApproved && !districtApproved,
+    },
+    {
+      step: 3,
+      id: 'province',
+      title: 'Provincial Diocese Clearance',
+      subtitle: 'Diocesan Secretariat',
+      isCompleted: provinceApproved,
+      isActive: districtApproved && !provinceApproved,
+    },
+    {
+      step: 4,
+      id: 'cmc',
+      title: 'CMC Screening Exam',
+      subtitle: 'Theology & Liturgy',
+      isCompleted: cmcApproved,
+      isActive: provinceApproved && !cmcApproved,
+    },
+    {
+      step: 5,
+      id: 'synod',
+      title: 'Holy Synod Ratification',
+      subtitle: 'Final Seal & Pass Issuance',
+      isCompleted: nationalApproved,
+      isActive: cmcApproved && !nationalApproved,
+    },
+    {
+      step: 6,
+      id: 'consecration',
+      title: 'Solemn Altar Consecration',
+      subtitle: 'Laying of Hands',
+      isCompleted: isOrdained,
+      isActive: nationalApproved && !isOrdained,
+    },
+  ];
+
+  const currentStageIndex = isOrdained
+    ? 6
+    : nationalApproved
+    ? 6
+    : cmcApproved
+    ? 5
+    : provinceApproved
+    ? 4
+    : districtApproved
+    ? 3
+    : branchApproved
+    ? 2
+    : 1;
+
+  const currentStageInfo = applicantStages[Math.min(currentStageIndex - 1, 5)];
+
+  const stageGuidance: Record<number, { heading: string; desc: string; actionText?: string; actionTab?: string }> = {
+    1: {
+      heading: 'Parish Priest Endorsement In Review',
+      desc: 'Your nomination profile is registered and undergoing endorsement by your local Parish Priest and Elders. Ensure your church tithes, local standing, and branch records are verified.',
+      actionText: 'Inspect Parish Approval Status',
+      actionTab: 'clearance',
+    },
+    2: {
+      heading: 'District Council Vetting Underway',
+      desc: 'Your Parish Priest has successfully endorsed your candidacy. Your file is now before the District Superintendent Council for regional quota verification.',
+      actionText: 'View District Progress',
+      actionTab: 'clearance',
+    },
+    3: {
+      heading: 'Provincial Diocese Quota Clearance',
+      desc: 'District verification confirmed. The Provincial Diocese Secretariat is reviewing your ministerial tenure and allotting your provincial diocese quota.',
+      actionText: 'View Provincial Clearance',
+      actionTab: 'clearance',
+    },
+    4: {
+      heading: 'Central Ministerial Committee (CMC) Screening',
+      desc: 'Provincial diocese has cleared your candidacy. You are scheduled for the Central Ministerial Committee written theology and liturgical assessment.',
+      actionText: 'View Examination Syllabus',
+      actionTab: 'clearance',
+    },
+    5: {
+      heading: isLeviesCleared ? 'Holy Synod Supreme Ratification' : 'Statutory Levies Settlement Required',
+      desc: isLeviesCleared
+        ? 'CMC screening certified with distinction. The Holy Synod & Office of the Prelate is docketing your final ratification and chancel seating allocation.'
+        : 'CMC screening completed! Please settle your outstanding statutory ordination levies to enable generation of your Digital Gate 2 Fast-Track Pass.',
+      actionText: isLeviesCleared ? 'View Clearance Status' : 'Settle Statutory Levies',
+      actionTab: isLeviesCleared ? 'clearance' : 'payments',
+    },
+    6: {
+      heading: isOrdained ? 'Sacred Consecration Concluded' : 'All Clearances Ratified — Ready for Altar Consecration',
+      desc: isOrdained
+        ? 'You have received the laying of hands from His Most Eminence, the Baba Aladura. Your Official Certificate of Ordination is gazetted and available for printing.'
+        : 'All 5 clearance tiers are ratified and statutory levies are settled! Your Gate 2 Digital Ceremony Pass and Pew Seating are unlocked. Report promptly at the Holy Order Cathedral on Saturday, Nov 14, 2026.',
+      actionText: isOrdained ? 'Download Certificate' : 'Open Ceremony Pass',
+      actionTab: isOrdained ? 'overview' : 'pass',
+    },
+  };
 
   const readyCount =
     (isVettingCleared ? 1 : 0) +
@@ -324,6 +436,41 @@ export function CandidateDashboard({
       console.error('Failed to submit payment reference:', err);
     } finally {
       setIsSubmittingPayment(false);
+    }
+  };
+
+  const [isProcessingOnlinePay, setIsProcessingOnlinePay] = useState(false);
+
+  const handleInstantOnlinePayment = async () => {
+    setIsProcessingOnlinePay(true);
+    try {
+      const generatedReceipt = `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const updated = await api.updateCandidate(
+        candidate.id,
+        {
+          duesStatus: 'cleared',
+          duesAmountPaid: totalLevy,
+          receiptNumber: candidate.receiptNumber || generatedReceipt,
+        },
+        candidate.fullName
+      );
+      if (updated) {
+        setCandidate(updated);
+        onUpdateCandidate?.(updated);
+        setPaymentSubmittedSuccess(true);
+        realtimeClient.broadcastLocal({
+          id: `evt_${Date.now()}`,
+          type: 'CANDIDATE_UPDATED',
+          timestamp: new Date().toISOString(),
+          payload: { candidateId: candidate.id, status: 'cleared', amount: totalLevy, receipt: updated.receiptNumber },
+          actor: candidate.fullName,
+          candidateId: candidate.id,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to process online payment:', err);
+    } finally {
+      setIsProcessingOnlinePay(false);
     }
   };
 
@@ -486,8 +633,9 @@ export function CandidateDashboard({
           </div>
 
           {/* Right: Key Action Buttons (Clean Grid on Mobile, Column on Desktop) */}
+          {/* Right: Key Action Buttons (Clean Grid on Mobile, Column on Desktop) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5 w-full lg:w-56 shrink-0 pt-2 lg:pt-0">
-            {isCeremonyReady && (
+            {isPassReady ? (
               <Tooltip content="Open your digital accreditation pass with QR verification" position="left" className="w-full">
                 <Button
                   variant="gold"
@@ -499,18 +647,42 @@ export function CandidateDashboard({
                   Digital Ceremony Pass
                 </Button>
               </Tooltip>
+            ) : (
+              <Tooltip content="Digital Ceremony Pass is locked until all 5 vetting clearances and statutory levies are verified" position="left" className="w-full">
+                <Button
+                  variant="outline"
+                  size="md"
+                  icon={<Lock className="w-4 h-4 text-amber-500" />}
+                  onClick={() => setShowPassModal(true)}
+                  className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-dashed border-amber-400 dark:border-amber-600/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                >
+                  Pass Restricted ({completedCount}/5 Clearances) 🔒
+                </Button>
+              </Tooltip>
             )}
 
-            {(isOrdained || isCeremonyReady) && (
+            {isOrdained ? (
               <Tooltip content="View and print your official certificate of ordination" position="left" className="w-full">
                 <Button
                   variant="outline"
                   size="md"
-                  icon={<Award className="w-4 h-4" />}
+                  icon={<Award className="w-4 h-4 text-amber-500" />}
                   onClick={() => setShowCertModal(true)}
                   className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
                 >
                   Ordination Certificate
+                </Button>
+              </Tooltip>
+            ) : (
+              <Tooltip content="Conferred at the Holy Altar by His Most Eminence upon sacred investiture" position="left" className="w-full">
+                <Button
+                  variant="outline"
+                  size="md"
+                  icon={<Award className="w-4 h-4 text-slate-400" />}
+                  onClick={() => setShowCertModal(true)}
+                  className="w-full justify-center bg-slate-100/60 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                >
+                  Certificate (Post-Ordination) 🔒
                 </Button>
               </Tooltip>
             )}
@@ -586,6 +758,11 @@ export function CandidateDashboard({
         >
           <QrCode className="w-4 h-4 text-blue-500" />
           <span>Ceremony Pass & Seating</span>
+          {!isPassReady && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono">
+              🔒 Locked
+            </span>
+          )}
         </Link>
 
         <Link
@@ -611,6 +788,120 @@ export function CandidateDashboard({
       {/* ========================================================================= */}
       {currentTab === 'overview' && (
         <div className="space-y-6 animate-in fade-in duration-200">
+
+          {/* ========================================================================= */}
+          {/* APPLICANT ORDINATION PROGRESSION STAGE TRACKER (6-STAGE STEPPER)          */}
+          {/* ========================================================================= */}
+          <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-amber-700 dark:text-amber-400 font-bold">
+                    Official Candidate Progression Pipeline
+                  </span>
+                </div>
+                <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
+                  Stage {currentStageIndex} of 6: {currentStageInfo?.title || 'Ecclesiastical Vetting'}
+                </h2>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-xl font-mono text-xs font-bold border ${
+                  isOrdained
+                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                    : isCeremonyReady
+                    ? 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30'
+                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                }`}>
+                  {isOrdained
+                    ? 'Sacred Investiture Conferred ✓'
+                    : isCeremonyReady
+                    ? 'Ceremony Pass & Pew Ready ✓'
+                    : `Active Stage (${completedCount}/5 Cleared)`}
+                </span>
+              </div>
+            </div>
+
+            {/* Stepper Roadmap Display */}
+            <div className="relative pt-2 pb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 relative z-10">
+                {applicantStages.map((stage) => {
+                  const isDone = stage.isCompleted;
+                  const isCurrent = currentStageIndex === stage.step && !isDone;
+                  return (
+                    <div
+                      key={stage.id}
+                      className={`p-3 rounded-2xl border transition-all flex flex-col items-center text-center ${
+                        isDone
+                          ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                          : isCurrent
+                          ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
+                          : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs mb-2 transition-transform ${
+                        isDone
+                          ? 'bg-emerald-500 text-white shadow-xs'
+                          : isCurrent
+                          ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {isDone ? (
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        ) : isCurrent ? (
+                          <span>0{stage.step}</span>
+                        ) : (
+                          <Lock className="w-3.5 h-3.5 opacity-60" />
+                        )}
+                      </div>
+                      <span className="font-bold text-xs leading-tight line-clamp-1 text-slate-900 dark:text-white">
+                        {stage.title}
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                        {stage.subtitle}
+                      </span>
+                      <span className={`text-[9px] font-mono mt-1.5 px-1.5 py-0.5 rounded-md font-semibold ${
+                        isDone
+                          ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
+                          : isCurrent
+                          ? 'bg-amber-500/25 text-amber-800 dark:text-amber-200'
+                          : 'bg-slate-200/60 dark:bg-slate-800 text-slate-400'
+                      }`}>
+                        {isDone ? 'Cleared ✓' : isCurrent ? 'In Progress ⏳' : 'Locked 🔒'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Contextual Stage Advisory & Next Step Callout */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
+                  <Info className="w-4 h-4" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="font-bold text-slate-900 dark:text-white">
+                    {stageGuidance[currentStageIndex]?.heading || 'Ecclesiastical Vetting Docket'}
+                  </p>
+                  <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed max-w-2xl">
+                    {stageGuidance[currentStageIndex]?.desc}
+                  </p>
+                </div>
+              </div>
+              {stageGuidance[currentStageIndex]?.actionText && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentTab((stageGuidance[currentStageIndex]?.actionTab as any) || 'clearance')}
+                  className="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs shrink-0 transition-colors inline-flex items-center gap-1.5 self-end sm:self-center cursor-pointer"
+                >
+                  <span>{stageGuidance[currentStageIndex]?.actionText}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-500" />
+                </button>
+              )}
+            </div>
+          </div>
           
           {/* Quick Summary KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1149,60 +1440,128 @@ export function CandidateDashboard({
               </div>
             </div>
 
-            {/* Direct Bank Transfer & Settlement Form (For candidates with pending dues) */}
+            {/* Dual Payment Options: Instant Online Gateway & Direct Bank Remittance */}
             {!isLeviesCleared && (
-              <div className="p-5 sm:p-6 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 space-y-4">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
-                  <CreditCard className="w-4 h-4 text-amber-500" />
-                  <span>Official Church Account Direct Remittance Details</span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/20">
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Designated Bank</span>
-                    <span className="font-bold text-slate-900 dark:text-white">Zenith Bank Plc</span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/20">
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Account Number</span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">1014892019</span>
-                  </div>
-                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/20">
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Required Payment Narration</span>
-                    <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{candidate.regNumber}</span>
-                  </div>
-                </div>
-
+              <div className="space-y-4">
+                
                 {paymentSubmittedSuccess ? (
-                  <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>Payment reference confirmed and verified successfully! Official receipt generated.</span>
+                  <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                      <span>Payment confirmed and verified successfully! Your official receipt number has been generated.</span>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSlipModal(true)}
+                      className="bg-white dark:bg-slate-900 text-xs font-bold shrink-0"
+                    >
+                      View Receipt Slip
+                    </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handlePaymentSubmit} className="space-y-2 pt-1">
-                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium block">
-                      Already paid via bank transfer, USSD, or parish cash desk? Enter your transfer reference or teller number below:
-                    </span>
-                    <div className="flex flex-col sm:flex-row gap-2.5">
-                      <input
-                        type="text"
-                        value={paymentRefInput}
-                        onChange={(e) => setPaymentRefInput(e.target.value)}
-                        placeholder="e.g. ZEN-TXN-902184 / Remita RRR..."
-                        className="flex-1 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-mono"
-                        required
-                      />
-                      <Button
-                        variant="gold"
-                        size="md"
-                        type="submit"
-                        loading={isSubmittingPayment}
-                        disabled={!paymentRefInput.trim()}
-                        className="font-bold text-xs shrink-0 px-5"
-                      >
-                        Confirm & Record Payment Reference
-                      </Button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Method 1: Instant Online Gateway */}
+                    <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 via-white dark:via-[#0b1021] to-amber-500/5 border border-amber-500/30 flex flex-col justify-between gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-mono uppercase font-bold text-amber-700 dark:text-amber-400">
+                            Option 1: Instant Clearance
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300">
+                            Fastest
+                          </span>
+                        </div>
+                        <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                          Online Debit Card / USSD Payment
+                        </h4>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                          Settle your statutory levies instantly via secured card, bank app transfer, or USSD code. Your clearance updates in real-time immediately.
+                        </p>
+                      </div>
+
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/20 font-medium">
+                          <span className="text-slate-700 dark:text-slate-300">Total Statutory Dues:</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
+                            ₦{outstandingLevy.toLocaleString()}.00
+                          </span>
+                        </div>
+
+                        <Button
+                          variant="gold"
+                          size="md"
+                          onClick={handleInstantOnlinePayment}
+                          loading={isProcessingOnlinePay}
+                          icon={<CreditCard className="w-4 h-4" />}
+                          className="w-full justify-center font-bold text-xs shadow-md h-11"
+                        >
+                          Pay ₦{outstandingLevy.toLocaleString()} Instantly Online
+                        </Button>
+                        <p className="text-[10px] text-center text-slate-400">
+                          Secured via Zenith Bank Ecclesiastical Gateway &bull; Instant Receipt Generation
+                        </p>
+                      </div>
                     </div>
-                  </form>
+
+                    {/* Method 2: Direct Bank Transfer Remittance */}
+                    <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between gap-4">
+                      <div className="space-y-2">
+                        <span className="text-[11px] font-mono uppercase font-bold text-slate-500">
+                          Option 2: Direct Bank Remittance
+                        </span>
+                        <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                          Official Church Bank Transfer
+                        </h4>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                          Remit directly into the official church revenue account and submit your transfer transaction reference below for confirmation:
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">Designated Bank</span>
+                          <span className="font-bold text-slate-900 dark:text-white">Zenith Bank Plc</span>
+                        </div>
+                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block">Account Number</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-white">1014892019</span>
+                        </div>
+                        <div className="col-span-2 p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Payment Narration</span>
+                            <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{candidate.regNumber}</span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">Required</span>
+                        </div>
+                      </div>
+
+                      <form onSubmit={handlePaymentSubmit} className="space-y-2 pt-1">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            value={paymentRefInput}
+                            onChange={(e) => setPaymentRefInput(e.target.value)}
+                            placeholder="e.g. ZEN-TXN-902184"
+                            className="flex-1 p-2.5 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-mono"
+                            required
+                          />
+                          <Button
+                            variant="primary"
+                            size="md"
+                            type="submit"
+                            loading={isSubmittingPayment}
+                            disabled={!paymentRefInput.trim()}
+                            className="font-bold text-xs shrink-0 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white"
+                          >
+                            Submit Ref
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
                 )}
+
               </div>
             )}
 
