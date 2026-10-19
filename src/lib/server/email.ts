@@ -19,9 +19,12 @@ const DEFAULT_FROM: EmailRecipient = {
   email: process.env.NEXT_PUBLIC_SECRETARIAT_EMAIL || 'secretariat@esocs.church',
 };
 
-const MAILPIT_HTTP_HOST = process.env.MAILPIT_HTTP_HOST || 'localhost';
+function getCandidateHosts(): string[] {
+  if (process.env.MAILPIT_HTTP_HOST) return [process.env.MAILPIT_HTTP_HOST];
+  return ['localhost', 'host.docker.internal', 'mailpit', '172.17.0.1'];
+}
+
 const MAILPIT_HTTP_PORT = parseInt(process.env.MAILPIT_HTTP_PORT || '8025', 10);
-const MAILPIT_SMTP_HOST = process.env.MAILPIT_SMTP_HOST || 'localhost';
 const MAILPIT_SMTP_PORT = parseInt(process.env.MAILPIT_SMTP_PORT || '1025', 10);
 
 /**
@@ -30,59 +33,62 @@ const MAILPIT_SMTP_PORT = parseInt(process.env.MAILPIT_SMTP_PORT || '1025', 10);
 export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const recipients = Array.isArray(options.to) ? options.to : [options.to];
   const from = options.from || DEFAULT_FROM;
+  const hosts = getCandidateHosts();
 
-  // 1. Try Mailpit HTTP REST API (/api/v1/send)
-  try {
-    const payload = JSON.stringify({
-      From: { Email: from.email, Name: from.name },
-      To: recipients.map((r) => ({ Email: r.email, Name: r.name || r.email })),
-      Subject: options.subject,
-      HTML: options.html,
-      Text: options.text || options.html.replace(/<[^>]+>/g, ''),
-    });
+  const payload = JSON.stringify({
+    From: { Email: from.email, Name: from.name },
+    To: recipients.map((r) => ({ Email: r.email, Name: r.name || r.email })),
+    Subject: options.subject,
+    HTML: options.html,
+    Text: options.text || options.html.replace(/<[^>]+>/g, ''),
+  });
 
-    const result = await new Promise<{ success: boolean; messageId?: string }>((resolve, reject) => {
-      const req = http.request(
-        {
-          host: MAILPIT_HTTP_HOST,
-          port: MAILPIT_HTTP_PORT,
-          path: '/api/v1/send',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(payload),
+  // 1. Try Mailpit HTTP REST API across available host aliases (/api/v1/send)
+  for (const host of hosts) {
+    try {
+      const result = await new Promise<{ success: boolean; messageId?: string }>((resolve, reject) => {
+        const req = http.request(
+          {
+            host,
+            port: MAILPIT_HTTP_PORT,
+            path: '/api/v1/send',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Content-Length': Buffer.byteLength(payload),
+            },
+            timeout: 2500,
           },
-          timeout: 4000,
-        },
-        (res) => {
-          let body = '';
-          res.on('data', (chunk) => (body += chunk));
-          res.on('end', () => {
-            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-              try {
-                const parsed = JSON.parse(body);
-                resolve({ success: true, messageId: parsed.ID });
-              } catch {
-                resolve({ success: true });
+          (res) => {
+            let body = '';
+            res.on('data', (chunk) => (body += chunk));
+            res.on('end', () => {
+              if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+                try {
+                  const parsed = JSON.parse(body);
+                  resolve({ success: true, messageId: parsed.ID });
+                } catch {
+                  resolve({ success: true });
+                }
+              } else {
+                reject(new Error(`Mailpit HTTP returned status ${res.statusCode}: ${body}`));
               }
-            } else {
-              reject(new Error(`Mailpit HTTP returned status ${res.statusCode}: ${body}`));
-            }
-          });
-        }
-      );
+            });
+          }
+        );
 
-      req.on('timeout', () => {
-        req.destroy(new Error('Mailpit HTTP request timed out'));
+        req.on('timeout', () => {
+          req.destroy(new Error(`Mailpit HTTP request to ${host} timed out`));
+        });
+        req.on('error', (err) => reject(err));
+        req.write(payload);
+        req.end();
       });
-      req.on('error', (err) => reject(err));
-      req.write(payload);
-      req.end();
-    });
 
-    return result;
-  } catch (httpError: any) {
-    console.warn('[EmailService] Mailpit HTTP failed, falling back to SMTP port 1025:', httpError.message);
+      return result;
+    } catch {
+      // Continue to next candidate host
+    }
   }
 
   // 2. Fallback to direct SMTP via net.Socket (port 1025)
@@ -115,8 +121,9 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
       '',
     ].join('\r\n');
 
+    const smtpHost = process.env.MAILPIT_SMTP_HOST || hosts[0] || 'localhost';
     const smtpResult = await new Promise<{ success: boolean; messageId?: string }>((resolve, reject) => {
-      const socket = net.createConnection({ host: MAILPIT_SMTP_HOST, port: MAILPIT_SMTP_PORT }, () => {
+      const socket = net.createConnection({ host: smtpHost, port: MAILPIT_SMTP_PORT }, () => {
         let step = 0;
         socket.on('data', (data) => {
           const resStr = data.toString();
