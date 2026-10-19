@@ -44,12 +44,12 @@ export function CardHeader({
   }
 
   return (
-    <div className={`px-6 py-5 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-4 ${className}`}>
-      <div>
-        {title && <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h3>}
-        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+    <div className={`px-5 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 ${className}`}>
+      <div className="min-w-0 flex-1">
+        {title && <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight break-words">{title}</h3>}
+        {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-words">{subtitle}</p>}
       </div>
-      {action && <div className="shrink-0">{action}</div>}
+      {action && <div className="shrink-0 max-w-full">{action}</div>}
     </div>
   );
 }

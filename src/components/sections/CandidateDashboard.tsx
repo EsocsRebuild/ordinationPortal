@@ -599,30 +599,29 @@ export function CandidateDashboard({
             </div>
 
             {/* Candidate Identity Text */}
-            <div className="space-y-1.5 flex-1 text-center sm:text-left min-w-0">
-              
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight leading-snug">
+            <div className="space-y-1.5 flex-1 text-center sm:text-left min-w-0 max-w-full overflow-hidden">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight leading-snug break-words">
                 {candidate.fullName}
               </h1>
 
-              <div className="flex items-center justify-center sm:justify-start gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
                 <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span className="font-semibold text-slate-900 dark:text-white">{candidate.parish}</span>
+                <span className="font-semibold text-slate-900 dark:text-white truncate max-w-[200px] sm:max-w-xs">{candidate.parish}</span>
                 <span className="text-slate-400">&bull;</span>
-                <span className="text-slate-600 dark:text-slate-400">{candidate.province}</span>
+                <span className="text-slate-600 dark:text-slate-400 truncate max-w-[150px] sm:max-w-xs">{candidate.province}</span>
               </div>
 
               {/* Rank Progression Path */}
-              <div className="pt-1">
-                <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs">
-                  <span className="px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium shadow-xs">
+              <div className="pt-1 max-w-full">
+                <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-xs max-w-full">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium shadow-xs break-words">
                     Current: <strong className="text-slate-900 dark:text-white ml-0.5">{candidate.currentRank}</strong>
                   </span>
                   <ArrowRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold border border-amber-500/30 shadow-xs">
+                  <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-800 dark:text-amber-300 font-bold border border-amber-500/30 shadow-xs break-words">
                     Target: {candidate.targetRankName}
                   </span>
-                  <span className="hidden md:inline-flex text-[11px] text-emerald-700 dark:text-emerald-400 font-mono px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <span className="hidden md:inline-flex text-[11px] text-emerald-700 dark:text-emerald-400 font-mono px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 shrink-0">
                     {candidate.tenureYears || 5} Yrs Ministry ✓
                   </span>
                 </div>
@@ -633,18 +632,17 @@ export function CandidateDashboard({
           </div>
 
           {/* Right: Key Action Buttons (Clean Grid on Mobile, Column on Desktop) */}
-          {/* Right: Key Action Buttons (Clean Grid on Mobile, Column on Desktop) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5 w-full lg:w-56 shrink-0 pt-2 lg:pt-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:flex lg:flex-col gap-2.5 w-full lg:w-64 xl:w-72 shrink-0 pt-2 lg:pt-0">
             {isPassReady ? (
               <Tooltip content="Open your digital accreditation pass with QR verification" position="left" className="w-full">
                 <Button
                   variant="gold"
                   size="md"
-                  icon={<QrCode className="w-4 h-4" />}
+                  icon={<QrCode className="w-4 h-4 shrink-0" />}
                   onClick={() => setShowPassModal(true)}
-                  className="w-full justify-center shadow-md font-bold text-xs h-10 sm:h-11"
+                  className="w-full justify-center shadow-md font-bold text-xs min-h-[44px] py-2.5 px-3 leading-tight"
                 >
-                  Digital Ceremony Pass
+                  <span className="truncate">Digital Ceremony Pass</span>
                 </Button>
               </Tooltip>
             ) : (
@@ -652,11 +650,11 @@ export function CandidateDashboard({
                 <Button
                   variant="outline"
                   size="md"
-                  icon={<Lock className="w-4 h-4 text-amber-500" />}
+                  icon={<Lock className="w-4 h-4 text-amber-500 shrink-0" />}
                   onClick={() => setShowPassModal(true)}
-                  className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-dashed border-amber-400 dark:border-amber-600/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                  className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-dashed border-amber-400 dark:border-amber-600/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs min-h-[44px] py-2.5 px-3 leading-tight"
                 >
-                  Pass Restricted ({completedCount}/5 Clearances) 🔒
+                  <span className="truncate">Pass Restricted ({completedCount}/5 Cleared)</span>
                 </Button>
               </Tooltip>
             )}
@@ -666,11 +664,11 @@ export function CandidateDashboard({
                 <Button
                   variant="outline"
                   size="md"
-                  icon={<Award className="w-4 h-4 text-amber-500" />}
+                  icon={<Award className="w-4 h-4 text-amber-500 shrink-0" />}
                   onClick={() => setShowCertModal(true)}
-                  className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                  className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 text-xs min-h-[44px] py-2.5 px-3 leading-tight"
                 >
-                  Ordination Certificate
+                  <span className="truncate">Ordination Certificate</span>
                 </Button>
               </Tooltip>
             ) : (
@@ -678,11 +676,11 @@ export function CandidateDashboard({
                 <Button
                   variant="outline"
                   size="md"
-                  icon={<Award className="w-4 h-4 text-slate-400" />}
+                  icon={<Award className="w-4 h-4 text-slate-400 shrink-0" />}
                   onClick={() => setShowCertModal(true)}
-                  className="w-full justify-center bg-slate-100/60 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                  className="w-full justify-center bg-slate-100/60 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs min-h-[44px] py-2.5 px-3 leading-tight"
                 >
-                  Certificate (Post-Ordination) 🔒
+                  <span className="truncate">Certificate (Post-Ordination) 🔒</span>
                 </Button>
               </Tooltip>
             )}
@@ -691,11 +689,11 @@ export function CandidateDashboard({
               <Button
                 variant="outline"
                 size="md"
-                icon={<Receipt className="w-4 h-4 text-emerald-500" />}
+                icon={<Receipt className="w-4 h-4 text-emerald-500 shrink-0" />}
                 onClick={() => setShowSlipModal(true)}
-                className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs h-10 sm:h-11"
+                className="w-full justify-center bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 text-xs min-h-[44px] py-2.5 px-3 leading-tight"
               >
-                Official Payment Slip
+                <span className="truncate">Official Payment Slip</span>
               </Button>
             </Tooltip>
           </div>
@@ -824,14 +822,14 @@ export function CandidateDashboard({
 
             {/* Stepper Roadmap Display */}
             <div className="relative pt-2 pb-2">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 relative z-10">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 relative z-10">
                 {applicantStages.map((stage) => {
                   const isDone = stage.isCompleted;
                   const isCurrent = currentStageIndex === stage.step && !isDone;
                   return (
                     <div
                       key={stage.id}
-                      className={`p-3 rounded-2xl border transition-all flex flex-col items-center text-center ${
+                      className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex flex-col items-center text-center min-w-0 overflow-hidden ${
                         isDone
                           ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
                           : isCurrent
@@ -839,7 +837,7 @@ export function CandidateDashboard({
                           : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs mb-2 transition-transform ${
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs mb-2 transition-transform shrink-0 ${
                         isDone
                           ? 'bg-emerald-500 text-white shadow-xs'
                           : isCurrent
@@ -854,13 +852,13 @@ export function CandidateDashboard({
                           <Lock className="w-3.5 h-3.5 opacity-60" />
                         )}
                       </div>
-                      <span className="font-bold text-xs leading-tight line-clamp-1 text-slate-900 dark:text-white">
+                      <span className="font-bold text-[11px] sm:text-xs leading-snug line-clamp-2 text-slate-900 dark:text-white break-words w-full">
                         {stage.title}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 break-words w-full">
                         {stage.subtitle}
                       </span>
-                      <span className={`text-[9px] font-mono mt-1.5 px-1.5 py-0.5 rounded-md font-semibold ${
+                      <span className={`text-[9px] font-mono mt-1.5 px-1.5 py-0.5 rounded-md font-semibold truncate max-w-full ${
                         isDone
                           ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                           : isCurrent
@@ -876,16 +874,16 @@ export function CandidateDashboard({
             </div>
 
             {/* Contextual Stage Advisory & Next Step Callout */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-              <div className="flex items-start gap-3">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs overflow-hidden">
+              <div className="flex items-start gap-3 min-w-0 flex-1">
                 <div className="p-2 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
                   <Info className="w-4 h-4" />
                 </div>
-                <div className="space-y-0.5">
-                  <p className="font-bold text-slate-900 dark:text-white">
+                <div className="space-y-0.5 min-w-0 flex-1">
+                  <p className="font-bold text-slate-900 dark:text-white break-words">
                     {stageGuidance[currentStageIndex]?.heading || 'Ecclesiastical Vetting Docket'}
                   </p>
-                  <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed max-w-2xl">
+                  <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed max-w-2xl break-words">
                     {stageGuidance[currentStageIndex]?.desc}
                   </p>
                 </div>
@@ -896,8 +894,8 @@ export function CandidateDashboard({
                   onClick={() => setCurrentTab((stageGuidance[currentStageIndex]?.actionTab as any) || 'clearance')}
                   className="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs shrink-0 transition-colors inline-flex items-center gap-1.5 self-end sm:self-center cursor-pointer"
                 >
-                  <span>{stageGuidance[currentStageIndex]?.actionText}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="truncate">{stageGuidance[currentStageIndex]?.actionText}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 </button>
               )}
             </div>
@@ -906,8 +904,8 @@ export function CandidateDashboard({
           {/* Quick Summary KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            <Link href="/dashboard/candidate?tab=clearance" className="group">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-emerald-500/60 transition-all cursor-pointer">
+            <Link href="/dashboard/candidate?tab=clearance" className="group block">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-emerald-500/60 transition-all cursor-pointer overflow-hidden">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
                   isVettingCleared
                     ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
@@ -915,20 +913,20 @@ export function CandidateDashboard({
                 }`}>
                   <CheckCheck className="w-5 h-5" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Clearance Progress</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Clearance Progress</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
                     {completedCount} of 5 Approved
                   </p>
-                  <p className={`text-[11px] font-medium ${isVettingCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  <p className={`text-[11px] font-medium truncate ${isVettingCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                     {progressPercent}% Cleared →
                   </p>
                 </div>
               </div>
             </Link>
 
-            <Link href="/dashboard/candidate?tab=payments" className="group">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-amber-500/60 transition-all cursor-pointer">
+            <Link href="/dashboard/candidate?tab=payments" className="group block">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-amber-500/60 transition-all cursor-pointer overflow-hidden">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
                   isLeviesCleared
                     ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
@@ -936,46 +934,46 @@ export function CandidateDashboard({
                 }`}>
                   <CreditCard className="w-5 h-5" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Payment Status</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Payment Status</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
                     ₦{amountPaid.toLocaleString()} Paid
                   </p>
-                  <p className={`text-[11px] font-mono ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  <p className={`text-[11px] font-mono truncate ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                     {isLeviesCleared ? 'Receipt Confirmed →' : `₦${outstandingLevy.toLocaleString()} Due →`}
                   </p>
                 </div>
               </div>
             </Link>
 
-            <Link href="/dashboard/candidate?tab=pass" className="group">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-blue-500/60 transition-all cursor-pointer">
+            <Link href="/dashboard/candidate?tab=pass" className="group block">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-blue-500/60 transition-all cursor-pointer overflow-hidden">
                 <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-105 transition-transform">
                   <Calendar className="w-5 h-5" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ceremony Date</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Ceremony Date</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
                     {isCeremonyReady ? (candidate.ordinationDate || 'Sat, Nov 14, 2026') : 'Nov 14, 2026 (Pending)'}
                   </p>
-                  <p className="text-[11px] text-blue-600 dark:text-blue-400">
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400 truncate">
                     {isCeremonyReady ? '09:00 AM Prompt →' : 'Awaiting Final Seal →'}
                   </p>
                 </div>
               </div>
             </Link>
 
-            <Link href="/dashboard/candidate?tab=pass" className="group">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-purple-500/60 transition-all cursor-pointer">
+            <Link href="/dashboard/candidate?tab=pass" className="group block">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-purple-500/60 transition-all cursor-pointer overflow-hidden">
                 <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
                   <Building className="w-5 h-5" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Assigned Seating</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Assigned Seating</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
                     {isCeremonyReady && candidate.seatNumber ? candidate.seatNumber : 'Allocation Locked'}
                   </p>
-                  <p className="text-[11px] text-purple-600 dark:text-purple-400">
+                  <p className="text-[11px] text-purple-600 dark:text-purple-400 truncate">
                     {isCeremonyReady && candidate.seatNumber ? 'Gate 2 Entrance →' : 'Upon Final Clearance →'}
                   </p>
                 </div>
