@@ -16,12 +16,79 @@ interface CertificateModalProps {
 export function CertificateModal({ candidate, isOpen = true, onClose }: CertificateModalProps) {
   if (!isOpen) return null;
 
+  const isOrdained = candidate.stage === 'ordained';
   const cert = createCertificateRecord(candidate);
   const verifyUrl = `https://ordination.esocs.church/verify/${candidate.id}`;
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (!isOrdained) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+        <div className="relative w-full max-w-xl bg-white dark:bg-[#090e1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6 text-slate-900 dark:text-slate-100">
+          <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <Shield className="w-5 h-5 text-amber-500" />
+              <span className="text-sm font-bold tracking-tight text-white">
+                Official Ordination Certificate &bull; Awaiting Consecration
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-8 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+              <Shield className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-serif font-bold text-xl text-slate-900 dark:text-white">
+                Sacred Certificate Conferred Upon Ordination
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
+                In strict accordance with ESOCS Holy Order constitution, the official Certificate of Holy Ordination is solemnly presented at the Chancel Altar by His Most Eminence, The Baba Aladura &amp; Prelate, following the sacred laying of hands.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-left text-xs space-y-2.5">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500">Candidate Name:</span>
+                <span className="font-bold text-slate-900 dark:text-white">{candidate.fullName}</span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500">Target Sacred Order:</span>
+                <span className="font-bold text-amber-700 dark:text-amber-400">{candidate.targetRankName}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Current Clearance Status:</span>
+                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {candidate.stage === 'board_approved' || candidate.stage === 'investiture_assigned'
+                    ? 'Ratified & Awaiting Convocation'
+                    : 'Clearance in Progress'}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              variant="gold"
+              size="md"
+              onClick={onClose}
+              className="w-full font-bold text-xs"
+            >
+              Return to Candidate Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">

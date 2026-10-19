@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
-import { ProvinceHierarchy, EcclesiasticalRank } from '@/types';
+import { ProvinceHierarchy, EcclesiasticalRank, CandidateProfile } from '@/types';
 import {
   ESOCS_RANKS,
   ESOCS_HIERARCHY,
@@ -34,6 +35,7 @@ import {
   Check,
   ShieldCheck,
   Camera,
+  Copy,
 } from 'lucide-react';
 
 // Dedicated Male & Female Icons
@@ -80,9 +82,12 @@ const CURRENT_YEAR = 2026;
 const YEARS_OPTIONS = Array.from({ length: 35 }, (_, i) => CURRENT_YEAR - i);
 
 export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
+  const router = useRouter();
   const { registerCandidate, isLoading } = useAuth();
 
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
+  const [enrolledCandidate, setEnrolledCandidate] = useState<CandidateProfile | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
 
   // Holy Order Ministry state
   const [gender, setGender] = useState<'male' | 'female'>('male');
@@ -409,7 +414,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     const resolvedPhone = phoneValidation?.isValid ? phoneValidation.formatted : phone.trim();
 
     try {
-      await registerCandidate({
+      const response = await registerCandidate({
         fullName: computedFullName,
         firstName: firstName.trim(),
         middleName: middleName.trim() || undefined,
@@ -428,13 +433,31 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         targetRankName,
         password,
         enable2FA,
-      });
+      }, false);
+
       if (typeof window !== 'undefined') {
         localStorage.removeItem('esocs_reg_draft');
       }
-      onClose();
+
+      if (response && response.candidate) {
+        setEnrolledCandidate(response.candidate);
+      }
+      setCurrentStep(4);
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to submit ordination registration.');
+    }
+  };
+
+  const handleProceedToDashboard = () => {
+    router.push('/dashboard/candidate');
+    onClose();
+  };
+
+  const handleCopyRef = () => {
+    if (enrolledCandidate?.regNumber) {
+      navigator.clipboard.writeText(enrolledCandidate.regNumber);
+      setCopiedRef(true);
+      setTimeout(() => setCopiedRef(false), 2000);
     }
   };
 
@@ -468,47 +491,59 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
           </div>
 
           {/* Stepper Timeline */}
-          <div className="mt-5 grid grid-cols-3 gap-3">
-            {[
-              { num: 1, title: 'Profile & Jurisdiction' },
-              { num: 2, title: 'Ordination Order' },
-              { num: 3, title: 'Account Security' },
-            ].map((step) => {
-              const isCompleted = currentStep > step.num;
-              const isCurrent = currentStep === step.num;
-              return (
-                <div key={step.num} className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
-                        isCompleted
-                          ? 'bg-emerald-500 text-white shadow-sm'
-                          : isCurrent
-                          ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20 shadow-sm'
-                          : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700/60'
-                      }`}
-                    >
-                      {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.num}
-                    </span>
-                    <span className={`text-xs font-semibold truncate ${isCurrent ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
-                      {step.title}
-                    </span>
+          {currentStep < 4 ? (
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              {[
+                { num: 1, title: 'Profile & Jurisdiction' },
+                { num: 2, title: 'Ordination Order' },
+                { num: 3, title: 'Account Security' },
+              ].map((step) => {
+                const isCompleted = currentStep > step.num;
+                const isCurrent = currentStep === step.num;
+                return (
+                  <div key={step.num} className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-mono font-bold transition-all ${
+                          isCompleted
+                            ? 'bg-emerald-500 text-white shadow-sm'
+                            : isCurrent
+                            ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/20 shadow-sm'
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700/60'
+                        }`}
+                      >
+                        {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : step.num}
+                      </span>
+                      <span className={`text-xs font-semibold truncate ${isCurrent ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {step.title}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          isCompleted
+                            ? 'bg-emerald-500 w-full'
+                            : isCurrent
+                            ? 'bg-amber-500 w-full'
+                            : 'w-0'
+                        }`}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
-                    <div
-                      className={`h-full transition-all duration-300 ${
-                        isCompleted
-                          ? 'bg-emerald-500 w-full'
-                          : isCurrent
-                          ? 'bg-amber-500 w-full'
-                          : 'w-0'
-                      }`}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-4 flex items-center justify-between px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-mono">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span>Application Recorded in Canonical Roster</span>
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[10px] font-bold">
+                Stage 1 Active
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Modal Form Scrollable Content */}
@@ -1002,48 +1037,144 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               </div>
             </form>
           )}
+
+          {/* STEP 4: Enrolment Confirmation & Application Reference */}
+          {currentStep === 4 && enrolledCandidate && (
+            <div className="space-y-6 text-center animate-in fade-in zoom-in-95 duration-300 py-3">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+                <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12" />
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-[11px] font-mono uppercase tracking-wider px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30">
+                  Nomination Application Recorded
+                </span>
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">
+                  Ordination Nomination Enrolled!
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-lg mx-auto leading-relaxed">
+                  Peace be unto you, <strong>{enrolledCandidate.fullName}</strong>. Your candidate dossier has been safely enrolled in the 2026 Holy Order General Conference Ordination Roster.
+                </p>
+              </div>
+
+              {/* Official Reg Number Card with Copy */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 max-w-md mx-auto flex items-center justify-between gap-3 shadow-inner">
+                <div className="text-left">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-amber-700 dark:text-amber-400 block font-bold">
+                    Official Registration Number
+                  </span>
+                  <span className="text-base sm:text-lg font-mono font-bold text-slate-900 dark:text-white block mt-0.5">
+                    {enrolledCandidate.regNumber}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyRef}
+                  className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-amber-500/40 text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-slate-700 transition-all flex items-center gap-1.5 shadow-xs"
+                >
+                  {copiedRef ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedRef ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+
+              {/* Candidate Details Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left max-w-2xl mx-auto text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Proposed Order</span>
+                  <span className="font-bold text-slate-900 dark:text-white mt-0.5 block truncate">
+                    {enrolledCandidate.targetRankName}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Parish Branch</span>
+                  <span className="font-bold text-slate-900 dark:text-white mt-0.5 block truncate">
+                    {enrolledCandidate.parish}
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Current Status</span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400 mt-0.5 block truncate">
+                    Stage 1: Parish Vetting
+                  </span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-500 block">Statutory Levies</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-white mt-0.5 block truncate">
+                    ₦{(enrolledCandidate.levyBreakdown?.total || 56250).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {/* Next Steps Guidance */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-left space-y-2.5 text-xs leading-relaxed max-w-2xl mx-auto">
+                <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+                  <ShieldCheck className="w-4 h-4 text-amber-500" />
+                  <span>Ecclesiastical Next Steps:</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1.5 text-slate-600 dark:text-slate-400">
+                  <li><strong>Parish Rector Endorsement:</strong> Your parish leadership will conduct attendance and conduct vetting.</li>
+                  <li><strong>Real-time Tracking:</strong> Follow each stage of approval live from your candidate dashboard.</li>
+                  <li><strong>Dues & Levies:</strong> You can review and clear statutory dues from your personal payment desk.</li>
+                  <li><strong>Ceremony Pass & Robing:</strong> Fast-track Gate 2 entry pass and chancel pew seating are unlocked once Stage 5 ratification is sealed.</li>
+                </ol>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer Controls */}
         <div className="p-5 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-950/90 flex items-center justify-between gap-4 shrink-0">
-          {currentStep > 1 ? (
+          {currentStep === 4 ? (
             <button
               type="button"
-              onClick={handlePrevStep}
-              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-200/70 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all flex items-center gap-2"
+              onClick={handleProceedToDashboard}
+              className="w-full py-4 rounded-2xl text-sm font-bold bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Previous Step</span>
+              <span>Enter My Candidate Clearance Dashboard</span>
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-all"
-            >
-              Cancel
-            </button>
-          )}
+            <>
+              {currentStep > 1 ? (
+                <button
+                  type="button"
+                  onClick={handlePrevStep}
+                  className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-slate-200/70 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Previous Step</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-all"
+                >
+                  Cancel
+                </button>
+              )}
 
-          {currentStep < 3 ? (
-            <button
-              type="submit"
-              form={`reg-step-${currentStep}`}
-              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20 transition-all flex items-center gap-2"
-            >
-              <span>Continue Next</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              form="reg-step-3"
-              disabled={isLoading}
-              className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
-            >
-              <span>{isLoading ? 'Submitting...' : 'Complete Registration'}</span>
-              <CheckCircle2 className="w-4 h-4" />
-            </button>
+              {currentStep < 3 ? (
+                <button
+                  type="submit"
+                  form={`reg-step-${currentStep}`}
+                  className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 shadow-md shadow-amber-500/20 transition-all flex items-center gap-2"
+                >
+                  <span>Continue Next</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  form="reg-step-3"
+                  disabled={isLoading}
+                  className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  <span>{isLoading ? 'Submitting...' : 'Complete Registration'}</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

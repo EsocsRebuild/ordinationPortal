@@ -82,8 +82,14 @@ export function PaymentClearanceSlipModal({
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               General Secretariat Headquarters &bull; Mount Zion, Yaba, Lagos
             </p>
-            <div className="inline-block px-3 py-0.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 mt-2">
-              Official Assessment Receipt &bull; Cleared & Sealed
+            <div className={`inline-block px-3 py-0.5 rounded-full text-[11px] font-mono font-bold border mt-2 ${
+              candidate.duesStatus === 'cleared'
+                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
+                : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+            }`}>
+              {candidate.duesStatus === 'cleared'
+                ? 'Official Assessment Receipt • Cleared & Sealed'
+                : 'Official Assessment Statement • Pending Remittance'}
             </div>
           </div>
 
@@ -132,34 +138,60 @@ export function PaymentClearanceSlipModal({
                   <tr>
                     <td className="px-4 py-2.5 font-medium">Branch Parish Development Share</td>
                     <td className="px-4 py-2.5 text-slate-500">{candidate.parish}</td>
-                    <td className="px-4 py-2.5 text-right font-mono font-bold">₦15,000</td>
-                    <td className="px-4 py-2.5 text-center text-emerald-600 dark:text-emerald-400 font-semibold">✓ Paid</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold">
+                      {formatCurrency(candidate.levyBreakdown?.branchLevy ?? 5000)}
+                    </td>
+                    <td className={`px-4 py-2.5 text-center font-semibold ${
+                      candidate.duesStatus === 'cleared' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {candidate.duesStatus === 'cleared' ? '✓ Paid' : 'Pending'}
+                    </td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium">District Council Administrative Share</td>
                     <td className="px-4 py-2.5 text-slate-500">District Office</td>
-                    <td className="px-4 py-2.5 text-right font-mono font-bold">₦15,000</td>
-                    <td className="px-4 py-2.5 text-center text-emerald-600 dark:text-emerald-400 font-semibold">✓ Paid</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold">
+                      {formatCurrency(candidate.levyBreakdown?.districtLevy ?? 5000)}
+                    </td>
+                    <td className={`px-4 py-2.5 text-center font-semibold ${
+                      candidate.duesStatus === 'cleared' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {candidate.duesStatus === 'cleared' ? '✓ Paid' : 'Pending'}
+                    </td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium">Provincial Secretariat Ordination Quota</td>
                     <td className="px-4 py-2.5 text-slate-500">{candidate.province}</td>
-                    <td className="px-4 py-2.5 text-right font-mono font-bold">₦20,000</td>
-                    <td className="px-4 py-2.5 text-center text-emerald-600 dark:text-emerald-400 font-semibold">✓ Paid</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold">
+                      {formatCurrency(candidate.levyBreakdown?.provincialLevy ?? 6250)}
+                    </td>
+                    <td className={`px-4 py-2.5 text-center font-semibold ${
+                      candidate.duesStatus === 'cleared' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {candidate.duesStatus === 'cleared' ? '✓ Paid' : 'Pending'}
+                    </td>
                   </tr>
                   <tr>
                     <td className="px-4 py-2.5 font-medium">Holy Synod Central Apex Levies & Regalia</td>
                     <td className="px-4 py-2.5 text-slate-500">Holy Order Synod</td>
-                    <td className="px-4 py-2.5 text-right font-mono font-bold">₦30,000</td>
-                    <td className="px-4 py-2.5 text-center text-emerald-600 dark:text-emerald-400 font-semibold">✓ Paid</td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold">
+                      {formatCurrency(candidate.levyBreakdown?.nationalFee ?? 40000)}
+                    </td>
+                    <td className={`px-4 py-2.5 text-center font-semibold ${
+                      candidate.duesStatus === 'cleared' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {candidate.duesStatus === 'cleared' ? '✓ Paid' : 'Pending'}
+                    </td>
                   </tr>
                   <tr className="bg-amber-500/5 dark:bg-amber-400/5 font-bold text-slate-900 dark:text-white border-t-2 border-slate-300 dark:border-slate-700">
-                    <td className="px-4 py-3" colSpan={2}>Total Assessment Cleared</td>
+                    <td className="px-4 py-3" colSpan={2}>Total Assessment</td>
                     <td className="px-4 py-3 text-right font-mono text-base text-amber-600 dark:text-amber-400">
-                      {formatCurrency(totalAmount)}
+                      {formatCurrency(candidate.levyBreakdown?.total ?? 56250)}
                     </td>
-                    <td className="px-4 py-3 text-center text-emerald-600 dark:text-emerald-400 font-bold">
-                      PAID IN FULL
+                    <td className={`px-4 py-3 text-center font-bold ${
+                      candidate.duesStatus === 'cleared' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {candidate.duesStatus === 'cleared' ? 'PAID IN FULL' : 'PENDING'}
                     </td>
                   </tr>
                 </tbody>

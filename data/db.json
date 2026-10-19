@@ -1,6 +1,64 @@
 {
   "candidates": [
     {
+      "id": "cand-006",
+      "regNumber": "ESOCS/ORD/2026/6416",
+      "fullName": "peter chima tester",
+      "email": "peter4tech@gmail.com",
+      "phone": "+234 808 639 2101",
+      "gender": "male",
+      "dateOfBirth": "1990-01-01",
+      "occupation": "Ecclesiastical Member / Worker",
+      "maritalStatus": "married",
+      "dateJoinedChurch": "2012-05-10",
+      "baptismDate": "2012-10-15",
+      "currentRank": "Brother",
+      "currentRankYear": 2022,
+      "tenureYears": 4,
+      "tenureValid": true,
+      "targetRankId": "rank_aladura",
+      "targetRankName": "Aladura",
+      "province": "Lagos Central Province",
+      "district": "Ebute Metta District (Apex Mother District)",
+      "parish": "Mount Zion Cathedral Branch (National Headquarters)",
+      "branchPriestName": "Parish Presiding Officer",
+      "stage": "nominated",
+      "currentVettingTier": "branch",
+      "submissionDate": "2026-10-19",
+      "lastUpdated": "2026-10-19",
+      "attendanceRecordPercentage": 96,
+      "conductRating": "exemplary",
+      "duesStatus": "pending",
+      "duesAmountPaid": 0,
+      "levyBreakdown": {
+        "branchLevy": 5000,
+        "districtLevy": 5000,
+        "provincialLevy": 6250,
+        "nationalFee": 40000,
+        "total": 56250
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": false
+        },
+        "district": {
+          "approved": false
+        },
+        "province": {
+          "approved": false
+        },
+        "cmc": {
+          "approved": false
+        },
+        "national": {
+          "approved": false
+        }
+      },
+      "screeningNotes": [
+        "Self-registered via ESOCS Canonical Portal. Current Rank: Brother (2022). Target Rank: Aladura."
+      ]
+    },
+    {
       "id": "cand-001",
       "regNumber": "ESOCS/ORD/2026/0481",
       "fullName": "Emmanuel Olusola Adeleke",
@@ -483,9 +541,29 @@
       "roleTitle": "Advisory Board Member & Council of Elders",
       "jurisdiction": "Holy Synod Council of Elders",
       "passwordHash": "password123"
+    },
+    {
+      "userId": "user-cand-006",
+      "name": "peter chima tester",
+      "email": "peter4tech@gmail.com",
+      "role": "candidate",
+      "roleTitle": "Ordinand Candidate (Ascending to Aladura)",
+      "jurisdiction": "Mount Zion Cathedral Branch (National Headquarters), Lagos Central Province",
+      "candidateId": "cand-006",
+      "passwordHash": "OgbaPeter@96",
+      "registeredAt": "2026-10-19T03:43:17.766Z",
+      "twoFactorEnabled": true
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1792381397766",
+      "timestamp": "2026-10-19T03:43:17.766Z",
+      "performedBy": "peter chima tester",
+      "action": "SELF_REGISTRATION",
+      "candidateId": "cand-006",
+      "details": "Candidate self-registered (ESOCS/ORD/2026/6416) for rank Aladura. Strict canonical progression validated."
+    },
     {
       "id": "log-1791574835336-496",
       "timestamp": "2026-10-09T19:40:35.336Z",

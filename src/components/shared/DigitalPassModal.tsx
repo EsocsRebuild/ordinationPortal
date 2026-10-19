@@ -17,12 +17,100 @@ interface DigitalPassModalProps {
 export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalPassModalProps) {
   if (!isOpen) return null;
 
+  const completedTiersCount = [
+    candidate.tierApprovals?.branch?.approved,
+    candidate.tierApprovals?.district?.approved,
+    candidate.tierApprovals?.province?.approved,
+    candidate.tierApprovals?.cmc?.approved,
+    candidate.tierApprovals?.national?.approved,
+  ].filter(Boolean).length;
+
+  const isVettingCompleted = completedTiersCount === 5 || ['board_approved', 'investiture_assigned', 'ordained'].includes(candidate.stage);
+  const isLeviesCleared = candidate.duesStatus === 'cleared';
+  const isPassUnlocked = isVettingCompleted && isLeviesCleared;
+
   const robing = getRobingSpecifications(candidate.targetRankId);
   const verifyUrl = `https://ordination.esocs.church/verify/${candidate.id}`;
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (!isPassUnlocked) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+        <div className="relative w-full max-w-xl bg-white dark:bg-[#090e1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-4 text-slate-900 dark:text-slate-100 transition-colors">
+          <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-bold text-white tracking-wide font-['Raleway']">
+                  Admission Pass &bull; Verification Required
+                </h2>
+                <p className="text-[11px] text-amber-400 font-medium">
+                  General Conference 2026 &bull; Mount Zion Fast-Track Entry
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-7 sm:p-8 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+              <Shield className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-serif font-bold text-xl text-slate-900 dark:text-white">
+                Digital Ceremony Admission Pass Restricted
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
+                In strict compliance with cathedral convocation protocol, Gate 2 chancel barcode access and reserved seating allocations are released exclusively upon completion of all ecclesiastical approvals and settlement of statutory dues.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-left text-xs space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500">5-Tier Ecclesiastical Clearance:</span>
+                <span className={`font-mono font-bold ${isVettingCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {isVettingCompleted ? 'Cleared (5/5 Approved) ✓' : `In Review (${completedTiersCount}/5 Approved) ⏳`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500">Statutory Ordination Levies:</span>
+                <span className={`font-mono font-bold ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {isLeviesCleared ? 'Settled in Full ✓' : `Pending (₦${((candidate.levyBreakdown?.total || 56250) - (candidate.duesAmountPaid || 0)).toLocaleString()} Due) ⏳`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Holy Synod Supreme Council Seal:</span>
+                <span className={`font-mono font-bold ${isVettingCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>
+                  {isVettingCompleted ? 'Affixed ✓' : 'Awaiting Stage 5 Ratification 🔒'}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              variant="gold"
+              size="md"
+              onClick={onClose}
+              className="w-full font-bold text-xs"
+            >
+              Return to Candidate Clearance Roadmap
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
@@ -106,19 +194,19 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Date & Time</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs">Sat, Nov 14, 2026</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.ordinationDate || 'Sat, Nov 14, 2026'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">09:00 AM Prompt</p>
             </div>
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Assigned Seat</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.seatNumber || 'Zone A • Pew 14'}</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.seatNumber || 'Zone A Front Pew'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Gate 2 Entrance</p>
             </div>
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Presiding Minister</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{candidate.robingOfficer || 'Apostle General Coker'}</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{candidate.robingOfficer || 'Supervising Apostle General'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Ordaining Officiant</p>
             </div>
           </div>

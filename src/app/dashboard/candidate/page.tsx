@@ -113,6 +113,7 @@ function CandidateDashboardContent() {
       <DashboardLayout
         activeSectionTitle={currentSectionTitle}
         currentTab={tabParam}
+        candidate={candidate}
       >
         {isConsecrated ? (
           <ConsecratedClergyDashboard

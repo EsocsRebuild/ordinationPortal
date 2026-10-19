@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserRole, UserSession } from '@/types';
-import { api, LoginCredentials, RegisterCandidatePayload } from '@/services/api';
+import { api, LoginCredentials, RegisterCandidatePayload, AuthSessionResponse } from '@/services/api';
 
 interface AuthContextType {
   user: UserSession | null;
@@ -11,7 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   twoFactorPending: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
-  registerCandidate: (payload: RegisterCandidatePayload) => Promise<void>;
+  registerCandidate: (payload: RegisterCandidatePayload, autoRedirect?: boolean) => Promise<AuthSessionResponse>;
   resetPassword: (identifier: string, newPassword: string, otp?: string) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
   verifyTwoFactor: (otp: string, rememberDevice?: boolean) => Promise<void>;
@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const registerCandidate = async (payload: RegisterCandidatePayload) => {
+  const registerCandidate = async (payload: RegisterCandidatePayload, autoRedirect = true): Promise<AuthSessionResponse> => {
     setIsLoading(true);
     try {
       const response = await api.registerCandidate(payload);
@@ -116,7 +116,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('esocs_user_session', JSON.stringify(response.user));
       localStorage.setItem('esocs_auth_token', response.token);
 
-      router.push('/dashboard/candidate');
+      if (autoRedirect) {
+        router.push('/dashboard/candidate');
+      }
+
+      return response;
     } catch (err) {
       throw err;
     } finally {
