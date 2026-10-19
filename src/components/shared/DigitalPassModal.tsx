@@ -106,19 +106,19 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Date & Time</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs">Sat, Nov 14, 2026</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.ordinationDate || 'Sat, Nov 14, 2026'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">09:00 AM Prompt</p>
             </div>
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Assigned Seat</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.seatNumber || 'Zone A • Pew 14'}</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.seatNumber || 'Zone A Front Pew'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Gate 2 Entrance</p>
             </div>
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Presiding Minister</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{candidate.robingOfficer || 'Apostle General Coker'}</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{candidate.robingOfficer || 'Supervising Apostle General'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Ordaining Officiant</p>
             </div>
           </div>

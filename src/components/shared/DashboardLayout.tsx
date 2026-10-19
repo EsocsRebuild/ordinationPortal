@@ -38,14 +38,16 @@ import {
   PanelLeftOpen,
 } from 'lucide-react';
 import { InactivityTimer } from './InactivityTimer';
+import { CandidateProfile } from '@/types';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
   activeSectionTitle: string;
   currentTab?: string;
+  candidate?: CandidateProfile | null;
 }
 
-export function DashboardLayout({ children, activeSectionTitle, currentTab }: DashboardLayoutProps) {
+export function DashboardLayout({ children, activeSectionTitle, currentTab, candidate }: DashboardLayoutProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer
@@ -71,6 +73,29 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab }: Da
   const isCandidate = user.role === 'candidate';
   const effectiveTab = currentTab || 'overview';
 
+  // Dynamic status evaluation from candidate profile
+  const completedTiersCount = candidate?.tierApprovals
+    ? ['branch', 'district', 'province', 'cmc', 'national'].filter(
+        (t) => Boolean(candidate.tierApprovals?.[t as keyof typeof candidate.tierApprovals]?.approved)
+      ).length
+    : 0;
+
+  const isCeremonyReady = Boolean(
+    completedTiersCount === 5 ||
+    candidate?.stage === 'investiture_assigned' ||
+    candidate?.stage === 'ordained'
+  );
+
+  const paymentBadge = candidate?.duesStatus === 'cleared'
+    ? 'Cleared'
+    : candidate?.duesAmountPaid && candidate?.duesAmountPaid > 0
+    ? 'Partial'
+    : 'Pending';
+
+  const passBadge = isCeremonyReady
+    ? (candidate?.seatNumber ? 'Ready' : 'Allocated')
+    : 'Locked';
+
   const navItems = isCandidate
     ? [
         {
@@ -86,7 +111,7 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab }: Da
           title: 'Ordination Clearance',
           href: '/dashboard/candidate?tab=clearance',
           icon: CheckSquare,
-          badge: '5 of 5',
+          badge: `${completedTiersCount}/5`,
           isActive: effectiveTab === 'clearance',
         },
         {
@@ -94,7 +119,7 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab }: Da
           title: 'Payment & Fee Receipts',
           href: '/dashboard/candidate?tab=payments',
           icon: Receipt,
-          badge: 'Cleared',
+          badge: paymentBadge,
           isActive: effectiveTab === 'payments',
         },
         {
@@ -102,7 +127,7 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab }: Da
           title: 'Ceremony Pass & Seating',
           href: '/dashboard/candidate?tab=pass',
           icon: QrCode,
-          badge: 'Nov 14',
+          badge: passBadge,
           isActive: effectiveTab === 'pass',
         },
         {

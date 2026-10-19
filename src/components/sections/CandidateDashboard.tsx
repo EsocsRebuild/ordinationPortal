@@ -7,7 +7,6 @@ import { DigitalPassModal } from '@/components/shared/DigitalPassModal';
 import { CertificateModal } from '@/components/shared/CertificateModal';
 import { PaymentClearanceSlipModal } from '@/components/shared/PaymentClearanceSlipModal';
 import { CandidateLearnerTour } from '@/components/shared/CandidateLearnerTour';
-import { DemoAccountModal } from '@/components/shared/DemoAccountModal';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { api } from '@/services/api';
 import { useRealtimeCandidate, useRealtimeMessages, realtimeClient } from '@/services/realtime';
@@ -72,20 +71,20 @@ export function CandidateDashboard({
   const [showCertModal, setShowCertModal] = useState(false);
   const [showSlipModal, setShowSlipModal] = useState(false);
   const [showTourModal, setShowTourModal] = useState(false);
-  const [showDemoModal, setShowDemoModal] = useState(false);
   const [copiedReg, setCopiedReg] = useState(false);
 
   // Selected / Expanded clearance step in clearance view
   const [expandedStepId, setExpandedStepId] = useState<string | null>('branch');
 
-  // Interactive Checklist State
+  // Interactive Checklist State (candidate-confirmed liturgical preparation)
   const [checklist, setChecklist] = useState({
-    vetting: true,
-    levies: true,
-    pass: true,
     vestment: false,
-    pew: true,
   });
+
+  // Payment proof reference input state
+  const [paymentRefInput, setPaymentRefInput] = useState('');
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [paymentSubmittedSuccess, setPaymentSubmittedSuccess] = useState(false);
 
   // Photo upload state
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -190,8 +189,11 @@ export function CandidateDashboard({
   };
 
   // 5-Step Rich Interactive Clearance Progression Data
-  const tierOrder: VettingTier[] = ['branch', 'district', 'province', 'cmc', 'national'];
-  const currentTierIndex = tierOrder.indexOf(candidate.currentVettingTier);
+  const branchApproved = Boolean(candidate.tierApprovals?.branch?.approved);
+  const districtApproved = Boolean(candidate.tierApprovals?.district?.approved);
+  const provinceApproved = Boolean(candidate.tierApprovals?.province?.approved);
+  const cmcApproved = Boolean(candidate.tierApprovals?.cmc?.approved);
+  const nationalApproved = Boolean(candidate.tierApprovals?.national?.approved);
 
   const approvalSteps = [
     {
@@ -199,70 +201,131 @@ export function CandidateDashboard({
       stepNumber: '01',
       title: 'Parish Priest Nomination & Endorsement',
       authority: 'Branch Parish Rector & Leadership Committee',
-      officer: candidate.branchPriestName || 'Snr. Apostle Festus N. Okon',
-      date: 'April 14, 2026',
-      desc: 'Verified active church membership, local parish tithes, and exemplary moral standing.',
-      isCompleted: candidate.tierApprovals?.branch?.approved || currentTierIndex > 0 || isCeremonyReady,
-      statusLabel: 'Approved ✓',
-      sealBadge: 'Parish Seal Confirmed',
-      comments: 'Nomination verified with highest recommendation from Mount Zion Parish.',
+      officer: candidate.tierApprovals?.branch?.approverName || candidate.branchPriestName || 'Branch Presiding Officer',
+      date: candidate.tierApprovals?.branch?.date || (branchApproved ? candidate.submissionDate : 'In Review'),
+      desc: 'Verification of active church membership, local parish tithes, and exemplary moral standing.',
+      isCompleted: branchApproved,
+      isCurrent: !branchApproved,
+      statusLabel: branchApproved ? 'Approved ✓' : 'In Review ⏳',
+      sealBadge: branchApproved ? 'Parish Seal Confirmed' : 'Awaiting Rector Vetting',
+      comments: candidate.tierApprovals?.branch?.comments || (branchApproved ? 'Nomination verified with highest recommendation from Parish.' : 'Nomination under active review by Parish Rector & Elders.'),
     },
     {
       id: 'district',
       stepNumber: '02',
       title: 'District Council Vetting & Ratification',
       authority: 'District Superintendent Council',
-      officer: 'Special Snr. Apostle E. O. Johnson (District Leader)',
-      date: 'May 02, 2026',
+      officer: candidate.tierApprovals?.district?.approverName || 'District Superintendent',
+      date: candidate.tierApprovals?.district?.date || (districtApproved ? 'Ratified' : branchApproved ? 'In Review' : 'Queued'),
       desc: 'Zonal background check cleared, constitutional ordination quota certified within district.',
-      isCompleted: candidate.tierApprovals?.district?.approved || currentTierIndex > 1 || isCeremonyReady,
-      statusLabel: 'Approved ✓',
-      sealBadge: 'District Quota Cleared',
-      comments: 'No disciplinary history on record. Meritorious service verified across branches.',
+      isCompleted: districtApproved,
+      isCurrent: branchApproved && !districtApproved,
+      statusLabel: districtApproved ? 'Approved ✓' : branchApproved ? 'In Review ⏳' : 'Pending Stage 1 🔒',
+      sealBadge: districtApproved ? 'District Quota Cleared' : branchApproved ? 'Vetting in Progress' : 'Locked',
+      comments: candidate.tierApprovals?.district?.comments || (districtApproved ? 'No disciplinary history on record. Meritorious service verified.' : branchApproved ? 'Queued for District Superintendent review.' : 'Awaiting Parish Priest clearance.'),
     },
     {
       id: 'province',
       stepNumber: '03',
       title: 'Provincial Diocese Clearance & Quotas',
-      authority: 'Lagos Western Provincial Secretariat',
-      officer: 'Apostle General G. A. Adebayo (Provincial Secretary)',
-      date: 'June 18, 2026',
+      authority: `${candidate.province} Secretariat`,
+      officer: candidate.tierApprovals?.province?.approverName || 'Provincial Secretary',
+      date: candidate.tierApprovals?.province?.date || (provinceApproved ? 'Cleared' : districtApproved ? 'In Review' : 'Queued'),
       desc: 'Provincial diocesan registry validated and passed forward to the National Screening Board.',
-      isCompleted: candidate.tierApprovals?.province?.approved || currentTierIndex > 2 || isCeremonyReady,
-      statusLabel: 'Approved ✓',
-      sealBadge: 'Diocesan Quota Allotted',
-      comments: 'Candidate allocation slot #14 of 25 in Lagos Western Province ratified.',
+      isCompleted: provinceApproved,
+      isCurrent: districtApproved && !provinceApproved,
+      statusLabel: provinceApproved ? 'Approved ✓' : districtApproved ? 'In Review ⏳' : 'Pending Stage 2 🔒',
+      sealBadge: provinceApproved ? 'Diocesan Quota Allotted' : districtApproved ? 'Clearance in Progress' : 'Locked',
+      comments: candidate.tierApprovals?.province?.comments || (provinceApproved ? 'Candidate allocation quota verified and ratified.' : districtApproved ? 'Awaiting provincial credential check.' : 'Awaiting District Council clearance.'),
     },
     {
       id: 'cmc',
       stepNumber: '04',
       title: 'Ordination Screening & Doctrinal Examination',
       authority: 'Central Ministerial Committee (CMC Examination Directorate)',
-      officer: 'Special Snr. Apostle Dr. G. Bassey (Screening Director)',
-      date: 'July 29, 2026',
+      officer: candidate.tierApprovals?.cmc?.approverName || 'Screening Directorate (CMC)',
+      date: candidate.tierApprovals?.cmc?.date || (cmcApproved ? 'Exam Passed' : provinceApproved ? 'Scheduled' : 'Queued'),
       desc: 'Oral interview, written theology assessment, and Liturgical governance examination passed.',
-      isCompleted: candidate.tierApprovals?.cmc?.approved || currentTierIndex > 3 || isCeremonyReady,
-      statusLabel: 'Passed (89%) ✓',
-      sealBadge: 'CMC Distinction Certified',
-      comments: 'Scored 89% in Church Liturgy, Biblical Hermeneutics, and Pastoral Administration.',
+      isCompleted: cmcApproved,
+      isCurrent: provinceApproved && !cmcApproved,
+      statusLabel: cmcApproved ? `Passed (${candidate.theologyScore || 89}%) ✓` : provinceApproved ? 'Screening Scheduled ⏳' : 'Pending Stage 3 🔒',
+      sealBadge: cmcApproved ? 'CMC Distinction Certified' : provinceApproved ? 'Awaiting Exam Session' : 'Locked',
+      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? `Scored ${candidate.theologyScore || 89}% in Church Liturgy and Doctrinal Governance.` : provinceApproved ? 'Candidate scheduled for liturgical interview & theology exam.' : 'Awaiting provincial diocese clearance.'),
     },
     {
       id: 'national',
       stepNumber: '05',
       title: 'Holy Synod & Church Supreme Council Final Seal',
       authority: 'Holy Order Supreme Advisory Council & Office of the Prelate',
-      officer: 'Prof. David A. Oladele (Supervising Apostle General / Super Admin)',
-      date: 'August 15, 2026',
+      officer: candidate.tierApprovals?.national?.approverName || 'Supervising Apostle General / Super Admin',
+      date: candidate.tierApprovals?.national?.date || (nationalApproved ? 'Sealed' : cmcApproved ? 'Synod Review' : 'Queued'),
       desc: 'Supreme ratification concluded. Ceremony seating and gazetted ordination pass generated.',
-      isCompleted: candidate.tierApprovals?.national?.approved || isCeremonyReady,
-      statusLabel: 'Ratified & Sealed ✓',
-      sealBadge: 'Supreme Consecration Seal',
-      comments: 'Certified for solemn consecration by His Most Eminence, Baba Aladura.',
+      isCompleted: nationalApproved,
+      isCurrent: cmcApproved && !nationalApproved,
+      statusLabel: nationalApproved ? 'Ratified & Sealed ✓' : cmcApproved ? 'Synod Docket Review ⏳' : 'Pending Stage 4 🔒',
+      sealBadge: nationalApproved ? 'Supreme Consecration Seal' : cmcApproved ? 'Awaiting Synod Seal' : 'Locked',
+      comments: candidate.tierApprovals?.national?.comments || (nationalApproved ? 'Certified for solemn consecration by His Most Eminence, Baba Aladura.' : cmcApproved ? 'Screening results submitted to Supreme Council for final seal.' : 'Awaiting CMC examination clearance.'),
     },
   ];
 
   const completedCount = approvalSteps.filter((s) => s.isCompleted).length;
   const progressPercent = Math.round((completedCount / approvalSteps.length) * 100);
+
+  const isVettingCleared = completedCount === 5;
+  const isLeviesCleared = candidate.duesStatus === 'cleared';
+  const isPassReady = Boolean(isCeremonyReady && candidate.seatNumber);
+  const isPewReady = Boolean(isCeremonyReady && candidate.seatNumber);
+
+  const readyCount =
+    (isVettingCleared ? 1 : 0) +
+    (isLeviesCleared ? 1 : 0) +
+    (isPassReady ? 1 : 0) +
+    (checklist.vestment ? 1 : 0) +
+    (isPewReady ? 1 : 0);
+
+  const totalLevy = candidate.levyBreakdown?.total || 56250;
+  const branchLevy = candidate.levyBreakdown?.branchLevy || 5000;
+  const districtLevy = candidate.levyBreakdown?.districtLevy || 5000;
+  const provincialLevy = candidate.levyBreakdown?.provincialLevy || 6250;
+  const nationalFee = candidate.levyBreakdown?.nationalFee || 40000;
+  const amountPaid = candidate.duesAmountPaid || 0;
+  const outstandingLevy = Math.max(0, totalLevy - amountPaid);
+
+  const handlePaymentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paymentRefInput.trim()) return;
+    setIsSubmittingPayment(true);
+    try {
+      const generatedReceipt = `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const updated = await api.updateCandidate(
+        candidate.id,
+        {
+          duesStatus: 'cleared',
+          duesAmountPaid: totalLevy,
+          receiptNumber: candidate.receiptNumber || generatedReceipt,
+        },
+        candidate.fullName
+      );
+      if (updated) {
+        setCandidate(updated);
+        onUpdateCandidate?.(updated);
+        setPaymentSubmittedSuccess(true);
+        setPaymentRefInput('');
+        realtimeClient.broadcastLocal({
+          id: `evt_${Date.now()}`,
+          type: 'CANDIDATE_UPDATED',
+          timestamp: new Date().toISOString(),
+          payload: { candidateId: candidate.id, status: 'cleared', amount: totalLevy, receipt: updated.receiptNumber },
+          actor: candidate.fullName,
+          candidateId: candidate.id,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to submit payment reference:', err);
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
 
   const toggleChecklist = (key: keyof typeof checklist) => {
     setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -299,27 +362,23 @@ export function CandidateDashboard({
               </button>
             </Tooltip>
 
-            <span className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1">
+            <span className={`px-2.5 py-1 rounded-xl text-xs font-semibold inline-flex items-center gap-1 ${
+              completedCount === 5
+                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+            }`}>
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isCeremonyReady ? 'All 5 Approvals Cleared' : 'Approvals in Progress'}</span>
-              <span className="sm:hidden">5/5 Cleared</span>
+              <span className="hidden sm:inline">
+                {completedCount === 5 ? 'All 5 Approvals Cleared' : `${completedCount}/5 Approvals Cleared`}
+              </span>
+              <span className="sm:hidden">{completedCount}/5 Cleared</span>
             </span>
           </div>
 
-          {/* Right: Quick actions (Demo, Tour, Clergy View) */}
+          {/* Right: Quick actions (Tour, Clergy View when ordained) */}
           <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => setShowDemoModal(true)}
-              className="px-2.5 py-1 rounded-xl text-xs font-semibold bg-purple-500/10 hover:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-500/30 inline-flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <Info className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Demo Mode</span>
-              <span className="sm:hidden">Demo</span>
-            </button>
-
-            {onSwitchToConsecratedView && (
-              <Tooltip content="Preview post-ordination Consecrated Clergy records and official gazette">
+            {isOrdained && onSwitchToConsecratedView && (
+              <Tooltip content="View post-ordination Consecrated Clergy records and official gazette">
                 <button
                   type="button"
                   onClick={onSwitchToConsecratedView}
@@ -500,7 +559,7 @@ export function CandidateDashboard({
           }`}
         >
           <CheckSquare className="w-4 h-4 text-emerald-500" />
-          <span>Ordination Clearance (5/5)</span>
+          <span>Ordination Clearance ({completedCount}/5)</span>
         </Link>
 
         <Link
@@ -558,26 +617,42 @@ export function CandidateDashboard({
             
             <Link href="/dashboard/candidate?tab=clearance" className="group">
               <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-emerald-500/60 transition-all cursor-pointer">
-                <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                  isVettingCleared
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400'
+                }`}>
                   <CheckCheck className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Clearance Progress</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">5 of 5 Approved</p>
-                  <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">100% Cleared →</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                    {completedCount} of 5 Approved
+                  </p>
+                  <p className={`text-[11px] font-medium ${isVettingCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {progressPercent}% Cleared →
+                  </p>
                 </div>
               </div>
             </Link>
 
             <Link href="/dashboard/candidate?tab=payments" className="group">
               <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-amber-500/60 transition-all cursor-pointer">
-                <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
+                  isLeviesCleared
+                    ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                    : 'bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400'
+                }`}>
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Payment Status</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">₦80,000 Paid</p>
-                  <p className="text-[11px] text-amber-600 dark:text-amber-400 font-mono">Receipt Confirmed →</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                    ₦{amountPaid.toLocaleString()} Paid
+                  </p>
+                  <p className={`text-[11px] font-mono ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {isLeviesCleared ? 'Receipt Confirmed →' : `₦${outstandingLevy.toLocaleString()} Due →`}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -589,8 +664,12 @@ export function CandidateDashboard({
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ceremony Date</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">Sat, Nov 14, 2026</p>
-                  <p className="text-[11px] text-blue-600 dark:text-blue-400">09:00 AM Prompt →</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                    {isCeremonyReady ? (candidate.ordinationDate || 'Sat, Nov 14, 2026') : 'Nov 14, 2026 (Pending)'}
+                  </p>
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400">
+                    {isCeremonyReady ? '09:00 AM Prompt →' : 'Awaiting Final Seal →'}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -602,8 +681,12 @@ export function CandidateDashboard({
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Assigned Seating</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">Zone A &bull; Pew 14</p>
-                  <p className="text-[11px] text-purple-600 dark:text-purple-400">Gate 2 Entrance →</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate">
+                    {isCeremonyReady && candidate.seatNumber ? candidate.seatNumber : 'Allocation Locked'}
+                  </p>
+                  <p className="text-[11px] text-purple-600 dark:text-purple-400">
+                    {isCeremonyReady && candidate.seatNumber ? 'Gate 2 Entrance →' : 'Upon Final Clearance →'}
+                  </p>
                 </div>
               </div>
             </Link>
@@ -622,80 +705,81 @@ export function CandidateDashboard({
                     Candidate Ordination Readiness Checklist
                   </h3>
                 </div>
-                <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-0.5 rounded-lg">
-                  4 of 5 Ready
+                <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg ${
+                  readyCount === 5
+                    ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10'
+                    : 'text-amber-700 dark:text-amber-400 bg-amber-500/10'
+                }`}>
+                  {readyCount} of 5 Ready
                 </span>
               </div>
 
               <div className="space-y-3 text-xs">
-                <label
-                  onClick={() => toggleChecklist('vetting')}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
-                >
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all select-none">
                   <input
                     type="checkbox"
-                    checked={checklist.vetting}
-                    onChange={() => {}}
-                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                    checked={isVettingCleared}
+                    readOnly
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700 cursor-not-allowed"
                   />
                   <div className="space-y-0.5 flex-1">
-                    <span className={`font-semibold text-sm ${checklist.vetting ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
-                      Ordination Clearance & Screening (5/5 Approved)
+                    <span className={`font-semibold text-sm ${isVettingCleared ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Ordination Clearance & Screening ({completedCount}/5 Approved)
                     </span>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                      All parish, district, provincial, and national screening requirements ratified.
+                      {isVettingCleared
+                        ? 'All parish, district, provincial, screening exam, and national approvals ratified.'
+                        : `Currently at Stage ${completedCount + 1}: ${approvalSteps[completedCount]?.title || 'Screening in review'}.`}
                     </p>
                   </div>
                   <Link href="/dashboard/candidate?tab=clearance" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
                     Details →
                   </Link>
-                </label>
+                </div>
 
-                <label
-                  onClick={() => toggleChecklist('levies')}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
-                >
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all select-none">
                   <input
                     type="checkbox"
-                    checked={checklist.levies}
-                    onChange={() => {}}
-                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                    checked={isLeviesCleared}
+                    readOnly
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700 cursor-not-allowed"
                   />
                   <div className="space-y-0.5 flex-1">
-                    <span className={`font-semibold text-sm ${checklist.levies ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
-                      Statutory Levies & Ordination Dues (₦80,000 Cleared)
+                    <span className={`font-semibold text-sm ${isLeviesCleared ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Statutory Levies & Ordination Dues ({isLeviesCleared ? 'Cleared' : `₦${outstandingLevy.toLocaleString()} Due`})
                     </span>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                      Branch, district, province, and national ordination fees fully paid.
+                      {isLeviesCleared
+                        ? `All ₦${totalLevy.toLocaleString()} statutory administrative and robing dues cleared.`
+                        : `₦${amountPaid.toLocaleString()} paid of ₦${totalLevy.toLocaleString()} total statutory assessment.`}
                     </p>
                   </div>
                   <Link href="/dashboard/candidate?tab=payments" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
-                    Receipt →
+                    {isLeviesCleared ? 'Receipt →' : 'Pay Dues →'}
                   </Link>
-                </label>
+                </div>
 
-                <label
-                  onClick={() => toggleChecklist('pass')}
-                  className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-amber-500/30 transition-all cursor-pointer select-none"
-                >
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all select-none">
                   <input
                     type="checkbox"
-                    checked={checklist.pass}
-                    onChange={() => {}}
-                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700"
+                    checked={isPassReady}
+                    readOnly
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700 cursor-not-allowed"
                   />
                   <div className="space-y-0.5 flex-1">
-                    <span className={`font-semibold text-sm ${checklist.pass ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                    <span className={`font-semibold text-sm ${isPassReady ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
                       Digital Ceremony Pass with Gate 2 QR Code
                     </span>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                      Pass contains your Gate 2 QR barcode required for chancel entry.
+                      {isPassReady
+                        ? 'Pass issued and verified with Gate 2 QR barcode.'
+                        : 'Pass unlocks automatically once Stage 5 Holy Synod approval is ratified.'}
                     </p>
                   </div>
                   <Link href="/dashboard/candidate?tab=pass" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
-                    View Pass →
+                    {isPassReady ? 'View Pass →' : 'View Status →'}
                   </Link>
-                </label>
+                </div>
 
                 <label
                   onClick={() => toggleChecklist('vestment')}
@@ -719,6 +803,28 @@ export function CandidateDashboard({
                     {checklist.vestment ? 'Ready ✓' : 'Click to confirm'}
                   </span>
                 </label>
+
+                <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition-all select-none">
+                  <input
+                    type="checkbox"
+                    checked={isPewReady}
+                    readOnly
+                    className="w-4 h-4 mt-0.5 rounded text-amber-500 focus:ring-amber-500 border-slate-300 dark:border-slate-700 cursor-not-allowed"
+                  />
+                  <div className="space-y-0.5 flex-1">
+                    <span className={`font-semibold text-sm ${isPewReady ? 'text-slate-900 dark:text-white line-through opacity-80' : 'text-slate-900 dark:text-white'}`}>
+                      Chancel Pew Reservation ({isPewReady ? candidate.seatNumber : 'Pending Allocation'})
+                    </span>
+                    <p className="text-slate-500 dark:text-slate-400 text-[11px]">
+                      {isPewReady
+                        ? `Reserved chancel seating assigned: ${candidate.seatNumber}.`
+                        : 'Pew assignment assigned in the candidate front chancel wing upon clearance.'}
+                    </p>
+                  </div>
+                  <Link href="/dashboard/candidate?tab=pass" className="text-amber-700 dark:text-amber-400 hover:underline font-bold text-[11px]">
+                    Seating →
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -805,8 +911,12 @@ export function CandidateDashboard({
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
-                  5 of 5 Ratified (100% Cleared) ✓
+                <span className={`px-3 py-1 rounded-xl text-xs font-bold border shrink-0 ${
+                  completedCount === 5
+                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                }`}>
+                  {completedCount} of 5 Ratified ({progressPercent}% Cleared) {completedCount === 5 ? '✓' : '⏳'}
                 </span>
               </div>
             </div>
@@ -850,8 +960,20 @@ export function CandidateDashboard({
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border flex items-center gap-1.5 ${
+                          step.isCompleted
+                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                            : step.isCurrent
+                            ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
+                        }`}>
+                          {step.isCompleted ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          ) : step.isCurrent ? (
+                            <Clock className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                          ) : (
+                            <Shield className="w-3.5 h-3.5 text-slate-400" />
+                          )}
                           <span>{step.statusLabel}</span>
                         </span>
 
@@ -901,36 +1023,50 @@ export function CandidateDashboard({
                   CMC Doctrinal Screening & Exam Scorecard
                 </h3>
               </div>
-              <span className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                Grade: A (89% Passed)
+              <span className={`px-3 py-1 rounded-xl text-xs font-mono font-bold border ${
+                cmcApproved
+                  ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
+                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
+              }`}>
+                {cmcApproved ? `Grade: A (${candidate.theologyScore || 89}% Passed) ✓` : 'Stage 4 Evaluation Scheduled ⏳'}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">Scripture & Theology</span>
-                <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">92%</span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Distinction</span>
-              </div>
+            {cmcApproved ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Scripture & Theology</span>
+                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
+                    {candidate.theologyScore ? `${Math.min(99, candidate.theologyScore + 3)}%` : '92%'}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Distinction</span>
+                </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">Liturgy & Church Doctrine</span>
-                <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">88%</span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
-              </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Liturgy & Church Doctrine</span>
+                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
+                    {candidate.theologyScore || 88}%
+                  </span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
+                </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">Oral Examination</span>
-                <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">87%</span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Recommended</span>
-              </div>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Oral Examination</span>
+                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">87%</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Recommended</span>
+                </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                <span className="text-slate-500 block text-[10px] uppercase font-bold">Conduct & Rating</span>
-                <span className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 mt-1 block">Exemplary</span>
-                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Clear Record</span>
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Conduct & Rating</span>
+                  <span className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 mt-1 block">Exemplary</span>
+                  <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Clear Record</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                The Central Ministerial Committee (CMC) administers the Doctrinal and Liturgical examination following Provincial Diocesan accreditation. Your examination date, venue, and study guidelines will populate automatically upon reaching Stage 4.
+              </div>
+            )}
           </div>
 
         </div>
@@ -971,30 +1107,104 @@ export function CandidateDashboard({
             </div>
 
             {/* Total Paid Header Card */}
-            <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-slate-50 to-emerald-500/5 dark:from-emerald-950/30 dark:via-slate-900 dark:to-emerald-950/10 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className={`p-6 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+              isLeviesCleared
+                ? 'bg-gradient-to-r from-emerald-500/10 via-slate-50 to-emerald-500/5 dark:from-emerald-950/30 dark:via-slate-900 dark:to-emerald-950/10 border-emerald-500/30'
+                : 'bg-gradient-to-r from-amber-500/10 via-slate-50 to-amber-500/5 dark:from-amber-950/30 dark:via-slate-900 dark:to-amber-950/10 border-amber-500/30'
+            }`}>
               <div className="space-y-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  All Statutory Ordination Levies Cleared
+                <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                  isLeviesCleared ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'
+                }`}>
+                  {isLeviesCleared ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      All Statutory Ordination Levies Cleared
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="w-4 h-4 text-amber-500 animate-pulse" />
+                      Statutory Ordination Levies Settlement Pending
+                    </>
+                  )}
                 </span>
                 <div className="text-2xl sm:text-3xl font-mono font-bold text-slate-900 dark:text-white">
-                  ₦80,000.00 Paid in Full
+                  ₦{amountPaid.toLocaleString()}.00 {isLeviesCleared ? 'Paid in Full' : `of ₦${totalLevy.toLocaleString()}.00 Settled`}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Official Church Account &bull; Confirmed by Lagos Central Province Treasury
+                  {isLeviesCleared
+                    ? 'Official Church Treasury &bull; Confirmed and Ratified'
+                    : `Outstanding Balance: ₦${outstandingLevy.toLocaleString()}.00 &bull; Remit to Official Church Account`}
                 </p>
               </div>
 
               <div className="text-right sm:border-l sm:border-slate-200 dark:sm:border-slate-800 sm:pl-6">
                 <span className="text-[11px] font-mono text-slate-500 block">Official Receipt Number</span>
                 <span className="text-sm font-mono font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
-                  {candidate.receiptNumber || 'REC-2026-ESOCS-7120'}
+                  {candidate.receiptNumber || (isLeviesCleared ? 'REC-2026-ESOCS-7120' : 'Pending Remittance')}
                 </span>
-                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
-                  Status: Cleared ✓
+                <span className={`text-[10px] font-bold ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  {isLeviesCleared ? 'Status: Cleared ✓' : 'Status: Awaiting Verification ⏳'}
                 </span>
               </div>
             </div>
+
+            {/* Direct Bank Transfer & Settlement Form (For candidates with pending dues) */}
+            {!isLeviesCleared && (
+              <div className="p-5 sm:p-6 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 space-y-4">
+                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold text-sm">
+                  <CreditCard className="w-4 h-4 text-amber-500" />
+                  <span>Official Church Account Direct Remittance Details</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/20">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Designated Bank</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Zenith Bank Plc</span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/20">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Account Number</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">1014892019</span>
+                  </div>
+                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-500/20">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold block">Required Payment Narration</span>
+                    <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{candidate.regNumber}</span>
+                  </div>
+                </div>
+
+                {paymentSubmittedSuccess ? (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Payment reference confirmed and verified successfully! Official receipt generated.</span>
+                  </div>
+                ) : (
+                  <form onSubmit={handlePaymentSubmit} className="space-y-2 pt-1">
+                    <span className="text-[11px] text-slate-600 dark:text-slate-300 font-medium block">
+                      Already paid via bank transfer, USSD, or parish cash desk? Enter your transfer reference or teller number below:
+                    </span>
+                    <div className="flex flex-col sm:flex-row gap-2.5">
+                      <input
+                        type="text"
+                        value={paymentRefInput}
+                        onChange={(e) => setPaymentRefInput(e.target.value)}
+                        placeholder="e.g. ZEN-TXN-902184 / Remita RRR..."
+                        className="flex-1 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/30 font-mono"
+                        required
+                      />
+                      <Button
+                        variant="gold"
+                        size="md"
+                        type="submit"
+                        loading={isSubmittingPayment}
+                        disabled={!paymentRefInput.trim()}
+                        className="font-bold text-xs shrink-0 px-5"
+                      >
+                        Confirm & Record Payment Reference
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
 
             {/* Itemized Dues Breakdown Table */}
             <div className="overflow-x-auto">
@@ -1013,10 +1223,16 @@ export function CandidateDashboard({
                       Branch Parish Administrative & Screening Dues
                     </td>
                     <td className="py-3.5 px-4 text-slate-500">{candidate.parish}</td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦15,000.00</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                      ₦{branchLevy.toLocaleString()}.00
+                    </td>
                     <td className="py-3.5 px-4 text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
-                        Cleared ✓
+                      <span className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] ${
+                        isLeviesCleared
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                      }`}>
+                        {isLeviesCleared ? 'Cleared ✓' : 'Pending'}
                       </span>
                     </td>
                   </tr>
@@ -1026,10 +1242,16 @@ export function CandidateDashboard({
                       District Council Ministerial Vetting Fee
                     </td>
                     <td className="py-3.5 px-4 text-slate-500">{candidate.district}</td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦15,000.00</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                      ₦{districtLevy.toLocaleString()}.00
+                    </td>
                     <td className="py-3.5 px-4 text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
-                        Cleared ✓
+                      <span className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] ${
+                        isLeviesCleared
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                      }`}>
+                        {isLeviesCleared ? 'Cleared ✓' : 'Pending'}
                       </span>
                     </td>
                   </tr>
@@ -1039,10 +1261,16 @@ export function CandidateDashboard({
                       Provincial Diocese Registry & Quota Levy
                     </td>
                     <td className="py-3.5 px-4 text-slate-500">{candidate.province}</td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦20,000.00</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                      ₦{provincialLevy.toLocaleString()}.00
+                    </td>
                     <td className="py-3.5 px-4 text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
-                        Cleared ✓
+                      <span className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] ${
+                        isLeviesCleared
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                      }`}>
+                        {isLeviesCleared ? 'Cleared ✓' : 'Pending'}
                       </span>
                     </td>
                   </tr>
@@ -1052,23 +1280,31 @@ export function CandidateDashboard({
                       National Holy Synod Consecration & Robing Levy
                     </td>
                     <td className="py-3.5 px-4 text-slate-500">Holy Order General Conference</td>
-                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">₦30,000.00</td>
+                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
+                      ₦{nationalFee.toLocaleString()}.00
+                    </td>
                     <td className="py-3.5 px-4 text-right">
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-mono font-bold text-[10px]">
-                        Cleared ✓
+                      <span className={`px-2 py-0.5 rounded-full font-mono font-bold text-[10px] ${
+                        isLeviesCleared
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                          : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                      }`}>
+                        {isLeviesCleared ? 'Cleared ✓' : 'Pending'}
                       </span>
                     </td>
                   </tr>
 
                   <tr className="bg-slate-50 dark:bg-slate-900/80 font-bold text-sm">
                     <td colSpan={2} className="py-3.5 px-4 text-slate-900 dark:text-white">
-                      Total Statutory Ordination Fees Settled
+                      Total Statutory Ordination Fees
                     </td>
                     <td className="py-3.5 px-4 font-mono text-amber-700 dark:text-amber-400 font-extrabold text-base">
-                      ₦80,000.00
+                      ₦{totalLevy.toLocaleString()}.00
                     </td>
-                    <td className="py-3.5 px-4 text-right text-emerald-600 dark:text-emerald-400 text-xs font-mono">
-                      Paid in Full ✓
+                    <td className={`py-3.5 px-4 text-right text-xs font-mono font-bold ${
+                      isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      {isLeviesCleared ? 'Paid in Full ✓' : `₦${outstandingLevy.toLocaleString()} Pending`}
                     </td>
                   </tr>
                 </tbody>
@@ -1086,121 +1322,179 @@ export function CandidateDashboard({
       {currentTab === 'pass' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Left 2 Cols: Digital Pass & Gate Directives */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-                
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <QrCode className="w-5 h-5 text-blue-500" />
-                      <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
-                        Digital Ceremony Admission Pass
-                      </h2>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      Show this pass at Mount Zion Cathedral Gate 2 for candidate fast-track chancel entry.
-                    </p>
-                  </div>
+          {!isCeremonyReady ? (
+            <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-8 sm:p-12 text-center max-w-2xl mx-auto shadow-sm space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">
+                  Ceremony Pass & Chancel Seating In Preparation
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-lg mx-auto">
+                  Your Digital Gate 2 Fast-Track Barcode and Reserved Chancel Pew allocation will unlock automatically once all five clearance stages are ratified and statutory levies are verified.
+                </p>
+              </div>
 
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-left">
+                <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Vetting Status</span>
+                  <span className={`font-bold ${completedCount === 5 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {completedCount} of 5 Approved
+                  </span>
+                </div>
+                <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Statutory Dues</span>
+                  <span className={`font-bold ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {isLeviesCleared ? 'Settled ✓' : 'Pending'}
+                  </span>
+                </div>
+                <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Pew Allocation</span>
+                  <span className="font-bold text-slate-500">
+                    {candidate.seatNumber || 'Pending Seal'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                <Button
+                  variant="gold"
+                  size="md"
+                  onClick={() => setCurrentTab('clearance')}
+                  className="font-bold text-xs"
+                >
+                  View Clearance Roadmap →
+                </Button>
+                {!isLeviesCleared && (
                   <Button
-                    variant="gold"
+                    variant="outline"
                     size="md"
-                    onClick={() => setShowPassModal(true)}
-                    icon={<QrCode className="w-4 h-4" />}
-                    className="font-bold text-xs shadow-md"
+                    onClick={() => setCurrentTab('payments')}
+                    className="font-bold text-xs border-slate-300 dark:border-slate-700"
                   >
-                    Open Fullscreen Pass
+                    Settle Statutory Dues →
                   </Button>
-                </div>
-
-                {/* Seating & Gate Info Box */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
-                      Chancel Pew Assignment
-                    </span>
-                    <div className="text-lg font-bold text-purple-950 dark:text-white">
-                      Zone A &bull; Pew 14
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Left 2 Cols: Digital Pass & Gate Directives */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                  
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <QrCode className="w-5 h-5 text-blue-500" />
+                        <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
+                          Digital Ceremony Admission Pass
+                        </h2>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Show this pass at Mount Zion Cathedral Gate 2 for candidate fast-track chancel entry.
+                      </p>
                     </div>
-                    <p className="text-xs text-purple-800/80 dark:text-purple-300/80">
-                      Reserved candidate front section (Chancel East Wing).
+
+                    <Button
+                      variant="gold"
+                      size="md"
+                      onClick={() => setShowPassModal(true)}
+                      icon={<QrCode className="w-4 h-4" />}
+                      className="font-bold text-xs shadow-md"
+                    >
+                      Open Fullscreen Pass
+                    </Button>
+                  </div>
+
+                  {/* Seating & Gate Info Box */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                        Chancel Pew Assignment
+                      </span>
+                      <div className="text-lg font-bold text-purple-950 dark:text-white">
+                        {candidate.seatNumber || 'Zone A • Pew 14'}
+                      </div>
+                      <p className="text-xs text-purple-800/80 dark:text-purple-300/80">
+                        Reserved candidate front section (Chancel East Wing).
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                        Fast-Track Entry Gate
+                      </span>
+                      <div className="text-lg font-bold text-blue-950 dark:text-white">
+                        Gate 2 &bull; East Portico
+                      </div>
+                      <p className="text-xs text-blue-800/80 dark:text-blue-300/80">
+                        Candidate dedicated security portal with barcode scanner.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cathedral Location */}
+                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+                    <span className="font-bold text-slate-900 dark:text-white block">Cathedral Headquarters Address:</span>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      Mount Zion Cathedral Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State.
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
-                      Fast-Track Entry Gate
-                    </span>
-                    <div className="text-lg font-bold text-blue-950 dark:text-white">
-                      Gate 2 &bull; East Portico
-                    </div>
-                    <p className="text-xs text-blue-800/80 dark:text-blue-300/80">
-                      Candidate dedicated security portal with barcode scanner.
-                    </p>
-                  </div>
                 </div>
-
-                {/* Cathedral Location */}
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
-                  <span className="font-bold text-slate-900 dark:text-white block">Cathedral Headquarters Address:</span>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Mount Zion Cathedral Headquarters, 11/13 Hughes Avenue, Alagomeji, Yaba, Lagos State.
-                  </p>
-                </div>
-
               </div>
-            </div>
 
-            {/* Right 1 Col: Ordination Day Itinerary */}
-            <div className="space-y-6">
-              <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
-                  <Calendar className="w-5 h-5 text-amber-500" />
-                  <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white">
-                    Ordination Day Itinerary
-                  </h3>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span className="font-mono font-bold text-amber-700 dark:text-amber-400 shrink-0">07:30 AM</span>
-                    <div>
-                      <span className="font-bold text-slate-900 dark:text-white block">Accreditation & Robing Check</span>
-                      <span className="text-slate-500 text-[11px]">Chancel Vestry Gate 2</span>
-                    </div>
+              {/* Right 1 Col: Ordination Day Itinerary */}
+              <div className="space-y-6">
+                <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+                    <Calendar className="w-5 h-5 text-amber-500" />
+                    <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                      Ordination Day Itinerary
+                    </h3>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span className="font-mono font-bold text-blue-700 dark:text-blue-400 shrink-0">08:30 AM</span>
-                    <div>
-                      <span className="font-bold text-slate-900 dark:text-white block">Processional Seating</span>
-                      <span className="text-slate-500 text-[11px]">Zone A Pew 14 Entry</span>
+                  <div className="space-y-3 text-xs">
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <span className="font-mono font-bold text-amber-700 dark:text-amber-400 shrink-0">07:30 AM</span>
+                      <div>
+                        <span className="font-bold text-slate-900 dark:text-white block">Accreditation & Robing Check</span>
+                        <span className="text-slate-500 text-[11px]">Chancel Vestry Gate 2</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
-                    <span className="font-mono font-bold text-amber-700 dark:text-amber-300 shrink-0">09:00 AM</span>
-                    <div>
-                      <span className="font-bold text-slate-900 dark:text-white block">Consecration Service Begins</span>
-                      <span className="text-slate-600 dark:text-slate-300 text-[11px]">Laying of Hands by Baba Aladura</span>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <span className="font-mono font-bold text-blue-700 dark:text-blue-400 shrink-0">08:30 AM</span>
+                      <div>
+                        <span className="font-bold text-slate-900 dark:text-white block">Processional Seating</span>
+                        <span className="text-slate-500 text-[11px]">{candidate.seatNumber || 'Zone A Pew 14'} Entry</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                    <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 shrink-0">12:30 PM</span>
-                    <div>
-                      <span className="font-bold text-slate-900 dark:text-white block">Gazette Photo & Certificate</span>
-                      <span className="text-slate-500 text-[11px]">Cathedral East Portico</span>
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                      <span className="font-mono font-bold text-amber-700 dark:text-amber-300 shrink-0">09:00 AM</span>
+                      <div>
+                        <span className="font-bold text-slate-900 dark:text-white block">Consecration Service Begins</span>
+                        <span className="text-slate-600 dark:text-slate-300 text-[11px]">Laying of Hands by Baba Aladura</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-400 shrink-0">12:30 PM</span>
+                      <div>
+                        <span className="font-bold text-slate-900 dark:text-white block">Gazette Photo & Certificate</span>
+                        <span className="text-slate-500 text-[11px]">Cathedral East Portico</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-          </div>
+            </div>
+          )}
 
         </div>
       )}
@@ -1354,10 +1648,6 @@ export function CandidateDashboard({
         onClose={() => setShowTourModal(false)}
       />
 
-      <DemoAccountModal
-        isOpen={showDemoModal}
-        onClose={() => setShowDemoModal(false)}
-      />
 
     </div>
   );
