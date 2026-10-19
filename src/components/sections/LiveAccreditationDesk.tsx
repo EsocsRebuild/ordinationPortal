@@ -58,7 +58,7 @@ const COHORTS: CohortDefinition[] = [
     ranks: ['Brother', 'Aladura', 'Leader', 'Rabbi', 'Sister', 'Lady Aladura', 'Lady Leader'],
     sessionTime: 'Saturday 08:00 AM – 10:30 AM',
     gateName: 'Gate 1 (North Nave Wing)',
-    presidingPrelate: 'Senior Apostle Festus N. Okon & Council of Pastors',
+    presidingPrelate: 'Council of Pastors & Parish Leadership',
     colorClass: 'border-blue-500/40 text-blue-300 bg-blue-500/10',
   },
   {
@@ -68,7 +68,7 @@ const COHORTS: CohortDefinition[] = [
     ranks: ['Pastor', 'Evangelist', 'Dorcas', 'Deborah', 'Mary'],
     sessionTime: 'Saturday 10:45 AM – 01:15 PM',
     gateName: 'Gate 2 (Central Chancel Wing)',
-    presidingPrelate: 'Special Senior Apostle Dr. Godwin I. Bassey',
+    presidingPrelate: 'Central Ministerial Committee (CMC)',
     colorClass: 'border-purple-500/40 text-purple-300 bg-purple-500/10',
   },
   {
@@ -78,7 +78,7 @@ const COHORTS: CohortDefinition[] = [
     ranks: ['Apostle (White)', 'Super Apostle (Pink)', 'Prophetess'],
     sessionTime: 'Saturday 01:30 PM – 03:45 PM',
     gateName: 'Gate 2 (Chancel Apex Wing)',
-    presidingPrelate: 'His Eminence, Apostle General J. K. Coker',
+    presidingPrelate: 'Holy Synod Advisory Council',
     colorClass: 'border-pink-500/40 text-pink-300 bg-pink-500/10',
   },
   {
@@ -88,7 +88,7 @@ const COHORTS: CohortDefinition[] = [
     ranks: ['Senior Apostle (Yellow)', 'Special Senior Apostle (Blue)', 'Mother in Israel', 'Snr. Mother in Israel', 'Sp. Snr. Mother in Israel', 'Apostle General (Green)', 'Supervising Apostle General (Green)'],
     sessionTime: 'Saturday 04:00 PM – 06:30 PM',
     gateName: 'Apex Sanctuary Gate (Sanctum Sanctorum)',
-    presidingPrelate: 'Supervising Apostle General Prof. David A. Oladele & Holy Synod',
+    presidingPrelate: 'The Prelate & Holy Synod Council of Elders',
     colorClass: 'border-amber-500/40 text-amber-300 bg-amber-500/10',
   },
   {
@@ -586,7 +586,7 @@ export function LiveAccreditationDesk({ officerName = 'Accreditation Marshal' }:
                 </div>
                 <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
                   <span className="text-slate-400 text-[11px] block">Assigned Chancel Pew</span>
-                  <span className="font-bold text-white text-sm">{scannedCandidate.seatNumber || 'Zone A - Chancel Pew 14'}</span>
+                  <span className="font-bold text-white text-sm">{scannedCandidate.seatNumber || 'Pending Allocation'}</span>
                 </div>
                 <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
                   <span className="text-slate-400 text-[11px] block">Financial Clearance</span>

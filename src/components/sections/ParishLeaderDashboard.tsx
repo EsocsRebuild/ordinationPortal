@@ -642,7 +642,7 @@ export function ParishLeaderDashboard({
                           required
                           value={formData.firstName}
                           onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                          placeholder="e.g. Emmanuel"
+                          placeholder="First Name"
                           className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
                         />
                       </div>
@@ -655,7 +655,7 @@ export function ParishLeaderDashboard({
                           type="text"
                           value={formData.middleName}
                           onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-                          placeholder="e.g. Babatunde"
+                          placeholder="Middle Name"
                           className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
                         />
                       </div>
@@ -669,7 +669,7 @@ export function ParishLeaderDashboard({
                           required
                           value={formData.lastName}
                           onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                          placeholder="e.g. Adeleke"
+                          placeholder="Surname"
                           className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
                         />
                       </div>
@@ -683,7 +683,7 @@ export function ParishLeaderDashboard({
                         type="text"
                         value={formData.preferredName}
                         onChange={(e) => setFormData({ ...formData, preferredName: e.target.value })}
-                        placeholder="e.g. Pastor Adeleke"
+                        placeholder="e.g. Brother John"
                         className="w-full px-3.5 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm font-medium text-white placeholder-slate-500 transition-all"
                       />
                     </div>
@@ -702,7 +702,7 @@ export function ParishLeaderDashboard({
                           required
                           value={formData.email}
                           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                          placeholder="e.g. e.adeleke@esocs.church"
+                          placeholder="ordinand@example.com"
                           className="w-full pl-10 pr-4 py-3 bg-slate-950/70 hover:bg-slate-950/90 border border-slate-800 focus:border-amber-400/90 focus:ring-4 focus:ring-amber-400/10 rounded-xl text-sm text-white placeholder-slate-500 transition-all"
                         />
                       </div>

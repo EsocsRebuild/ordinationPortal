@@ -96,6 +96,12 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
     ? (candidate?.seatNumber ? 'Ready' : 'Allocated')
     : 'Locked';
 
+  const verifyHref = candidate?.id
+    ? `/verify/${candidate.id}`
+    : user.candidateId
+    ? `/verify/${user.candidateId}`
+    : '/#verify-pass';
+
   const navItems = isCandidate
     ? [
         {
@@ -319,7 +325,7 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
                 <>
                   <Tooltip content="Verify Accreditation Pass" position="right">
                     <Link
-                      href="/verify/cand-001"
+                      href={verifyHref}
                       className="flex items-center justify-center p-2.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
                     >
                       <QrCode className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />
@@ -337,7 +343,7 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
               ) : (
                 <>
                   <Link
-                    href="/verify/cand-001"
+                    href={verifyHref}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
                   >
                     <QrCode className="w-4 h-4 text-amber-500 dark:text-amber-400 shrink-0" />

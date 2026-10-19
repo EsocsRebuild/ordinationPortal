@@ -172,7 +172,7 @@ export function ConsecratedClergyDashboard({
                   <span>{candidate.isCheckedIn || candidate.accreditedBy ? 'Accredited ✓' : 'Awaiting Check-in'}</span>
                 </div>
                 <p className="opacity-80 text-[11px]">
-                  Physical pass scanned at Cathedral Chancel Gate (Seat: {candidate.seatNumber || 'Assigned Zone A'}).
+                  Physical pass scanned at Cathedral Chancel Gate (Seat: {candidate.seatNumber || 'Cathedral Pew'}).
                 </p>
               </div>
 

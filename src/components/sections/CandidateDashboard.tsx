@@ -247,9 +247,9 @@ export function CandidateDashboard({
       desc: 'Oral interview, written theology assessment, and Liturgical governance examination passed.',
       isCompleted: cmcApproved,
       isCurrent: provinceApproved && !cmcApproved,
-      statusLabel: cmcApproved ? `Passed (${candidate.theologyScore || 89}%) ✓` : provinceApproved ? 'Screening Scheduled ⏳' : 'Pending Stage 3 🔒',
+      statusLabel: cmcApproved ? (candidate.theologyScore ? `Passed (${candidate.theologyScore}%) ✓` : 'Passed ✓') : provinceApproved ? 'Screening Scheduled ⏳' : 'Pending Stage 3 🔒',
       sealBadge: cmcApproved ? 'CMC Distinction Certified' : provinceApproved ? 'Awaiting Exam Session' : 'Locked',
-      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? `Scored ${candidate.theologyScore || 89}% in Church Liturgy and Doctrinal Governance.` : provinceApproved ? 'Candidate scheduled for liturgical interview & theology exam.' : 'Awaiting provincial diocese clearance.'),
+      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? (candidate.theologyScore ? `Scored ${candidate.theologyScore}% in Church Liturgy and Doctrinal Governance.` : 'Doctrinal examination and interview successfully certified by CMC.') : provinceApproved ? 'Candidate scheduled for liturgical interview & theology exam.' : 'Awaiting provincial diocese clearance.'),
     },
     {
       id: 'national',
@@ -395,11 +395,11 @@ export function CandidateDashboard({
     (checklist.vestment ? 1 : 0) +
     (isPewReady ? 1 : 0);
 
-  const totalLevy = candidate.levyBreakdown?.total || 56250;
-  const branchLevy = candidate.levyBreakdown?.branchLevy || 5000;
-  const districtLevy = candidate.levyBreakdown?.districtLevy || 5000;
-  const provincialLevy = candidate.levyBreakdown?.provincialLevy || 6250;
-  const nationalFee = candidate.levyBreakdown?.nationalFee || 40000;
+  const totalLevy = candidate.levyBreakdown?.total || 0;
+  const branchLevy = candidate.levyBreakdown?.branchLevy || 0;
+  const districtLevy = candidate.levyBreakdown?.districtLevy || 0;
+  const provincialLevy = candidate.levyBreakdown?.provincialLevy || 0;
+  const nationalFee = candidate.levyBreakdown?.nationalFee || 0;
   const amountPaid = candidate.duesAmountPaid || 0;
   const outstandingLevy = Math.max(0, totalLevy - amountPaid);
 
@@ -1319,7 +1319,7 @@ export function CandidateDashboard({
                   ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
                   : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
               }`}>
-                {cmcApproved ? `Grade: A (${candidate.theologyScore || 89}% Passed) ✓` : 'Stage 4 Evaluation Scheduled ⏳'}
+                {cmcApproved ? (candidate.theologyScore ? `Theology Exam: ${candidate.theologyScore}% Passed ✓` : 'CMC Screening Passed ✓') : 'Stage 4 Evaluation Scheduled ⏳'}
               </span>
             </div>
 
@@ -1328,28 +1328,32 @@ export function CandidateDashboard({
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Scripture & Theology</span>
                   <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
-                    {candidate.theologyScore ? `${Math.min(99, candidate.theologyScore + 3)}%` : '92%'}
+                    {candidate.theologyScore ? `${candidate.theologyScore}%` : 'Certified'}
                   </span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Distinction</span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Liturgy & Church Doctrine</span>
                   <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
-                    {candidate.theologyScore || 88}%
+                    {candidate.theologyScore ? `${candidate.theologyScore}%` : 'Certified'}
                   </span>
                   <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Oral Examination</span>
-                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">87%</span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Recommended</span>
+                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
+                    {candidate.interviewScore ? `${candidate.interviewScore}%` : 'Certified'}
+                  </span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Endorsed</span>
                 </div>
 
                 <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
                   <span className="text-slate-500 block text-[10px] uppercase font-bold">Conduct & Rating</span>
-                  <span className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 mt-1 block">Exemplary</span>
+                  <span className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 mt-1 block capitalize">
+                    {candidate.conductRating || 'Exemplary'}
+                  </span>
                   <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Clear Record</span>
                 </div>
               </div>
@@ -1432,7 +1436,7 @@ export function CandidateDashboard({
               <div className="text-right sm:border-l sm:border-slate-200 dark:sm:border-slate-800 sm:pl-6">
                 <span className="text-[11px] font-mono text-slate-500 block">Official Receipt Number</span>
                 <span className="text-sm font-mono font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
-                  {candidate.receiptNumber || (isLeviesCleared ? 'REC-2026-ESOCS-7120' : 'Pending Remittance')}
+                  {candidate.receiptNumber || (isLeviesCleared ? `REC-${new Date().getFullYear()}-${candidate.id.toUpperCase()}` : 'Pending Remittance')}
                 </span>
                 <span className={`text-[10px] font-bold ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                   {isLeviesCleared ? 'Status: Cleared ✓' : 'Status: Awaiting Verification ⏳'}
@@ -1775,7 +1779,7 @@ export function CandidateDashboard({
                         Chancel Pew Assignment
                       </span>
                       <div className="text-lg font-bold text-purple-950 dark:text-white">
-                        {candidate.seatNumber || 'Zone A • Pew 14'}
+                        {candidate.seatNumber || 'Pending Allocation'}
                       </div>
                       <p className="text-xs text-purple-800/80 dark:text-purple-300/80">
                         Reserved candidate front section (Chancel East Wing).
@@ -1829,7 +1833,7 @@ export function CandidateDashboard({
                       <span className="font-mono font-bold text-blue-700 dark:text-blue-400 shrink-0">08:30 AM</span>
                       <div>
                         <span className="font-bold text-slate-900 dark:text-white block">Processional Seating</span>
-                        <span className="text-slate-500 text-[11px]">{candidate.seatNumber || 'Zone A Pew 14'} Entry</span>
+                        <span className="text-slate-500 text-[11px]">{candidate.seatNumber ? `${candidate.seatNumber} Entry` : 'Reserved Pew Entry'}</span>
                       </div>
                     </div>
 

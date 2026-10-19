@@ -245,7 +245,7 @@ export default function HomePage() {
                         setVerifyId(e.target.value);
                         if (verifyError) setVerifyError('');
                       }}
-                      placeholder="e.g. cand-001 or ESOCS/2026/0842"
+                      placeholder="e.g. ESOCS/ORD/2026/0481 or Candidate ID"
                       className="w-full bg-slate-50 dark:bg-[#080d1a] border border-slate-300 dark:border-slate-700 focus:border-amber-500 dark:focus:border-amber-400 rounded-xl pl-9 pr-3.5 h-11 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono transition-colors"
                     />
                   </div>
@@ -264,25 +264,6 @@ export default function HomePage() {
                     {verifyError}
                   </p>
                 )}
-              </div>
-
-              {/* Sample Quick Lookups */}
-              <div className="pt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <span className="text-[11px]">Demo Passes:</span>
-                {['cand-001', 'cand-002', 'cand-003'].map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => {
-                      setVerifyId(code);
-                      setVerifyError('');
-                      router.push(`/verify/${code}`);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-amber-400 text-amber-800 dark:text-amber-300 font-mono text-[10px] sm:text-[11px] transition-colors"
-                  >
-                    {code}
-                  </button>
-                ))}
               </div>
             </form>
           </div>

@@ -153,15 +153,15 @@ export default function VerifyPage({ params }: VerifyPageProps) {
           <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
             <div>
               <span className="text-slate-400 block mb-0.5">Assigned Investiture Pew</span>
-              <span className="font-bold text-white text-sm">{candidate.seatNumber || 'Zone A - Chancel'}</span>
+              <span className="font-bold text-white text-sm">{candidate.seatNumber || 'Pending Allocation'}</span>
             </div>
             <div>
               <span className="text-slate-400 block mb-0.5">Presiding Robing Prelate</span>
-              <span className="font-bold text-white text-sm">{candidate.robingOfficer || 'Most Senior Apostle J. K. Coker'}</span>
+              <span className="font-bold text-white text-sm">{candidate.robingOfficer || 'To Be Assigned'}</span>
             </div>
             <div>
               <span className="text-slate-400 block mb-0.5">Conference Session</span>
-              <span className="font-bold text-white text-sm">{candidate.investitureSession || 'Saturday 09:00 AM'}</span>
+              <span className="font-bold text-white text-sm">{candidate.investitureSession || 'General Conference 2026'}</span>
             </div>
           </div>
 
@@ -172,7 +172,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               <span className="text-emerald-400 font-mono text-[10px] font-bold">SHA-256 HMAC VERIFIED</span>
             </div>
             <p className="font-mono text-xs text-amber-300 break-all p-2 bg-slate-900 rounded border border-slate-800">
-              {candidate.verificationHash || 'ESOCS-AUTH-2026-B83F4190-2A1B'}
+              {candidate.verificationHash || 'Pending Consecration Seal'}
             </p>
           </div>
         </div>

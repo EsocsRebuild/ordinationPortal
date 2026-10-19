@@ -87,7 +87,7 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
               <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
                 <span className="text-slate-500">Statutory Ordination Levies:</span>
                 <span className={`font-mono font-bold ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                  {isLeviesCleared ? 'Settled in Full ✓' : `Pending (₦${((candidate.levyBreakdown?.total || 56250) - (candidate.duesAmountPaid || 0)).toLocaleString()} Due) ⏳`}
+                  {isLeviesCleared ? 'Settled in Full ✓' : `Pending (₦${Math.max(0, (candidate.levyBreakdown?.total || 0) - (candidate.duesAmountPaid || 0)).toLocaleString()} Due) ⏳`}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -200,13 +200,13 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Assigned Seat</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.seatNumber || 'Zone A Front Pew'}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Gate 2 Entrance</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs">{candidate.seatNumber || 'Pending Allocation'}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">{candidate.seatNumber ? 'Chancel Access' : 'To Be Allocated'}</p>
             </div>
 
             <div className="p-3.5 bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl text-center sm:text-left">
               <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 block mb-0.5">Presiding Minister</span>
-              <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{candidate.robingOfficer || 'Supervising Apostle General'}</p>
+              <p className="font-bold text-slate-900 dark:text-white text-xs truncate">{candidate.robingOfficer || 'Presiding Ordination Officer'}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Ordaining Officiant</p>
             </div>
           </div>

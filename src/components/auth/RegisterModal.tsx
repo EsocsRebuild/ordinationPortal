@@ -617,7 +617,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="e.g. Emmanuel"
+                      placeholder="First Name"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -630,7 +630,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       type="text"
                       value={middleName}
                       onChange={(e) => setMiddleName(e.target.value)}
-                      placeholder="e.g. Babatunde"
+                      placeholder="Middle Name"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -644,7 +644,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="e.g. Adeleke"
+                      placeholder="Surname"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -660,7 +660,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       type="text"
                       value={preferredName}
                       onChange={(e) => setPreferredName(e.target.value)}
-                      placeholder="e.g. Pastor Adeleke"
+                      placeholder="e.g. Brother John"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -697,7 +697,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. e.adeleke@esocs.church"
+                      placeholder="ordinand@example.com"
                       className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>

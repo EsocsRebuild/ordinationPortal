@@ -114,14 +114,6 @@ export function TwoFactorModal() {
     }
   };
 
-  const handleDemoBypass = () => {
-    const demoCode = ['9', '4', '8', '2', '1', '0'];
-    setDigits(demoCode);
-    if (inputRefs.current[5]) {
-      inputRefs.current[5]?.focus();
-    }
-  };
-
   const isComplete = digits.every((d) => d !== '');
 
   return (
@@ -208,18 +200,6 @@ export function TwoFactorModal() {
                 />
               ))}
             </div>
-          </div>
-
-          {/* Quick Demo Helper */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 text-xs">
-            <span className="text-slate-500 dark:text-slate-400">Demo Verification Mode:</span>
-            <button
-              type="button"
-              onClick={handleDemoBypass}
-              className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-bold flex items-center gap-1.5 transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Auto-fill Code (948210)
-            </button>
           </div>
 
           {/* Remember Device Toggle */}

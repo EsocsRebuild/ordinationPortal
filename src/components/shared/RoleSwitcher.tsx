@@ -12,13 +12,13 @@ interface RoleSwitcherProps {
 
 const AVAILABLE_ROLE_PERSONAS: UserSession[] = [
   {
-    userId: 'user-cand-01',
-    name: 'Senior Apostle Emmanuel O. Adeleke',
-    email: 'e.adeleke@esocs.church',
+    userId: 'user-cand-006',
+    name: 'Peter Chima Tester',
+    email: 'peter4tech@gmail.com',
     role: 'candidate',
-    roleTitle: 'Ordination Candidate (Ascending to SSA Blue)',
-    jurisdiction: 'Mount Zion Cathedral, Lagos Central Province',
-    candidateId: 'cand-001',
+    roleTitle: 'Ordinand Candidate (Ascending to Aladura)',
+    jurisdiction: 'Mount Zion Cathedral Branch, Lagos Central Province',
+    candidateId: 'cand-006',
   },
   {
     userId: 'user-leader-01',
@@ -83,12 +83,13 @@ export function RoleSwitcher({ currentSession, onSelectRole }: RoleSwitcherProps
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
         {AVAILABLE_ROLE_PERSONAS.map((user) => {
           const isActive = user.role === currentSession.role;
+          const displayUser = (isActive && user.role === 'candidate') ? currentSession : user;
           const config = ROLE_CONFIGS[user.role];
 
           return (
             <button
               key={user.role}
-              onClick={() => onSelectRole(user)}
+              onClick={() => onSelectRole(displayUser)}
               className={`flex items-start gap-2.5 p-2.5 rounded-lg text-left transition-all border ${
                 isActive
                   ? 'bg-church-50 border-church-300 dark:bg-church-950/60 dark:border-church-700 shadow-sm ring-1 ring-church-500/20'
@@ -106,7 +107,7 @@ export function RoleSwitcher({ currentSession, onSelectRole }: RoleSwitcherProps
                   {isActive && <Check className="w-3.5 h-3.5 text-church-700 dark:text-gold-400 shrink-0" />}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                  {user.name.split(' ')[0]} {user.name.split(' ').slice(-1)[0]}
+                  {displayUser.name.split(' ')[0]} {displayUser.name.split(' ').slice(-1)[0]}
                 </p>
               </div>
             </button>

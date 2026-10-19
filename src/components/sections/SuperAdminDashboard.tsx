@@ -743,7 +743,18 @@ export function SuperAdminDashboard({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                {filteredCandidates.map((c) => {
+                {filteredCandidates.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Users className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                        <p className="font-medium text-slate-500">No candidates match the specified filter or criteria.</p>
+                        <p className="text-xs text-slate-400">Registered candidates will appear here as they submit their nominations.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredCandidates.map((c) => {
                   const stageMeta = getStageMeta(c.stage);
                   const isSelected = selectedCandidateIds.includes(c.id);
 
@@ -871,7 +882,8 @@ export function SuperAdminDashboard({
                       </td>
                     </tr>
                   );
-                })}
+                })
+              )}
               </tbody>
             </table>
           </CardBody>
