@@ -1226,30 +1226,30 @@ export function CandidateDashboard({
                     <button
                       type="button"
                       onClick={() => setExpandedStepId(isExpanded ? null : step.id)}
-                      className="w-full p-4 sm:p-5 flex items-center justify-between gap-4 text-left cursor-pointer select-none"
+                      className="w-full p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 text-left cursor-pointer select-none"
                     >
-                      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                      <div className="flex items-center gap-3.5 sm:gap-4 min-w-0 flex-1 overflow-hidden">
                         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-200 dark:bg-slate-800 text-amber-700 dark:text-amber-400 font-mono font-bold text-xs sm:text-sm flex items-center justify-center shrink-0 shadow-inner">
                           {step.stepNumber}
                         </div>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-serif font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-serif font-bold text-sm sm:text-base text-slate-900 dark:text-white break-words">
                               {step.title}
                             </h3>
-                            <span className="hidden md:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            <span className="hidden md:inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
                               {step.sealBadge}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 break-words mt-0.5 line-clamp-2 sm:line-clamp-1">
                             {step.desc}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border flex items-center gap-1.5 ${
+                      <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 shrink-0 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800/60">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border flex items-center gap-1.5 shrink-0 ${
                           step.isCompleted
                             ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
                             : step.isCurrent
@@ -1257,16 +1257,16 @@ export function CandidateDashboard({
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                         }`}>
                           {step.isCompleted ? (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                           ) : step.isCurrent ? (
-                            <Clock className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                            <Clock className="w-3.5 h-3.5 text-amber-500 animate-pulse shrink-0" />
                           ) : (
-                            <Shield className="w-3.5 h-3.5 text-slate-400" />
+                            <Shield className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           )}
-                          <span>{step.statusLabel}</span>
+                          <span className="truncate">{step.statusLabel}</span>
                         </span>
 
-                        <div className={`p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-transform ${
+                        <div className={`p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white transition-transform shrink-0 ${
                           isExpanded ? 'rotate-180 text-amber-500' : ''
                         }`}>
                           <ChevronDown className="w-4 h-4" />
@@ -1275,23 +1275,23 @@ export function CandidateDashboard({
                     </button>
 
                     {isExpanded && (
-                      <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/40 text-xs space-y-4 animate-in fade-in duration-200">
+                      <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/40 text-xs space-y-4 animate-in fade-in duration-200 overflow-hidden">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Vetting Authority</span>
-                            <span className="font-semibold text-slate-900 dark:text-white text-xs">{step.authority}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.authority}</span>
                           </div>
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Signing Officer</span>
-                            <span className="font-semibold text-slate-900 dark:text-white text-xs">{step.officer}</span>
+                            <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.officer}</span>
                           </div>
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date Ratified</span>
-                            <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 text-xs">{step.date}</span>
+                            <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 text-xs break-words">{step.date}</span>
                           </div>
                         </div>
 
-                        <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300">
+                        <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300 break-words leading-relaxed overflow-hidden">
                           <span className="font-bold text-amber-800 dark:text-amber-300 mr-1.5">Official Vetting Remarks:</span>
                           {step.comments}
                         </div>
@@ -1431,12 +1431,12 @@ export function CandidateDashboard({
                 </p>
               </div>
 
-              <div className="text-right sm:border-l sm:border-slate-200 dark:sm:border-slate-800 sm:pl-6">
-                <span className="text-[11px] font-mono text-slate-500 block">Official Receipt Number</span>
-                <span className="text-sm font-mono font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
+              <div className="text-left sm:text-right sm:border-l sm:border-slate-200 dark:sm:border-slate-800 sm:pl-6 shrink-0 min-w-0 max-w-full">
+                <span className="text-[11px] font-mono text-slate-500 block truncate">Official Receipt Number</span>
+                <span className="text-sm font-mono font-bold text-amber-700 dark:text-amber-400 block mt-0.5 break-all">
                   {candidate.receiptNumber || (isLeviesCleared ? `REC-${new Date().getFullYear()}-${candidate.id.toUpperCase()}` : 'Pending Remittance')}
                 </span>
-                <span className={`text-[10px] font-bold ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                <span className={`text-[10px] font-bold block truncate ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                   {isLeviesCleared ? 'Status: Cleared ✓' : 'Status: Awaiting Verification ⏳'}
                 </span>
               </div>
@@ -1464,28 +1464,28 @@ export function CandidateDashboard({
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Method 1: Instant Online Gateway */}
-                    <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 via-white dark:via-[#0b1021] to-amber-500/5 border border-amber-500/30 flex flex-col justify-between gap-4">
+                    <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-amber-500/10 via-white dark:via-[#0b1021] to-amber-500/5 border border-amber-500/30 flex flex-col justify-between gap-4 min-w-0 overflow-hidden">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-mono uppercase font-bold text-amber-700 dark:text-amber-400">
+                          <span className="text-[11px] font-mono uppercase font-bold text-amber-700 dark:text-amber-400 truncate">
                             Option 1: Instant Clearance
                           </span>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300 shrink-0">
                             Fastest
                           </span>
                         </div>
-                        <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                        <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white break-words">
                           Online Debit Card / USSD Payment
                         </h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed break-words">
                           Settle your statutory levies instantly via secured card, bank app transfer, or USSD code. Your clearance updates in real-time immediately.
                         </p>
                       </div>
 
                       <div className="space-y-3 pt-2">
                         <div className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-amber-500/10 border border-amber-500/20 font-medium">
-                          <span className="text-slate-700 dark:text-slate-300">Total Statutory Dues:</span>
-                          <span className="font-mono font-bold text-slate-900 dark:text-white text-sm">
+                          <span className="text-slate-700 dark:text-slate-300 truncate">Total Statutory Dues:</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-white text-sm shrink-0">
                             ₦{outstandingLevy.toLocaleString()}.00
                           </span>
                         </div>
@@ -1500,41 +1500,41 @@ export function CandidateDashboard({
                         >
                           Pay ₦{outstandingLevy.toLocaleString()} Instantly Online
                         </Button>
-                        <p className="text-[10px] text-center text-slate-400">
+                        <p className="text-[10px] text-center text-slate-400 truncate">
                           Secured via Zenith Bank Ecclesiastical Gateway &bull; Instant Receipt Generation
                         </p>
                       </div>
                     </div>
 
                     {/* Method 2: Direct Bank Transfer Remittance */}
-                    <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between gap-4">
+                    <div className="p-5 sm:p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex flex-col justify-between gap-4 min-w-0 overflow-hidden">
                       <div className="space-y-2">
-                        <span className="text-[11px] font-mono uppercase font-bold text-slate-500">
+                        <span className="text-[11px] font-mono uppercase font-bold text-slate-500 block truncate">
                           Option 2: Direct Bank Remittance
                         </span>
-                        <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                        <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white break-words">
                           Official Church Bank Transfer
                         </h4>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed break-words">
                           Remit directly into the official church revenue account and submit your transfer transaction reference below for confirmation:
                         </p>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">Designated Bank</span>
-                          <span className="font-bold text-slate-900 dark:text-white">Zenith Bank Plc</span>
+                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 min-w-0">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block truncate">Designated Bank</span>
+                          <span className="font-bold text-slate-900 dark:text-white truncate block">Zenith Bank Plc</span>
                         </div>
-                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">Account Number</span>
-                          <span className="font-mono font-bold text-slate-900 dark:text-white">1014892019</span>
+                        <div className="p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 min-w-0">
+                          <span className="text-[10px] text-slate-400 uppercase font-bold block truncate">Account Number</span>
+                          <span className="font-mono font-bold text-slate-900 dark:text-white truncate block">1014892019</span>
                         </div>
-                        <div className="col-span-2 p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                          <div>
-                            <span className="text-[10px] text-slate-400 uppercase font-bold block">Payment Narration</span>
-                            <span className="font-mono font-bold text-amber-700 dark:text-amber-400">{candidate.regNumber}</span>
+                        <div className="col-span-2 p-2.5 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between min-w-0 gap-2">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] text-slate-400 uppercase font-bold block truncate">Payment Narration</span>
+                            <span className="font-mono font-bold text-amber-700 dark:text-amber-400 break-all">{candidate.regNumber}</span>
                           </div>
-                          <span className="text-[10px] text-slate-400">Required</span>
+                          <span className="text-[10px] text-slate-400 shrink-0">Required</span>
                         </div>
                       </div>
 
@@ -1569,7 +1569,7 @@ export function CandidateDashboard({
 
             {/* Itemized Dues Breakdown Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+              <table className="w-full min-w-[560px] text-xs text-left">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase font-bold text-[10px] tracking-wider">
                     <th className="py-3 px-4">Statutory Fee Description</th>
@@ -1772,26 +1772,26 @@ export function CandidateDashboard({
 
                   {/* Seating & Gate Info Box */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                    <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/80 space-y-1.5 min-w-0 overflow-hidden">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-300 truncate block">
                         Chancel Pew Assignment
                       </span>
-                      <div className="text-lg font-bold text-purple-950 dark:text-white">
+                      <div className="text-lg font-bold text-purple-950 dark:text-white truncate">
                         {candidate.seatNumber || 'Pending Allocation'}
                       </div>
-                      <p className="text-xs text-purple-800/80 dark:text-purple-300/80">
+                      <p className="text-xs text-purple-800/80 dark:text-purple-300/80 break-words">
                         Reserved candidate front section (Chancel East Wing).
                       </p>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 space-y-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                    <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/80 space-y-1.5 min-w-0 overflow-hidden">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 truncate block">
                         Fast-Track Entry Gate
                       </span>
-                      <div className="text-lg font-bold text-blue-950 dark:text-white">
+                      <div className="text-lg font-bold text-blue-950 dark:text-white truncate">
                         Gate 2 &bull; East Portico
                       </div>
-                      <p className="text-xs text-blue-800/80 dark:text-blue-300/80">
+                      <p className="text-xs text-blue-800/80 dark:text-blue-300/80 break-words">
                         Candidate dedicated security portal with barcode scanner.
                       </p>
                     </div>
@@ -1901,17 +1901,17 @@ export function CandidateDashboard({
                     messages.map((msg, i) => (
                       <div
                         key={i}
-                        className={`p-3.5 rounded-2xl max-w-md ${
+                        className={`p-3.5 rounded-2xl max-w-md min-w-0 overflow-hidden break-words ${
                           msg.senderRole === 'candidate'
                             ? 'ml-auto bg-amber-500 text-slate-950 font-medium rounded-tr-none shadow-sm'
                             : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-tl-none shadow-sm'
                         }`}
                       >
-                        <div className="flex justify-between items-center text-[10px] opacity-75 mb-1">
-                          <span className="font-bold">{msg.senderName}</span>
-                          <span className="font-mono">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className="flex justify-between items-center text-[10px] opacity-75 mb-1 gap-2">
+                          <span className="font-bold truncate">{msg.senderName}</span>
+                          <span className="font-mono shrink-0">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <p className="leading-relaxed">{msg.content}</p>
+                        <p className="leading-relaxed break-words">{msg.content}</p>
                       </div>
                     ))
                   )}

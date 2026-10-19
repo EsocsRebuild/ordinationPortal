@@ -364,31 +364,31 @@ export function SuperAdminDashboard({
       </div>
 
       {/* Operational Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-          <span className="text-xs text-slate-500 font-medium">Reconciled Levies</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalDuesCollected)}</p>
-          <span className="text-[11px] text-emerald-600 font-semibold">{clearedCount} of {candidates.length} Cleared</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+          <span className="text-xs text-slate-500 font-medium truncate block">Reconciled Levies</span>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono truncate">{formatCurrency(totalDuesCollected)}</p>
+          <span className="text-[11px] text-emerald-600 font-semibold truncate block">{clearedCount} of {candidates.length} Cleared</span>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-          <span className="text-xs text-slate-500 font-medium">QR Credentials Issued</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">{certsReadyCount}</p>
-          <span className="text-[11px] text-church-600 dark:text-gold-400 font-semibold">Cryptographically signed</span>
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+          <span className="text-xs text-slate-500 font-medium truncate block">QR Credentials Issued</span>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono truncate">{certsReadyCount}</p>
+          <span className="text-[11px] text-church-600 dark:text-gold-400 font-semibold truncate block">Cryptographically signed</span>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-          <span className="text-xs text-slate-500 font-medium">Cathedral Pews Assigned</span>
-          <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+          <span className="text-xs text-slate-500 font-medium truncate block">Cathedral Pews Assigned</span>
+          <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono truncate">
             {candidates.filter((c) => c.seatNumber).length}
           </p>
-          <span className="text-[11px] text-slate-500 font-medium">Chancel & Nave rows</span>
+          <span className="text-[11px] text-slate-500 font-medium truncate block">Chancel & Nave rows</span>
         </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-          <span className="text-xs text-slate-500 font-medium">Conferred & Ordained</span>
-          <p className="text-2xl font-bold text-emerald-600 font-mono">{ordainedCount}</p>
-          <span className="text-[11px] text-emerald-600 font-semibold">Holy Synod Gazetted</span>
+        <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+          <span className="text-xs text-slate-500 font-medium truncate block">Conferred & Ordained</span>
+          <p className="text-xl sm:text-2xl font-bold text-emerald-600 font-mono truncate">{ordainedCount}</p>
+          <span className="text-[11px] text-emerald-600 font-semibold truncate block">Holy Synod Gazetted</span>
         </div>
       </div>
 
@@ -609,26 +609,26 @@ export function SuperAdminDashboard({
       {/* Tab: Financial Treasury Desk */}
       {activeTab === 'financials' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-              <span className="text-xs text-slate-500 font-medium">1. Branch Retention Share</span>
-              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalBranchRevenue)}</p>
-              <span className="text-[11px] text-slate-400">Local parish altar care</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+              <span className="text-xs text-slate-500 font-medium truncate block">1. Branch Retention Share</span>
+              <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 font-mono truncate">{formatCurrency(totalBranchRevenue)}</p>
+              <span className="text-[11px] text-slate-400 truncate block">Local parish altar care</span>
             </div>
-            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-              <span className="text-xs text-slate-500 font-medium">2. District Assessment Share</span>
-              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalDistrictRevenue)}</p>
-              <span className="text-[11px] text-slate-400">Zonal administration fund</span>
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+              <span className="text-xs text-slate-500 font-medium truncate block">2. District Assessment Share</span>
+              <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 font-mono truncate">{formatCurrency(totalDistrictRevenue)}</p>
+              <span className="text-[11px] text-slate-400 truncate block">Zonal administration fund</span>
             </div>
-            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-              <span className="text-xs text-slate-500 font-medium">3. Provincial Secretariat Share</span>
-              <p className="text-xl font-bold text-slate-900 dark:text-slate-100 font-mono">{formatCurrency(totalProvinceRevenue)}</p>
-              <span className="text-[11px] text-slate-400">Diocese operations</span>
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+              <span className="text-xs text-slate-500 font-medium truncate block">3. Provincial Secretariat Share</span>
+              <p className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 font-mono truncate">{formatCurrency(totalProvinceRevenue)}</p>
+              <span className="text-[11px] text-slate-400 truncate block">Diocese operations</span>
             </div>
-            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
-              <span className="text-xs text-slate-500 font-medium">4. Apex National / Regalia</span>
-              <p className="text-xl font-bold text-gold-600 dark:text-gold-400 font-mono">{formatCurrency(totalNationalRevenue)}</p>
-              <span className="text-[11px] text-emerald-600 font-semibold">Central ordination fund</span>
+            <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
+              <span className="text-xs text-slate-500 font-medium truncate block">4. Apex National / Regalia</span>
+              <p className="text-lg sm:text-xl font-bold text-gold-600 dark:text-gold-400 font-mono truncate">{formatCurrency(totalNationalRevenue)}</p>
+              <span className="text-[11px] text-emerald-600 font-semibold truncate block">Central ordination fund</span>
             </div>
           </div>
         </div>
@@ -647,7 +647,7 @@ export function SuperAdminDashboard({
             ) : auditLogs.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-xs">No audit events recorded yet.</div>
             ) : (
-              <table className="w-full text-left text-xs">
+              <table className="w-full min-w-[700px] text-left text-xs">
                 <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="px-5 py-3">Timestamp</th>
@@ -718,7 +718,7 @@ export function SuperAdminDashboard({
             }
           />
           <CardBody className="p-0 overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full min-w-[980px] text-left text-xs">
               <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
                 <tr>
                   <th className="px-4 py-3 w-10">
@@ -774,32 +774,32 @@ export function SuperAdminDashboard({
                         </button>
                       </td>
 
-                      <td className="px-4 py-3.5">
-                        <p className="font-bold text-slate-900 dark:text-slate-100">{c.fullName}</p>
-                        <span className="font-mono text-[11px] text-slate-400">{c.regNumber}</span>
+                      <td className="px-4 py-3.5 max-w-[200px]">
+                        <p className="font-bold text-slate-900 dark:text-slate-100 truncate">{c.fullName}</p>
+                        <span className="font-mono text-[11px] text-slate-400 truncate block">{c.regNumber}</span>
                       </td>
 
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-slate-500">{c.currentRank}</span>
-                          <ArrowRight className="w-3 h-3 text-slate-400" />
-                          <span className="font-bold text-church-900 dark:text-gold-300 font-serif">
+                      <td className="px-4 py-3.5 max-w-[220px]">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <span className="text-slate-500 truncate">{c.currentRank}</span>
+                          <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="font-bold text-church-900 dark:text-gold-300 font-serif truncate">
                             {c.targetRankName}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-slate-400 font-mono">
+                        <div className="flex items-center gap-1.5 mt-0.5 truncate">
+                          <span className="text-[10px] text-slate-400 font-mono truncate">
                             Since {c.currentRankYear} ({c.tenureYears || 2026 - c.currentRankYear} yrs)
                           </span>
-                          <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded font-semibold">
+                          <span className="text-[9px] px-1.5 py-0.2 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded font-semibold shrink-0">
                             Sequential ✓
                           </span>
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5">
-                        <p className="font-medium text-slate-800 dark:text-slate-200">{c.parish}</p>
-                        <span className="text-[11px] text-slate-500">{c.province}</span>
+                      <td className="px-4 py-3.5 max-w-[180px]">
+                        <p className="font-medium text-slate-800 dark:text-slate-200 truncate">{c.parish}</p>
+                        <span className="text-[11px] text-slate-500 truncate block">{c.province}</span>
                       </td>
 
                       <td className="px-4 py-3.5">
