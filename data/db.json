@@ -22,8 +22,8 @@
       "district": "Lagos Central District",
       "parish": "Mount Zion Cathedral",
       "branchPriestName": "Parish Presiding Officer",
-      "stage": "nominated",
-      "currentVettingTier": "branch",
+      "stage": "district_review",
+      "currentVettingTier": "district",
       "submissionDate": "2026-10-19",
       "lastUpdated": "2026-10-19",
       "attendanceRecordPercentage": 96,
@@ -39,24 +39,16 @@
       },
       "tierApprovals": {
         "branch": {
-          "approved": false
-        },
-        "district": {
-          "approved": false
-        },
-        "province": {
-          "approved": false
-        },
-        "cmc": {
-          "approved": false
-        },
-        "national": {
-          "approved": false
+          "approved": true,
+          "approverName": "Senior Apostle J. K. Babalola (Parish Rector)",
+          "comments": "Faithful in tithing, exemplary moral rectitude, endorsed for Rabbi promotion.",
+          "date": "2026-10-19T21:20:00Z"
         }
       },
       "screeningNotes": [
         "Self-registered via ESOCS Canonical Portal. Current Rank: Leader (2020). Target Rank: Rabbi."
-      ]
+      ],
+      "actorName": "Parish Rector (Admin Portal)"
     },
     {
       "id": "cand-006",
@@ -182,6 +174,14 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1792441216040",
+      "timestamp": "2026-10-19T20:20:16.040Z",
+      "performedBy": "Parish Rector (Admin Portal)",
+      "action": "UPDATE_CANDIDATE",
+      "candidateId": "cand-002",
+      "details": "Candidate record updated: stage=district_review, tier=district, dues=pending."
+    },
     {
       "id": "log-1792441110671",
       "timestamp": "2026-10-19T20:18:30.671Z",
