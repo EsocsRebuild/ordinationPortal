@@ -417,3 +417,4 @@ export async function sendVettingApprovalEmail(candidate: {
     html: wrapEcclesiasticalTemplate(content, `Your ordination docket has been cleared at ${candidate.tierName}`),
   });
 }
+
