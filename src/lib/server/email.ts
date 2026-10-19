@@ -283,16 +283,18 @@ export async function sendRegistrationConfirmationEmail(candidate: {
 /**
  * 2. Template: Security Verification OTP for Password Reset
  */
-export async function sendPasswordResetOtpEmail(user: { email: string; name?: string; otp: string }) {
+export async function sendPasswordResetOtpEmail(user: { email: string; name?: string; otp: string; isResend?: boolean }) {
   const content = `
-    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 0;">Security Verification Code</h2>
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 0;">Security Verification Code ${user.isResend ? '(Resent)' : ''}</h2>
     <p>Dear <strong>${user.name || 'Member'}</strong>,</p>
-    <p>We received a request to access or reset the password for your ESOCS Ordination Portal account.</p>
+    <p>We received a ${user.isResend ? 'resend ' : ''}request to verify your identity and reset your ecclesiastical account password.</p>
     
     <div style="background-color: #fef3c7; border: 2px dashed #d97706; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0;">
-      <div style="font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Your One-Time Verification OTP</div>
+      <div style="font-size: 12px; font-weight: 700; color: #92400e; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
+        ${user.isResend ? 'Your New One-Time Verification OTP (Resent)' : 'Your One-Time Verification OTP'}
+      </div>
       <div style="font-size: 36px; font-weight: 800; font-family: monospace; letter-spacing: 8px; color: #0f172a;">${user.otp}</div>
-      <div style="font-size: 11px; color: #b45309; margin-top: 8px;">Valid for 10 minutes &bull; Do not disclose to anyone</div>
+      <div style="font-size: 11px; color: #b45309; margin-top: 8px;">Valid for 10 minutes &bull; Prior codes have been invalidated &bull; Do not disclose</div>
     </div>
 
     <p style="font-size: 12px; color: #64748b;">If you did not request this verification code, please ignore this email or notify the Church Secretariat immediately.</p>
@@ -300,8 +302,35 @@ export async function sendPasswordResetOtpEmail(user: { email: string; name?: st
 
   return sendEmail({
     to: { email: user.email, name: user.name },
-    subject: `✝ ${user.otp} is your ESOCS Ordination Portal verification code`,
+    subject: `✝ ${user.otp} is your ${user.isResend ? '[RESENT] ' : ''}ESOCS Ordination Portal verification code`,
     html: wrapEcclesiasticalTemplate(content, `Your verification code is ${user.otp}`),
+  });
+}
+
+/**
+ * 2b. Template: Multi-Factor Authentication (2FA) OTP
+ */
+export async function sendTwoFactorOtpEmail(user: { email: string; name?: string; otp: string; isResend?: boolean }) {
+  const content = `
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin-top: 0;">Ecclesiastical 2FA Security Token</h2>
+    <p>Dear <strong>${user.name || 'Ecclesiastical Officer'}</strong>,</p>
+    <p>A sign-in attempt requires two-factor credential validation on the ESOCS Ordination Sovereign Portal.</p>
+    
+    <div style="background-color: #ecfdf5; border: 2px dashed #059669; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0;">
+      <div style="font-size: 12px; font-weight: 700; color: #065f46; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">
+        ${user.isResend ? 'New 6-Digit 2FA Token (Resent)' : 'Your 6-Digit 2FA Token'}
+      </div>
+      <div style="font-size: 36px; font-weight: 800; font-family: monospace; letter-spacing: 8px; color: #0f172a;">${user.otp}</div>
+      <div style="font-size: 11px; color: #047857; margin-top: 8px;">Valid for 5 minutes &bull; Secure workstation terminal</div>
+    </div>
+
+    <p style="font-size: 12px; color: #64748b;">If you are not attempting to log in, please secure your account immediately.</p>
+  `;
+
+  return sendEmail({
+    to: { email: user.email, name: user.name },
+    subject: `✝ ${user.otp} is your ${user.isResend ? '[RESENT] ' : ''}ESOCS Ordination 2FA token`,
+    html: wrapEcclesiasticalTemplate(content, `Your 2FA token is ${user.otp}`),
   });
 }
 

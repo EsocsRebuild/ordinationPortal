@@ -28,8 +28,8 @@
       "lastUpdated": "2026-10-19",
       "attendanceRecordPercentage": 96,
       "conductRating": "exemplary",
-      "duesStatus": "pending",
-      "duesAmountPaid": 0,
+      "duesStatus": "cleared",
+      "duesAmountPaid": 45000,
       "levyBreakdown": {
         "branchLevy": 9000,
         "districtLevy": 9000,
@@ -48,7 +48,9 @@
       "screeningNotes": [
         "Self-registered via ESOCS Canonical Portal. Current Rank: Leader (2020). Target Rank: Rabbi."
       ],
-      "actorName": "Parish Rector (Admin Portal)"
+      "actorName": "Pastor Michael Chukwuma",
+      "receiptNumber": "REC-2026-ESOCS-9941",
+      "paymentMethod": "Zenith Bank Ecclesiastical Gateway"
     },
     {
       "id": "cand-006",
@@ -174,6 +176,22 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1792441396261-938",
+      "timestamp": "2026-10-19T20:23:16.261Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
+    {
+      "id": "log-1792441237309",
+      "timestamp": "2026-10-19T20:20:37.309Z",
+      "performedBy": "Pastor Michael Chukwuma",
+      "action": "UPDATE_CANDIDATE",
+      "candidateId": "cand-002",
+      "details": "Candidate record updated: stage=district_review, tier=district, dues=cleared."
+    },
     {
       "id": "log-1792441216040",
       "timestamp": "2026-10-19T20:20:16.040Z",
