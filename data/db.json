@@ -113,6 +113,14 @@
   ],
   "auditLogs": [
     {
+      "id": "log-1792438151362-758",
+      "timestamp": "2026-10-19T19:29:11.362Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
+    {
       "id": "log-1792437825126-447",
       "timestamp": "2026-10-19T19:23:45.126Z",
       "performedBy": "peter chima tester",

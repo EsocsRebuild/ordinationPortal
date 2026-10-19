@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { createJwtToken } from '@/lib/server/jwt';
 import { validateCandidateRegistration } from '@/lib/server/validators';
 import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
+import { sendRegistrationConfirmationEmail } from '@/lib/server/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,22 @@ export async function POST(request: Request) {
       name: user.name,
       candidateId: user.candidateId,
     });
+
+    // Dispatch ecclesiastical dossier confirmation email to Mailpit
+    try {
+      await sendRegistrationConfirmationEmail({
+        fullName: candidate.fullName,
+        email: candidate.email,
+        regNumber: candidate.regNumber,
+        currentRank: candidate.currentRank,
+        targetRankName: candidate.targetRankName,
+        parish: candidate.parish,
+        district: candidate.district,
+        province: candidate.province,
+      });
+    } catch (emailErr) {
+      console.warn('[Register] Failed to dispatch registration confirmation to Mailpit:', emailErr);
+    }
 
     return createSuccessResponse(
       {

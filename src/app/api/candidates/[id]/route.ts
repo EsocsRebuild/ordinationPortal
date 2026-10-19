@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
+import { sendPaymentReceiptEmail, sendVettingApprovalEmail } from '@/lib/server/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,7 @@ export async function PATCH(
     const { id } = await params;
     const updates = await request.json();
 
+    const existing = db.candidates.getById(id);
     const candidate = db.candidates.update(id, updates, updates.actorName || 'Portal Official');
     if (!candidate) {
       return createErrorResponse(
@@ -49,6 +51,56 @@ export async function PATCH(
         ['CANDIDATE_NOT_FOUND'],
         404
       );
+    }
+
+    // 1. Dispatch Payment Receipt Email to Mailpit if dues were newly cleared
+    if (updates.duesStatus === 'cleared' && existing?.duesStatus !== 'cleared') {
+      try {
+        await sendPaymentReceiptEmail({
+          fullName: candidate.fullName,
+          email: candidate.email,
+          regNumber: candidate.regNumber,
+          receiptNumber: candidate.receiptNumber || `REC-2026-ESOCS-${Math.floor(1000 + Math.random() * 9000)}`,
+          amountPaid: candidate.duesAmountPaid || candidate.levyBreakdown?.total || 56250,
+          totalLevy: candidate.levyBreakdown?.total || 56250,
+          targetRankName: candidate.targetRankName,
+          paymentMethod: updates.paymentMethod || 'Zenith Bank Church Direct Remittance / Online Gateway',
+        });
+      } catch (err) {
+        console.warn('[Candidates] Failed to dispatch payment receipt email:', err);
+      }
+    }
+
+    // 2. Dispatch Vetting Tier Approval Notification to Mailpit
+    if (updates.tierApprovals) {
+      const tiers = [
+        { key: 'branch', label: 'Parish Priest Nomination', next: 'Stage 2: District Council Vetting' },
+        { key: 'district', label: 'District Council Vetting', next: 'Stage 3: Provincial Diocese Clearance' },
+        { key: 'province', label: 'Provincial Diocese Clearance', next: 'Stage 4: CMC Screening & Examination' },
+        { key: 'cmc', label: 'CMC Screening Examination', next: 'Stage 5: Holy Synod Ratification & Final Seal' },
+        { key: 'national', label: 'Holy Synod Ratification', next: 'Stage 6: Solemn Altar Consecration' },
+      ];
+      for (const t of tiers) {
+        const newlyApproved = (updates.tierApprovals as any)[t.key]?.approved;
+        const previouslyApproved = (existing?.tierApprovals as any)?.[t.key]?.approved;
+        if (newlyApproved && !previouslyApproved) {
+          const approver = (updates.tierApprovals as any)[t.key]?.approverName || 'Ecclesiastical Council';
+          const comments = (updates.tierApprovals as any)[t.key]?.comments;
+          try {
+            await sendVettingApprovalEmail({
+              fullName: candidate.fullName,
+              email: candidate.email,
+              regNumber: candidate.regNumber,
+              tierName: t.label,
+              approverName: approver,
+              nextStageTitle: t.next,
+              comments,
+            });
+          } catch (err) {
+            console.warn('[Candidates] Failed to dispatch vetting approval email:', err);
+          }
+        }
+      }
     }
 
     return createSuccessResponse(
