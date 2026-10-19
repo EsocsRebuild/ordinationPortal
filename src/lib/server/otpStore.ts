@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomInt } from 'crypto';
 
 export type OtpPurpose = 'password_reset' | 'two_factor' | 'candidate_verification';
 
@@ -79,7 +79,7 @@ class OtpStoreManager {
     }
 
     // Generate cryptographic 6-digit numeric token
-    const code = crypto.randomInt(100000, 999999).toString();
+    const code = randomInt(100000, 999999).toString();
     const expiresAt = now + config.expiresInSeconds * 1000;
     const cooldownUntil = now + config.cooldownSeconds * 1000;
 
@@ -222,3 +222,4 @@ class OtpStoreManager {
 const globalForOtp = global as unknown as { otpStore: OtpStoreManager };
 export const otpStore = globalForOtp.otpStore || new OtpStoreManager();
 if (process.env.NODE_ENV !== 'production') globalForOtp.otpStore = otpStore;
+
