@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { api } from '@/services/api';
 import { Button } from '@/components/ui/Button';
 import {
@@ -13,7 +13,7 @@ import {
   ArrowRight,
   ShieldCheck,
   RefreshCw,
-  Sparkles,
+  Clock,
   Eye,
   EyeOff,
   Check,
@@ -34,11 +34,35 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [simulatedOtp, setSimulatedOtp] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
+
+  // OTP lifecycle timers
+  const [countdown, setCountdown] = useState(600); // 10 minutes total validity
+  const [cooldown, setCooldown] = useState(60); // 60s resend cooldown
+
+  // Active timer ticks during step 2
+  useEffect(() => {
+    if (step !== 'verify_and_reset') return;
+    const interval = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [step]);
 
   if (!isOpen) return null;
+
+  const isExpired = countdown === 0;
+
+  const formatTime = (secs: number) => {
+    const mins = Math.floor(secs / 60);
+    const remainder = secs % 60;
+    return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
+  };
 
   // Password strength calculation
   const hasMinLen = newPassword.length >= 6;
@@ -51,6 +75,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setResendNotice(null);
 
     if (!identifier.trim()) {
       setErrorMsg('Please enter your Registration Number or Church Email.');
@@ -60,6 +85,9 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
     setIsLoading(true);
     try {
       const res = await api.requestPasswordOtp(identifier.trim());
+      setCountdown(res.expiresInSeconds || 600);
+      setCooldown(res.cooldownSeconds || 60);
+
       if (res.simulatedOtp) {
         setSimulatedOtp(res.simulatedOtp);
         setOtp(res.simulatedOtp); // Pre-fill for seamless instant testing
@@ -73,9 +101,39 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
     }
   };
 
+  const handleResendOtp = async () => {
+    if (cooldown > 0 && !isExpired) return;
+    setIsResending(true);
+    setErrorMsg(null);
+    setResendNotice(null);
+
+    try {
+      const res = await api.resendPasswordOtp(identifier.trim(), isExpired);
+      setCountdown(res.expiresInSeconds || 600);
+      setCooldown(res.cooldownSeconds || 60);
+
+      if (res.simulatedOtp) {
+        setSimulatedOtp(res.simulatedOtp);
+        setOtp(res.simulatedOtp);
+      }
+      setResendNotice(
+        res.message || 'A fresh verification code has been dispatched to your email and Mailpit.'
+      );
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Unable to resend verification code. Please wait.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+
+    if (isExpired) {
+      setErrorMsg('Your verification code has elapsed (expired). Click "Resend Code" to receive a fresh code.');
+      return;
+    }
 
     if (!otp.trim() || otp.length < 6) {
       setErrorMsg('Please enter the valid 6-digit verification code.');
@@ -98,7 +156,11 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
       setSuccessMsg(res.message);
       setStep('success');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Password reset failed. Please check your verification code.');
+      if (err.code === 'OTP_EXPIRED') {
+        setErrorMsg('Verification code has elapsed. Please click Resend Code to obtain a new code.');
+      } else {
+        setErrorMsg(err.message || 'Password reset failed. Please check your verification code.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +174,9 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
     setConfirmPassword('');
     setErrorMsg(null);
     setSuccessMsg(null);
+    setResendNotice(null);
+    setCountdown(600);
+    setCooldown(60);
     onClose();
   };
 
@@ -208,7 +273,27 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
           {errorMsg && (
             <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 rounded-2xl flex items-start gap-3 text-xs animate-in fade-in">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <div className="flex-1 font-medium">{errorMsg}</div>
+              <div className="flex-1 font-medium space-y-1">
+                <div>{errorMsg}</div>
+                {isExpired && (
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={isResending}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-200 underline mt-1"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                    Resend New Code Now
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {resendNotice && (
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300 rounded-2xl flex items-start gap-3 text-xs animate-in fade-in">
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex-1 font-medium">{resendNotice}</div>
             </div>
           )}
 
@@ -264,14 +349,43 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
           {/* STEP 2: Verify OTP & Choose New Password */}
           {step === 'verify_and_reset' && (
             <form onSubmit={handleResetPassword} className="space-y-5">
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300 rounded-2xl text-xs flex items-start gap-3">
-                <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
-                <div className="space-y-1 flex-1">
-                  <div>
-                    <strong>Verification Code Generated:</strong> Sent for <code>{identifier}</code>.
+              {/* Expiration & Active Status Banner */}
+              <div
+                className={`p-4 rounded-2xl text-xs flex items-start gap-3 border transition-colors ${
+                  isExpired
+                    ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300'
+                }`}
+              >
+                {isExpired ? (
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+                ) : (
+                  <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                )}
+                <div className="space-y-1.5 flex-1">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <strong>{isExpired ? 'Verification Code Elapsed:' : 'Verification Code Dispatched:'}</strong> Sent for <code>{identifier}</code>.
+                    </div>
+                    {/* Live Expiration Countdown Badge */}
+                    <div
+                      className={`flex items-center gap-1.5 font-mono px-2.5 py-1 rounded-full text-[11px] font-bold ${
+                        isExpired
+                          ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                          : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                      }`}
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{isExpired ? 'Elapsed' : `Expires in ${formatTime(countdown)}`}</span>
+                    </div>
                   </div>
-                  {simulatedOtp && (
-                    <div className="flex items-center justify-between pt-1">
+
+                  {isExpired ? (
+                    <p className="text-[11px] text-rose-700 dark:text-rose-300 font-medium pt-0.5">
+                      The prior 10-minute validity period has elapsed. Please click below to generate and resend a fresh verification code.
+                    </p>
+                  ) : simulatedOtp ? (
+                    <div className="flex items-center justify-between pt-1 border-t border-emerald-200/60 dark:border-emerald-800/60">
                       <span className="font-mono text-xs">
                         Security Code: <strong className="text-sm font-bold text-amber-600 dark:text-amber-400">{simulatedOtp}</strong>
                       </span>
@@ -283,23 +397,54 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
                         Auto-fill Code
                       </button>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </div>
 
-              {/* 6-Digit Token */}
+              {/* 6-Digit Token & Resend Actions */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  6-Digit Verification Code *
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    6-Digit Verification Code *
+                  </label>
+                  {/* Resend Action Button */}
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    disabled={isResending || (cooldown > 0 && !isExpired)}
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+                      isExpired
+                        ? 'text-amber-600 dark:text-amber-400 hover:underline font-bold'
+                        : cooldown > 0
+                        ? 'text-slate-400 cursor-not-allowed'
+                        : 'text-amber-600 dark:text-amber-400 hover:underline'
+                    }`}
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                    <span>
+                      {isResending
+                        ? 'Sending Code...'
+                        : isExpired
+                        ? 'Resend New Code'
+                        : cooldown > 0
+                        ? `Resend in ${cooldown}s`
+                        : 'Resend Verification Code'}
+                    </span>
+                  </button>
+                </div>
+
                 <input
                   type="text"
                   required
                   maxLength={6}
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="000000"
-                  className="w-full text-center tracking-[0.5em] font-mono text-xl py-3 bg-slate-50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-700/80 rounded-2xl font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-amber-500/15 focus:border-amber-500 transition-all"
+                  className={`w-full text-center tracking-[0.5em] font-mono text-xl py-3 bg-slate-50 dark:bg-slate-950/80 border rounded-2xl font-bold transition-all focus:outline-none focus:ring-4 ${
+                    isExpired
+                      ? 'border-rose-400 dark:border-rose-700 text-rose-600 focus:ring-rose-500/15 focus:border-rose-500'
+                      : 'border-slate-300 dark:border-slate-700/80 text-slate-900 dark:text-white focus:ring-amber-500/15 focus:border-amber-500'
+                  }`}
                 />
               </div>
 
@@ -421,10 +566,15 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
                   size="lg"
                   type="submit"
                   loading={isLoading}
+                  disabled={isExpired}
                   icon={<CheckCircle2 className="w-4 h-4" />}
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                  className={`font-bold ${
+                    isExpired
+                      ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed opacity-60'
+                      : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  }`}
                 >
-                  Update & Conclude Reset
+                  {isExpired ? 'Code Expired (Resend Above)' : 'Update & Conclude Reset'}
                 </Button>
               </div>
             </form>

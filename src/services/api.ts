@@ -134,18 +134,52 @@ class ApiService {
   }
 
   // Forgot Password / Self-Service Reset
-  async requestPasswordOtp(identifier: string): Promise<{ success: boolean; message: string; simulatedOtp?: string }> {
+  async requestPasswordOtp(
+    identifier: string,
+    action: 'request_otp' | 'resend_otp' = 'request_otp',
+    force: boolean = false
+  ): Promise<{
+    success: boolean;
+    message: string;
+    simulatedOtp?: string;
+    expiresAt?: number;
+    expiresInSeconds?: number;
+    cooldownSeconds?: number;
+    isResend?: boolean;
+  }> {
     const res = await fetch('/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'request_otp', identifier }),
+      body: JSON.stringify({ action, identifier, force }),
     });
 
     const data = await res.json();
     if (!res.ok || !data.success) {
-      throw new Error(data.message || 'Unable to request verification code.');
+      const err = new Error(data.message || 'Unable to request verification code.');
+      (err as any).code = data.code;
+      (err as any).retryAfterSeconds = data.retryAfterSeconds;
+      throw err;
     }
     return data;
+  }
+
+  async resendPasswordOtp(identifier: string, force: boolean = false) {
+    return this.requestPasswordOtp(identifier, 'resend_otp', force);
+  }
+
+  async getPasswordOtpStatus(identifier: string): Promise<{
+    exists: boolean;
+    isExpired: boolean;
+    secondsRemaining: number;
+    canResend: boolean;
+    cooldownSecondsRemaining: number;
+  }> {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'status', identifier }),
+    });
+    return res.json();
   }
 
   async resetPassword(identifier: string, newPassword: string, otp?: string): Promise<{ success: boolean; message: string }> {
@@ -157,7 +191,9 @@ class ApiService {
 
     const data = await res.json();
     if (!res.ok || !data.success) {
-      throw new Error(data.message || 'Password reset failed.');
+      const err = new Error(data.message || 'Password reset failed.');
+      (err as any).code = data.code;
+      throw err;
     }
     return data;
   }
@@ -177,17 +213,43 @@ class ApiService {
     return data;
   }
 
-  // 2FA Verification
-  async verify2FA(otp: string, rememberDevice: boolean = false): Promise<{ success: boolean; message: string }> {
+  // 2FA Verification & Resend
+  async verify2FA(otp: string, rememberDevice: boolean = false, identifier?: string): Promise<{ success: boolean; message: string }> {
     const res = await fetch('/api/auth/verify-2fa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ otp, rememberDevice }),
+      body: JSON.stringify({ action: 'verify', otp, rememberDevice, identifier }),
     });
 
     const data = await res.json();
     if (!res.ok || !data.success) {
-      throw new Error(data.message || 'Invalid 2FA verification token.');
+      const err = new Error(data.message || 'Invalid 2FA verification token.');
+      (err as any).code = data.code;
+      throw err;
+    }
+    return data;
+  }
+
+  async resend2FA(identifier?: string, force: boolean = false): Promise<{
+    success: boolean;
+    message: string;
+    simulatedOtp?: string;
+    expiresAt?: number;
+    expiresInSeconds?: number;
+    cooldownSeconds?: number;
+  }> {
+    const res = await fetch('/api/auth/verify-2fa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'resend', identifier, force }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      const err = new Error(data.message || 'Unable to resend 2FA token.');
+      (err as any).code = data.code;
+      (err as any).retryAfterSeconds = data.retryAfterSeconds;
+      throw err;
     }
     return data;
   }
