@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `Fresh 2FA security token dispatched to ${targetIdentifier} (check Mailpit at http://localhost:8025).`,
+        message: `A fresh 6-digit verification code has been dispatched to ${targetIdentifier}.`,
         simulatedOtp: otpResult.code,
         expiresAt: otpResult.expiresAt,
         expiresInSeconds: otpResult.expiresInSeconds,

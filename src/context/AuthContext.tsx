@@ -128,10 +128,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (is2FAEnabled) {
         setPendingUserSession({ user: response.user, token: response.token });
         setTwoFactorPending(true);
-        // Automatically dispatch initial 2FA token to Mailpit and church contact
-        api.resend2FA(response.user.email, true).catch((e) => {
+        // Automatically dispatch initial 2FA token to registered contact
+        try {
+          await api.resend2FA(response.user.email, true);
+        } catch (e) {
           console.warn('[AuthContext] Initial 2FA dispatch warning:', e);
-        });
+        }
         return;
       }
 
