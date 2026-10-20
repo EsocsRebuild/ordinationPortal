@@ -74,7 +74,7 @@ export function LoginModal({
                 ESOCS Ordination Portal
               </h3>
               <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">
-                Canonical Authentication Gateway
+                Official Portal Sign In
               </span>
             </div>
           </div>

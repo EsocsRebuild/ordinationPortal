@@ -213,7 +213,7 @@ export function LiveAccreditationDesk({ officerName = 'Accreditation Marshal' }:
         });
       } else {
         setFeedbackMsg({
-          text: `No candidate matching '${identifier}' found in canonical registry.`,
+          text: `No candidate matching '${identifier}' found in the ordination registry.`,
           type: 'error',
         });
       }

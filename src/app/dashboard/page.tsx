@@ -26,7 +26,7 @@ export default function DashboardIndexPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-      <AppLoader message="Connecting to your canonical dashboard..." />
+      <AppLoader message="Connecting to your dashboard..." />
     </div>
   );
 }

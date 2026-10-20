@@ -49,11 +49,11 @@ export function PathwayMarquee() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-gold-500"></span>
           </span>
           <span className="text-[11px] font-bold uppercase tracking-wider text-church-900 dark:text-gold-300 font-sans flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5" /> Canonical Ordination Pathway
+            <Radio className="w-3.5 h-3.5" /> Official Ordination Pathway
           </span>
         </div>
         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-          Live Canonical Progression
+          Live Progression
         </span>
       </div>
 

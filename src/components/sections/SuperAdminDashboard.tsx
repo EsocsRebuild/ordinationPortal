@@ -638,7 +638,7 @@ export function SuperAdminDashboard({
       {activeTab === 'audit_logs' && (
         <Card>
           <CardHeader
-            title="Sovereign Audit Trail & Canonical Event Stream"
+            title="System Audit Trail & Activity Logs"
             subtitle="Immutable activity logs tracking all user logins, tier advancements, password resets and reconciliations"
           />
           <CardBody className="p-0 overflow-x-auto">
@@ -699,7 +699,7 @@ export function SuperAdminDashboard({
                 ? 'Tier 4: CMC National Doctrinal Exam & Scoring Deck'
                 : activeTab === 'synod_tier'
                 ? 'Tier 5: Holy Synod Ratification & Apex Consecration Deck'
-                : 'Canonical Candidates Ledger & Vetting Cockpit'
+                : 'Candidate Ordination Ledger & Review Board'
             }
             subtitle="Select multiple candidates for 1-click batch endorsements, levy reconciliations, and certificate issuance"
             action={
@@ -982,7 +982,7 @@ export function SuperAdminDashboard({
                       {inspectingCandidate.targetRankName}
                     </span>
                     <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-semibold">
-                      ✓ Canonical Step Validated
+                      ✓ Promotion Step Validated
                     </span>
                   </div>
                 </div>

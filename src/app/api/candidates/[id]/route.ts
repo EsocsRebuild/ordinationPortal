@@ -15,7 +15,7 @@ export async function GET(
 
     if (!candidate) {
       return createErrorResponse(
-        `No candidate found with ecclesiastical identifier '${id}'.`,
+        `No candidate found with identifier '${id}'.`,
         ['CANDIDATE_NOT_FOUND'],
         404
       );
@@ -84,7 +84,7 @@ export async function PATCH(
         const newlyApproved = (updates.tierApprovals as any)[t.key]?.approved;
         const previouslyApproved = (existing?.tierApprovals as any)?.[t.key]?.approved;
         if (newlyApproved && !previouslyApproved) {
-          const approver = (updates.tierApprovals as any)[t.key]?.approverName || 'Ecclesiastical Council';
+          const approver = (updates.tierApprovals as any)[t.key]?.approverName || 'Ordination Review Board';
           const comments = (updates.tierApprovals as any)[t.key]?.comments;
           try {
             await sendVettingApprovalEmail({
@@ -105,7 +105,7 @@ export async function PATCH(
 
     return createSuccessResponse(
       { candidate },
-      'Candidate profile updated successfully in canonical ledger.',
+      'Candidate profile updated successfully.',
       200
     );
   } catch (error: any) {

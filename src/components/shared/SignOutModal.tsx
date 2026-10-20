@@ -94,13 +94,13 @@ export function SignOutModal({ isOpen, onClose, onConfirm }: SignOutModalProps) 
 
           <div className="space-y-1">
             <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20 inline-block">
-              Security & Session Protocol
+              Account Security
             </span>
             <h2 id="signout-modal-title" className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">
-              End Canonical Session?
+              Sign Out of Your Account?
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-              Are you sure you want to sign out of the ESOCS Holy Order Ordination Portal?
+              Are you sure you want to sign out of your ESOCS Ordination account?
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ export function SignOutModal({ isOpen, onClose, onConfirm }: SignOutModalProps) 
         <div className="p-3.5 rounded-2xl bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/20 text-xs text-slate-700 dark:text-slate-300 leading-relaxed flex items-start gap-2.5">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
           <p className="text-[11px]">
-            Your ordination progress, clearance endorsements, and payment records remain saved in the ecclesiastical central registry. You can sign back in anytime.
+            Your ordination progress, clearance approvals, and payment records remain saved in the church registry. You can sign back in anytime.
           </p>
         </div>
 

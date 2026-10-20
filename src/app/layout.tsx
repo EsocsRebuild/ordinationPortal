@@ -5,8 +5,8 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { fontVariables } from '@/lib/fonts';
 
 export const metadata: Metadata = {
-  title: 'ESOCS Ordination Portal | Holy Order Apex Directorate',
-  description: 'Enterprise canonical ordination management, vetting, investiture passes, and anti-forgery credential system.',
+  title: 'ESOCS Ordination Portal | Official Portal',
+  description: 'Official church ordination management, screening, investiture passes, and verification system.',
 };
 
 export default function RootLayout({

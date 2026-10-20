@@ -6,9 +6,9 @@ export default function NotFound() {
       <div className="w-16 h-16 rounded-2xl bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mb-6">
         <span className="text-2xl font-bold text-gold-400">404</span>
       </div>
-      <h1 className="text-2xl font-bold text-slate-100 mb-2">Ecclesiastical Record Not Found</h1>
+      <h1 className="text-2xl font-bold text-slate-100 mb-2">Record Not Found</h1>
       <p className="text-sm text-slate-400 max-w-md mb-8">
-        The requested portal resource or candidate record could not be located in the central registry.
+        The requested page or candidate record could not be located in the portal registry.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Link

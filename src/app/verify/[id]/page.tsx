@@ -30,7 +30,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         if (data) {
           setCandidate(data);
         } else {
-          setErrorMessage('Canonical record not found in the Holy Order Sovereign Ledger.');
+          setErrorMessage('Ordination record not found in the official church registry.');
         }
       } catch (err: any) {
         setErrorMessage(err.message || 'Verification failed. Record could not be confirmed.');
@@ -97,7 +97,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               </div>
               <div>
                 <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                  Canonical Credential Verified & Authentic
+                  Official Credential Verified & Authentic
                 </h1>
                 <p className="text-xs text-slate-400">
                   Registered in the Central Holy Synod Archives • ESOCS Church Worldwide
@@ -134,7 +134,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                   <p className="font-bold text-white text-sm">{candidate.targetRankName}</p>
                 </div>
                 <div>
-                  <span className="text-slate-400">Canonical Registration:</span>
+                  <span className="text-slate-400">Registration Number:</span>
                   <p className="font-mono font-bold text-amber-400 text-sm">{candidate.regNumber}</p>
                 </div>
                 <div>

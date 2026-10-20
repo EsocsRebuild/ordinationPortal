@@ -537,7 +537,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             <div className="mt-4 flex items-center justify-between px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-mono">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Application Recorded in Canonical Roster</span>
+                <span>Application Enrolled in Church Ordination Register</span>
               </span>
               <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[10px] font-bold">
                 Stage 1 Active

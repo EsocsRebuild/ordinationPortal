@@ -360,7 +360,7 @@ export const HierarchyManager: React.FC<HierarchyManagerProps> = ({
             <Badge variant="gold" size="sm" className="bg-gold-500/20 text-gold-300 border-gold-400/30">
               Live Backend Registry
             </Badge>
-            <span className="text-xs font-mono text-church-300">Autonomous Canonical Jurisdiction</span>
+            <span className="text-xs font-mono text-church-300">Official Church Jurisdiction</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-serif">
             Ecclesiastical Structure & Hierarchy Manager

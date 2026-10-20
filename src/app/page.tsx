@@ -61,7 +61,7 @@ export default function HomePage() {
   if (isInitialLoading) {
     return (
       <AppLoader
-        message="Loading Canonical Portal..."
+        message="Loading Ordination Portal..."
         subMessage="The Eternal Sacred Order of the Cherubim & Seraphim"
       />
     );
@@ -194,7 +194,7 @@ export default function HomePage() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span className="font-medium text-slate-800 dark:text-slate-300">General Conference 2026 Session</span>
             <span className="text-slate-400 dark:text-slate-600">&bull;</span>
-            <span>Canonical Registry Active</span>
+            <span>Ordination Registry Active</span>
           </div>
         </div>
       </section>
@@ -306,7 +306,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <span>SHA-256 Pass Security</span>
               <span>&bull;</span>
-              <span>Canonical Governance</span>
+              <span>Official Church Portal</span>
             </div>
           </div>
         </div>

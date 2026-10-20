@@ -85,13 +85,13 @@ export default function LoginPage() {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
               <Shield className="w-3.5 h-3.5" />
-              <span>Canonical Access Portal</span>
+              <span>Member & Admin Portal</span>
             </div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">
               Sign In to Portal
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Enter your ecclesiastical registration number or verified church email.
+              Enter your registration number or verified church email.
             </p>
           </div>
 

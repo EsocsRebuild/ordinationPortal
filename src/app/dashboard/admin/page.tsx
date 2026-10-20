@@ -49,7 +49,7 @@ export default function SuperAdminDashboardPage() {
       await api.batchAction({
         action: 'generate_certs',
         candidateIds: eligibleIds,
-        approverName: user?.name || 'Apex Sovereign Admin',
+        approverName: user?.name || 'Super Admin',
         approverRole: 'Super Admin',
       });
       await loadData();
@@ -61,7 +61,7 @@ export default function SuperAdminDashboardPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <AppLoader message="Loading Central Secretariat Sovereign Master Cockpit..." />
+        <AppLoader message="Loading Central Secretariat Admin Portal..." />
       </div>
     );
   }
