@@ -74,11 +74,11 @@ export async function PATCH(
     // 2. Dispatch Vetting Tier Approval Notification to Mailpit
     if (updates.tierApprovals) {
       const tiers = [
-        { key: 'branch', label: 'Parish Priest Nomination', next: 'Stage 2: District Council Vetting' },
-        { key: 'district', label: 'District Council Vetting', next: 'Stage 3: Provincial Diocese Clearance' },
-        { key: 'province', label: 'Provincial Diocese Clearance', next: 'Stage 4: CMC Screening & Examination' },
-        { key: 'cmc', label: 'CMC Screening Examination', next: 'Stage 5: Holy Synod Ratification & Final Seal' },
-        { key: 'national', label: 'Holy Synod Ratification', next: 'Stage 6: Solemn Altar Consecration' },
+        { key: 'branch', label: 'Parish Review', next: 'Stage 2: District Council Review' },
+        { key: 'district', label: 'District Review', next: 'Stage 3: Provincial Office Clearance' },
+        { key: 'province', label: 'Province Clearance', next: 'Stage 4: Candidate Screening & Examination' },
+        { key: 'cmc', label: 'Screening & Examination', next: 'Stage 5: National Council Final Approval' },
+        { key: 'national', label: 'National Council Approval', next: 'Stage 6: Official Ordination & Investiture' },
       ];
       for (const t of tiers) {
         const newlyApproved = (updates.tierApprovals as any)[t.key]?.approved;

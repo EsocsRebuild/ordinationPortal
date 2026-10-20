@@ -198,72 +198,72 @@ export function CandidateDashboard({
     {
       id: 'branch',
       stepNumber: '01',
-      title: 'Parish Priest Nomination & Endorsement',
-      authority: 'Branch Parish Rector & Leadership Committee',
-      officer: candidate.tierApprovals?.branch?.approverName || candidate.branchPriestName || 'Branch Presiding Officer',
+      title: 'Parish Pastor Recommendation',
+      authority: 'Parish Pastor & Church Board',
+      officer: candidate.tierApprovals?.branch?.approverName || candidate.branchPriestName || 'Parish Pastor',
       date: candidate.tierApprovals?.branch?.date || (branchApproved ? candidate.submissionDate : 'In Review'),
-      desc: 'Verification of active church membership, local parish tithes, and exemplary moral standing.',
+      desc: 'Verification of active church membership, local branch records, and pastor recommendation.',
       isCompleted: branchApproved,
       isCurrent: !branchApproved,
       statusLabel: branchApproved ? 'Approved ✓' : 'In Review ⏳',
-      sealBadge: branchApproved ? 'Parish Seal Confirmed' : 'Awaiting Rector Vetting',
-      comments: candidate.tierApprovals?.branch?.comments || (branchApproved ? 'Nomination verified with highest recommendation from Parish.' : 'Nomination under active review by Parish Rector & Elders.'),
+      sealBadge: branchApproved ? 'Parish Recommended' : 'Awaiting Pastor Review',
+      comments: candidate.tierApprovals?.branch?.comments || (branchApproved ? 'Nomination verified with parish recommendation.' : 'Under active review by Parish Pastor & Church Board.'),
     },
     {
       id: 'district',
       stepNumber: '02',
-      title: 'District Council Vetting & Ratification',
-      authority: 'District Superintendent Council',
+      title: 'District Council Review',
+      authority: 'District Superintendent & Council',
       officer: candidate.tierApprovals?.district?.approverName || 'District Superintendent',
       date: candidate.tierApprovals?.district?.date || (districtApproved ? 'Ratified' : branchApproved ? 'In Review' : 'Queued'),
-      desc: 'Zonal background check cleared, constitutional ordination quota certified within district.',
+      desc: 'District verification of service tenure, good character, and church records.',
       isCompleted: districtApproved,
       isCurrent: branchApproved && !districtApproved,
-      statusLabel: districtApproved ? 'Approved ✓' : branchApproved ? 'In Review ⏳' : 'Pending Stage 1 🔒',
-      sealBadge: districtApproved ? 'District Quota Cleared' : branchApproved ? 'Vetting in Progress' : 'Locked',
-      comments: candidate.tierApprovals?.district?.comments || (districtApproved ? 'No disciplinary history on record. Meritorious service verified.' : branchApproved ? 'Queued for District Superintendent review.' : 'Awaiting Parish Priest clearance.'),
+      statusLabel: districtApproved ? 'Approved ✓' : branchApproved ? 'In Review ⏳' : 'Pending Step 1 🔒',
+      sealBadge: districtApproved ? 'District Approved' : branchApproved ? 'Review in Progress' : 'Locked',
+      comments: candidate.tierApprovals?.district?.comments || (districtApproved ? 'Service verified with good standing.' : branchApproved ? 'Under review by District Superintendent.' : 'Awaiting Parish Pastor clearance.'),
     },
     {
       id: 'province',
       stepNumber: '03',
-      title: 'Provincial Diocese Clearance & Quotas',
-      authority: `${candidate.province} Secretariat`,
+      title: 'Provincial Office Clearance',
+      authority: `${candidate.province} Office`,
       officer: candidate.tierApprovals?.province?.approverName || 'Provincial Secretary',
       date: candidate.tierApprovals?.province?.date || (provinceApproved ? 'Cleared' : districtApproved ? 'In Review' : 'Queued'),
-      desc: 'Provincial diocesan registry validated and passed forward to the National Screening Board.',
+      desc: 'Provincial office verification and clearance for screening examination.',
       isCompleted: provinceApproved,
       isCurrent: districtApproved && !provinceApproved,
-      statusLabel: provinceApproved ? 'Approved ✓' : districtApproved ? 'In Review ⏳' : 'Pending Stage 2 🔒',
-      sealBadge: provinceApproved ? 'Diocesan Quota Allotted' : districtApproved ? 'Clearance in Progress' : 'Locked',
-      comments: candidate.tierApprovals?.province?.comments || (provinceApproved ? 'Candidate allocation quota verified and ratified.' : districtApproved ? 'Awaiting provincial credential check.' : 'Awaiting District Council clearance.'),
+      statusLabel: provinceApproved ? 'Approved ✓' : districtApproved ? 'In Review ⏳' : 'Pending Step 2 🔒',
+      sealBadge: provinceApproved ? 'Province Cleared' : districtApproved ? 'Clearance in Progress' : 'Locked',
+      comments: candidate.tierApprovals?.province?.comments || (provinceApproved ? 'Candidate allocation verified and ratified.' : districtApproved ? 'Awaiting provincial credential check.' : 'Awaiting District Council clearance.'),
     },
     {
       id: 'cmc',
       stepNumber: '04',
-      title: 'Ordination Screening & Doctrinal Examination',
-      authority: 'Central Ministerial Committee (CMC Examination Directorate)',
-      officer: candidate.tierApprovals?.cmc?.approverName || 'Screening Directorate (CMC)',
+      title: 'Candidate Screening & Examination',
+      authority: 'Screening Committee & Exam Board',
+      officer: candidate.tierApprovals?.cmc?.approverName || 'Screening Officer',
       date: candidate.tierApprovals?.cmc?.date || (cmcApproved ? 'Exam Passed' : provinceApproved ? 'Scheduled' : 'Queued'),
-      desc: 'Oral interview, written theology assessment, and Liturgical governance examination passed.',
+      desc: 'Candidate interview and basic church doctrine and scripture exam.',
       isCompleted: cmcApproved,
       isCurrent: provinceApproved && !cmcApproved,
-      statusLabel: cmcApproved ? (candidate.theologyScore ? `Passed (${candidate.theologyScore}%) ✓` : 'Passed ✓') : provinceApproved ? 'Screening Scheduled ⏳' : 'Pending Stage 3 🔒',
-      sealBadge: cmcApproved ? 'CMC Distinction Certified' : provinceApproved ? 'Awaiting Exam Session' : 'Locked',
-      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? (candidate.theologyScore ? `Scored ${candidate.theologyScore}% in Church Liturgy and Doctrinal Governance.` : 'Doctrinal examination and interview successfully certified by CMC.') : provinceApproved ? 'Candidate scheduled for liturgical interview & theology exam.' : 'Awaiting provincial diocese clearance.'),
+      statusLabel: cmcApproved ? (candidate.theologyScore ? `Passed (${candidate.theologyScore}%) ✓` : 'Passed ✓') : provinceApproved ? 'Screening Scheduled ⏳' : 'Pending Step 3 🔒',
+      sealBadge: cmcApproved ? 'Exam Passed' : provinceApproved ? 'Awaiting Exam Session' : 'Locked',
+      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? (candidate.theologyScore ? `Scored ${candidate.theologyScore}% in examination.` : 'Interview and exam passed successfully.') : provinceApproved ? 'Scheduled for candidate screening interview and exam.' : 'Awaiting Provincial clearance.'),
     },
     {
       id: 'national',
       stepNumber: '05',
-      title: 'Holy Synod & Church Supreme Council Final Seal',
-      authority: 'Holy Order Supreme Advisory Council & Office of the Prelate',
-      officer: candidate.tierApprovals?.national?.approverName || 'Supervising Apostle General / Super Admin',
-      date: candidate.tierApprovals?.national?.date || (nationalApproved ? 'Sealed' : cmcApproved ? 'Synod Review' : 'Queued'),
-      desc: 'Supreme ratification concluded. Ceremony seating and gazetted ordination pass generated.',
+      title: 'National Council Final Approval',
+      authority: 'General Conference & National Secretariat',
+      officer: candidate.tierApprovals?.national?.approverName || 'National Secretariat',
+      date: candidate.tierApprovals?.national?.date || (nationalApproved ? 'Approved' : cmcApproved ? 'Under Review' : 'Queued'),
+      desc: 'Final confirmation of candidate roster and preparation for ordination ceremony.',
       isCompleted: nationalApproved,
       isCurrent: cmcApproved && !nationalApproved,
-      statusLabel: nationalApproved ? 'Ratified & Sealed ✓' : cmcApproved ? 'Synod Docket Review ⏳' : 'Pending Stage 4 🔒',
-      sealBadge: nationalApproved ? 'Supreme Consecration Seal' : cmcApproved ? 'Awaiting Synod Seal' : 'Locked',
-      comments: candidate.tierApprovals?.national?.comments || (nationalApproved ? 'Certified for solemn consecration by His Most Eminence, Baba Aladura.' : cmcApproved ? 'Screening results submitted to Supreme Council for final seal.' : 'Awaiting CMC examination clearance.'),
+      statusLabel: nationalApproved ? 'Approved & Confirmed ✓' : cmcApproved ? 'Under Final Review ⏳' : 'Pending Step 4 🔒',
+      sealBadge: nationalApproved ? 'Council Approved' : cmcApproved ? 'Awaiting Council Approval' : 'Locked',
+      comments: candidate.tierApprovals?.national?.comments || (nationalApproved ? 'Approved for official ordination.' : cmcApproved ? 'Screening results submitted to National Council for final confirmation.' : 'Awaiting screening clearance.'),
     },
   ];
 
@@ -277,53 +277,53 @@ export function CandidateDashboard({
   const isPewReady = Boolean(isCeremonyReady && candidate.seatNumber);
   const isOrdained = candidate.stage === 'ordained';
 
-  // 6-Stage Ecclesiastical Ordination Progression Stepper
+  // 6-Stage Church Ordination Progression Stepper
   const applicantStages = [
     {
       step: 1,
       id: 'parish',
-      title: 'Parish Nomination',
-      subtitle: 'Local Rector Vetting',
+      title: '1. Parish Review',
+      subtitle: 'Pastor Recommendation',
       isCompleted: branchApproved,
       isActive: !branchApproved,
     },
     {
       step: 2,
       id: 'district',
-      title: 'District Council Vetting',
-      subtitle: 'Superintendent Council',
+      title: '2. District Review',
+      subtitle: 'District Council',
       isCompleted: districtApproved,
       isActive: branchApproved && !districtApproved,
     },
     {
       step: 3,
       id: 'province',
-      title: 'Provincial Diocese Clearance',
-      subtitle: 'Diocesan Secretariat',
+      title: '3. Province Clearance',
+      subtitle: 'Provincial Office',
       isCompleted: provinceApproved,
       isActive: districtApproved && !provinceApproved,
     },
     {
       step: 4,
       id: 'cmc',
-      title: 'CMC Screening Exam',
-      subtitle: 'Theology & Liturgy',
+      title: '4. Screening & Exam',
+      subtitle: 'Interview & Doctrine',
       isCompleted: cmcApproved,
       isActive: provinceApproved && !cmcApproved,
     },
     {
       step: 5,
       id: 'synod',
-      title: 'Holy Synod Ratification',
-      subtitle: 'Final Seal & Pass Issuance',
+      title: '5. Final Approval',
+      subtitle: 'National Council',
       isCompleted: nationalApproved,
       isActive: cmcApproved && !nationalApproved,
     },
     {
       step: 6,
       id: 'consecration',
-      title: 'Solemn Altar Consecration',
-      subtitle: 'Laying of Hands',
+      title: '6. Ordination Day',
+      subtitle: 'Ceremony & Pass',
       isCompleted: isOrdained,
       isActive: nationalApproved && !isOrdained,
     },
@@ -347,42 +347,42 @@ export function CandidateDashboard({
 
   const stageGuidance: Record<number, { heading: string; desc: string; actionText?: string; actionTab?: string }> = {
     1: {
-      heading: 'Parish Priest Endorsement In Review',
-      desc: 'Your nomination profile is registered and undergoing endorsement by your local Parish Priest and Elders. Ensure your church tithes, local standing, and branch records are verified.',
-      actionText: 'Inspect Parish Approval Status',
+      heading: 'Parish Pastor Review In Progress',
+      desc: 'Your nomination is registered and undergoing review by your local Parish Pastor and Church Board. Ensure your church tithes, membership records, and good standing are confirmed.',
+      actionText: 'View Parish Review Status',
       actionTab: 'clearance',
     },
     2: {
-      heading: 'District Council Vetting Underway',
-      desc: 'Your Parish Priest has successfully endorsed your candidacy. Your file is now before the District Superintendent Council for regional quota verification.',
+      heading: 'District Council Review Underway',
+      desc: 'Your Parish Pastor has recommended you. Your application is now with the District Council for verification.',
       actionText: 'View District Progress',
       actionTab: 'clearance',
     },
     3: {
-      heading: 'Provincial Diocese Quota Clearance',
-      desc: 'District verification confirmed. The Provincial Diocese Secretariat is reviewing your ministerial tenure and allotting your provincial diocese quota.',
+      heading: 'Provincial Office Clearance',
+      desc: 'District review is confirmed. The Provincial Office is reviewing your records and confirming your ordination slot.',
       actionText: 'View Provincial Clearance',
       actionTab: 'clearance',
     },
     4: {
-      heading: 'Central Ministerial Committee (CMC) Screening',
-      desc: 'Provincial diocese has cleared your candidacy. You are scheduled for the Central Ministerial Committee written theology and liturgical assessment.',
-      actionText: 'View Examination Syllabus',
+      heading: 'Candidate Screening & Examination',
+      desc: 'Provincial clearance is complete! You are scheduled for the candidate screening interview and examination.',
+      actionText: 'View Screening Details',
       actionTab: 'clearance',
     },
     5: {
-      heading: isLeviesCleared ? 'Holy Synod Supreme Ratification' : 'Statutory Levies Settlement Required',
+      heading: isLeviesCleared ? 'National Council Final Approval' : 'Ordination Fee Payment Required',
       desc: isLeviesCleared
-        ? 'CMC screening certified with distinction. The Holy Synod & Office of the Prelate is docketing your final ratification and chancel seating allocation.'
-        : 'CMC screening completed! Please settle your outstanding statutory ordination levies to enable generation of your Digital Gate 2 Fast-Track Pass.',
-      actionText: isLeviesCleared ? 'View Clearance Status' : 'Settle Statutory Levies',
+        ? 'Screening exam passed! The National Council is finalizing your official confirmation and ceremony seating.'
+        : 'Screening exam completed! Please complete your ordination fee payment to generate your digital ceremony pass.',
+      actionText: isLeviesCleared ? 'View Clearance Status' : 'Pay Ordination Fees',
       actionTab: isLeviesCleared ? 'clearance' : 'payments',
     },
     6: {
-      heading: isOrdained ? 'Sacred Consecration Concluded' : 'All Clearances Ratified — Ready for Altar Consecration',
+      heading: isOrdained ? 'Ordination Concluded' : 'Ready for Ordination Day',
       desc: isOrdained
-        ? 'You have received the laying of hands from His Most Eminence, the Baba Aladura. Your Official Certificate of Ordination is gazetted and available for printing.'
-        : 'All 5 clearance tiers are ratified and statutory levies are settled! Your Gate 2 Digital Ceremony Pass and Pew Seating are unlocked. Report promptly at the Holy Order Cathedral on Saturday, Nov 14, 2026.',
+        ? 'You have been officially ordained. Your Certificate of Ordination is ready for download.'
+        : 'All 5 review steps are approved and ordination fees are settled! Your Digital Ceremony Pass and Seating are ready. Attend the ceremony at the Cathedral on ordination day.',
       actionText: isOrdained ? 'Download Certificate' : 'Open Ceremony Pass',
       actionTab: isOrdained ? 'overview' : 'pass',
     },
@@ -822,14 +822,14 @@ export function CandidateDashboard({
 
             {/* Stepper Roadmap Display */}
             <div className="relative pt-2 pb-2">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3 relative z-10">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5 relative z-10">
                 {applicantStages.map((stage) => {
                   const isDone = stage.isCompleted;
                   const isCurrent = currentStageIndex === stage.step && !isDone;
                   return (
                     <div
                       key={stage.id}
-                      className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex flex-col items-center text-center min-w-0 overflow-hidden ${
+                      className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between items-center text-center min-w-0 min-h-[148px] ${
                         isDone
                           ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
                           : isCurrent
@@ -837,36 +837,41 @@ export function CandidateDashboard({
                           : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
                       }`}
                     >
-                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs mb-2 transition-transform shrink-0 ${
-                        isDone
-                          ? 'bg-emerald-500 text-white shadow-xs'
-                          : isCurrent
-                          ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                          : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                      }`}>
-                        {isDone ? (
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        ) : isCurrent ? (
-                          <span>0{stage.step}</span>
-                        ) : (
-                          <Lock className="w-3.5 h-3.5 opacity-60" />
-                        )}
+                      <div className="flex flex-col items-center w-full">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs mb-2.5 transition-transform shrink-0 ${
+                          isDone
+                            ? 'bg-emerald-500 text-white shadow-xs'
+                            : isCurrent
+                            ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                        }`}>
+                          {isDone ? (
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          ) : isCurrent ? (
+                            <span>0{stage.step}</span>
+                          ) : (
+                            <Lock className="w-3.5 h-3.5 opacity-60" />
+                          )}
+                        </div>
+                        <h4 className="font-bold text-xs sm:text-[13px] leading-snug text-slate-900 dark:text-white break-words w-full">
+                          {stage.title}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-tight break-words w-full">
+                          {stage.subtitle}
+                        </p>
                       </div>
-                      <span className="font-bold text-[11px] sm:text-xs leading-snug line-clamp-2 text-slate-900 dark:text-white break-words w-full">
-                        {stage.title}
-                      </span>
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1 break-words w-full">
-                        {stage.subtitle}
-                      </span>
-                      <span className={`text-[9px] font-mono mt-1.5 px-1.5 py-0.5 rounded-md font-semibold truncate max-w-full ${
-                        isDone
-                          ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                          : isCurrent
-                          ? 'bg-amber-500/25 text-amber-800 dark:text-amber-200'
-                          : 'bg-slate-200/60 dark:bg-slate-800 text-slate-400'
-                      }`}>
-                        {isDone ? 'Cleared ✓' : isCurrent ? 'In Progress ⏳' : 'Locked 🔒'}
-                      </span>
+
+                      <div className="pt-2 w-full">
+                        <span className={`inline-block text-[10px] font-semibold px-2.5 py-1 rounded-lg border w-full truncate ${
+                          isDone
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                            : isCurrent
+                            ? 'bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-500/40'
+                            : 'bg-slate-200/60 dark:bg-slate-800 text-slate-400 border-slate-300/40 dark:border-slate-700/50'
+                        }`}>
+                          {isDone ? 'Approved ✓' : isCurrent ? 'In Review ⏳' : 'Upcoming 🔒'}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}
@@ -1278,7 +1283,7 @@ export function CandidateDashboard({
                       <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/40 text-xs space-y-4 animate-in fade-in duration-200 overflow-hidden">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Vetting Authority</span>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Reviewing Board</span>
                             <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.authority}</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -1286,13 +1291,13 @@ export function CandidateDashboard({
                             <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.officer}</span>
                           </div>
                           <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date Ratified</span>
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date Confirmed</span>
                             <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 text-xs break-words">{step.date}</span>
                           </div>
                         </div>
 
                         <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300 break-words leading-relaxed overflow-hidden">
-                          <span className="font-bold text-amber-800 dark:text-amber-300 mr-1.5">Official Vetting Remarks:</span>
+                          <span className="font-bold text-amber-800 dark:text-amber-300 mr-1.5">Official Review Remarks:</span>
                           {step.comments}
                         </div>
                       </div>

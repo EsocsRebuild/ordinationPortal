@@ -276,6 +276,36 @@ class ApiService {
     return data.data?.candidate || data.candidate;
   }
 
+  async verifyCredential(id: string): Promise<{
+    id: string;
+    regNumber: string;
+    fullName: string;
+    currentRank: string;
+    targetRankName: string;
+    province: string;
+    district?: string;
+    parish: string;
+    duesStatus: string;
+    stage: string;
+    certificateNumber?: string | null;
+    verificationHash?: string | null;
+    investitureSession?: string | null;
+    seatNumber?: string | null;
+    isValid: boolean;
+    verificationDate: string;
+    institution: string;
+    authority: string;
+  }> {
+    const res = await fetch(`/api/verify/${encodeURIComponent(id)}`, {
+      cache: 'no-store',
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || `No official ordination credential found for '${id}'.`);
+    }
+    return data.data || data;
+  }
+
   async updateCandidate(id: string, updates: Partial<CandidateProfile>, actorName?: string): Promise<CandidateProfile> {
     const res = await fetch(`/api/candidates/${id}`, {
       method: 'PATCH',

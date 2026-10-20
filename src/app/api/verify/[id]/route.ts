@@ -23,17 +23,20 @@ export async function GET(
     const isOfficiallyApproved = ['board_approved', 'investiture_assigned', 'ordained'].includes(candidate.stage);
 
     const publicVerificationRecord = {
+      id: candidate.id,
       regNumber: candidate.regNumber,
       fullName: candidate.fullName,
+      currentRank: candidate.currentRank,
       targetRankName: candidate.targetRankName,
       province: candidate.province,
+      district: candidate.district,
       parish: candidate.parish,
       duesStatus: candidate.duesStatus,
       stage: candidate.stage,
       certificateNumber: candidate.certificateNumber || null,
       verificationHash: candidate.verificationHash || null,
-      investitureSession: candidate.investitureSession || 'To Be Announced',
-      seatNumber: candidate.seatNumber || 'Pending Allocation',
+      investitureSession: candidate.investitureSession || (isOfficiallyApproved ? 'General Conference 2026' : null),
+      seatNumber: candidate.seatNumber || null,
       isValid: isOfficiallyApproved,
       verificationDate: new Date().toISOString(),
       institution: 'Eternal Sacred Order of the Cherubim and Seraphim Worldwide',
