@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { createJwtToken } from '@/lib/server/jwt';
 import { validateCandidateRegistration } from '@/lib/server/validators';
 import { createSuccessResponse, createErrorResponse } from '@/lib/server/response';
+import { sendRegistrationConfirmationEmail } from '@/lib/server/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
 
     if (!validation.isValid || !validation.sanitizedData) {
       return createErrorResponse(
-        'Canonical registration validation failed.',
+        'Registration validation failed.',
         validation.errors,
         422
       );
@@ -67,6 +68,22 @@ export async function POST(request: Request) {
       candidateId: user.candidateId,
     });
 
+    // Dispatch confirmation email to Mailpit
+    try {
+      await sendRegistrationConfirmationEmail({
+        fullName: candidate.fullName,
+        email: candidate.email,
+        regNumber: candidate.regNumber,
+        currentRank: candidate.currentRank,
+        targetRankName: candidate.targetRankName,
+        parish: candidate.parish,
+        district: candidate.district,
+        province: candidate.province,
+      });
+    } catch (emailErr) {
+      console.warn('[Register] Failed to dispatch registration confirmation to Mailpit:', emailErr);
+    }
+
     return createSuccessResponse(
       {
         token,
@@ -78,7 +95,7 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     return createErrorResponse(
-      error.message || 'An unexpected error occurred during canonical registration.',
+      error.message || 'An unexpected error occurred during registration.',
       [error.message || 'Registration processing failure'],
       500
     );

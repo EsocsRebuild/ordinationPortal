@@ -51,7 +51,7 @@ export async function GET() {
         fullName: c.fullName,
         targetRankName: c.targetRankName,
         province: c.province,
-        seatNumber: c.seatNumber || 'Zone A - Chancel Pew',
+        seatNumber: c.seatNumber || 'Pending Allocation',
         checkInTimestamp: c.checkInTimestamp,
         accreditedBy: c.accreditedBy || 'Accreditation Marshal',
       }));

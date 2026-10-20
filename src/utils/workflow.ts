@@ -160,7 +160,7 @@ export function getStageMeta(stage: OrdinationStage): WorkflowStageMeta {
     label: 'Application Declined',
     shortLabel: 'Declined',
     stepNumber: 0,
-    description: 'Application does not meet ecclesiastical criteria or canonical prerequisites.',
+    description: 'Application does not meet church criteria or required prerequisites.',
     badgeBg: 'bg-rose-50 dark:bg-rose-950/40',
     badgeText: 'text-rose-700 dark:text-rose-300',
     borderColor: 'border-rose-300',

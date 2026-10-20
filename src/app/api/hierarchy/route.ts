@@ -13,7 +13,7 @@ export async function GET() {
         provinces: hierarchy.map((p) => p.name),
         totalProvinces: hierarchy.length,
       },
-      'Ecclesiastical hierarchy retrieved successfully.',
+      'Church hierarchy retrieved successfully.',
       200
     );
   } catch (error: any) {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
     if (action === 'save_all' && Array.isArray(hierarchy)) {
       const saved = db.hierarchy.saveAll(hierarchy, performedBy || 'Admin Directorate');
-      return createSuccessResponse({ hierarchy: saved }, 'Ecclesiastical hierarchy saved successfully.', 200);
+      return createSuccessResponse({ hierarchy: saved }, 'Church hierarchy saved successfully.', 200);
     }
 
     if (action === 'add_province' && province) {

@@ -12,7 +12,7 @@ export async function GET() {
         ranks,
         totalRanks: ranks.length,
       },
-      'Ecclesiastical ranks retrieved successfully.',
+      'Church ranks retrieved successfully.',
       200
     );
   } catch (error: any) {
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     if (action === 'save_all' && Array.isArray(ranks)) {
       const saved = db.ranks.saveAll(ranks, performedBy || 'Admin Directorate');
-      return createSuccessResponse({ ranks: saved }, 'Ecclesiastical ranks saved successfully.', 200);
+      return createSuccessResponse({ ranks: saved }, 'Church ranks saved successfully.', 200);
     }
 
     if (action === 'update_rank' && rankId && rank) {

@@ -64,7 +64,7 @@ export function DemoAccountModal({
               This is a Demo Account
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed px-2">
-              You are signed into a live simulation of the <strong>ESOCS Ordination Portal</strong>. All ecclesiastical approvals, fees, seat allocations, and digital QR passes are fully interactive for evaluation.
+              You are signed into a live demo of the <strong>ESOCS Ordination Portal</strong>. All candidate approvals, fee receipts, seat allocations, and digital QR passes are fully interactive for evaluation.
             </p>
           </div>
 

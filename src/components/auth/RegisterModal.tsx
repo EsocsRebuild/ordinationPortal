@@ -103,11 +103,13 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [phone, setPhone] = useState('');
   const [phoneValidation, setPhoneValidation] = useState<PhoneValidationResult | null>(null);
 
-  // Dynamic Ecclesiastical Hierarchy & Ranks state (loaded from live backend)
+  // Dynamic Church Hierarchy & Ranks state (loaded from live backend)
   const [liveHierarchy, setLiveHierarchy] = useState<ProvinceHierarchy[]>(ESOCS_HIERARCHY);
   const [liveRanks, setLiveRanks] = useState<EcclesiasticalRank[]>(ESOCS_RANKS);
 
   useEffect(() => {
+    if (!isOpen) return;
+
     api.getHierarchy()
       .then((res) => {
         if (res && Array.isArray(res.hierarchy) && res.hierarchy.length > 0) {
@@ -123,14 +125,14 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         }
       })
       .catch(() => {});
-  }, []);
+  }, [isOpen]);
 
-  // Canonical rank state
+  // Rank state
   const [currentRank, setCurrentRank] = useState('Pastor');
   const [currentRankYear, setCurrentRankYear] = useState(2022);
   const [targetRankName, setTargetRankName] = useState('Evangelist');
 
-  // Ecclesiastical Hierarchy state
+  // Church Hierarchy state
   const [province, setProvince] = useState<string>(() => liveHierarchy[0]?.name || 'Lagos Central Province');
   const [district, setDistrict] = useState<string>(() => {
     return liveHierarchy[0]?.districts[0]?.name || 'Ebute Metta District';
@@ -263,7 +265,6 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     return availableHousesOfPrayer.map((h) => ({
       value: h,
       label: h,
-      subLabel: 'Sanctuary / Altar of Prayer',
     }));
   }, [availableHousesOfPrayer]);
 
@@ -307,7 +308,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
   };
 
-  // Canonical progression validation
+  // Rank progression validation
   const validation = useMemo(() => {
     return validateRankProgression(currentRank, targetRankName, gender, currentRankYear, CURRENT_YEAR);
   }, [currentRank, targetRankName, gender, currentRankYear]);
@@ -325,7 +326,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
   };
 
-  const handleApplyCanonicalRecommendation = () => {
+  const handleApplyRecommendation = () => {
     if (validation.expectedNextRank) {
       setTargetRankName(validation.expectedNextRank.name);
     }
@@ -362,7 +363,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!email.trim() || !emailRegex.test(email.trim())) {
-        setSubmitError('Please enter a valid ecclesiastical or personal email address.');
+        setSubmitError('Please enter a valid email address.');
         return;
       }
       if (!phone.trim()) {
@@ -374,7 +375,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
         return;
       }
       if (!province || !parish) {
-        setSubmitError('Please select your Ecclesiastical Province and Local Parish Branch.');
+        setSubmitError('Please select your Province and Parish Branch.');
         return;
       }
       if (isCustomHouse && !customHouseOfPrayer.trim()) {
@@ -537,7 +538,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             <div className="mt-4 flex items-center justify-between px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold font-mono">
               <span className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <span>Application Recorded in Canonical Roster</span>
+                <span>Application Enrolled in Church Ordination Register</span>
               </span>
               <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-[10px] font-bold">
                 Stage 1 Active
@@ -555,7 +556,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             </div>
           )}
 
-          {/* STEP 1: Personal Identity, Ministry Order & Ecclesiastical Jurisdiction */}
+          {/* STEP 1: Personal Identity, Ministry Order & Church Location */}
           {currentStep === 1 && (
             <form onSubmit={handleNextStep} id="reg-step-1" className="space-y-6 animate-in fade-in">
               
@@ -617,7 +618,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="e.g. Emmanuel"
+                      placeholder="First Name"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -630,7 +631,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       type="text"
                       value={middleName}
                       onChange={(e) => setMiddleName(e.target.value)}
-                      placeholder="e.g. Babatunde"
+                      placeholder="Middle Name"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -644,7 +645,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="e.g. Adeleke"
+                      placeholder="Surname"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -660,7 +661,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       type="text"
                       value={preferredName}
                       onChange={(e) => setPreferredName(e.target.value)}
-                      placeholder="e.g. Pastor Adeleke"
+                      placeholder="e.g. Brother John"
                       className="w-full px-3.5 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -688,7 +689,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Ecclesiastical / Personal Email <span className="text-amber-500">*</span>
+                    Email Address <span className="text-amber-500">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -697,7 +698,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. e.adeleke@esocs.church"
+                      placeholder="ordinand@example.com"
                       className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all outline-none"
                     />
                   </div>
@@ -714,22 +715,22 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 </div>
               </div>
 
-              {/* 4. Ecclesiastical Hierarchy (Province -> Direct Branch Dropdown -> Sanctuary) */}
+              {/* 4. Church Hierarchy (Province -> Direct Branch Dropdown -> Sanctuary) */}
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-amber-500 shadow-sm shadow-amber-500" />
                     <span className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                      Ecclesiastical Territorial Jurisdiction
+                      Church Jurisdiction & Location
                     </span>
                   </div>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Searchable Church Directory</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Directory Selection</span>
                 </div>
 
                 {/* Tier 1: Province & Tier 2: Local Parish Branch (Shows all branches in province) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <SearchableSelect
-                    label="1. Ecclesiastical Province / Diocese"
+                    label="1. Church Province / Diocese"
                     required
                     options={provinceOptions}
                     value={province}
@@ -740,7 +741,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   />
 
                   <SearchableSelect
-                    label="2. Local Parish / Cathedral Branch"
+                    label="2. Parish / Branch"
                     required
                     options={branchOptions}
                     value={parish}
@@ -754,7 +755,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                 {/* Tier 3: House of Prayer / Sanctuary */}
                 <div className="space-y-2">
                   <SearchableSelect
-                    label="3. House of Prayer / Sanctuary / Chapel"
+                    label="3. House of Prayer / Sanctuary"
                     required
                     options={houseOptions}
                     value={isCustomHouse ? '__custom__' : houseOfPrayer}
@@ -866,7 +867,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   {validation.expectedNextRank && (
                     <button
                       type="button"
-                      onClick={handleApplyCanonicalRecommendation}
+                      onClick={handleApplyRecommendation}
                       className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-600 font-semibold flex items-center gap-1.5 transition-colors"
                     >
                       <Sparkles className="w-3.5 h-3.5" /> Auto-select Eligible: {validation.expectedNextRank.name}
@@ -1109,13 +1110,13 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-left space-y-2.5 text-xs leading-relaxed max-w-2xl mx-auto">
                 <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
                   <ShieldCheck className="w-4 h-4 text-amber-500" />
-                  <span>Ecclesiastical Next Steps:</span>
+                  <span>Next Steps:</span>
                 </div>
                 <ol className="list-decimal list-inside space-y-1.5 text-slate-600 dark:text-slate-400">
-                  <li><strong>Parish Rector Endorsement:</strong> Your parish leadership will conduct attendance and conduct vetting.</li>
+                  <li><strong>Parish Pastor Review:</strong> Your parish leadership will verify church attendance and records.</li>
                   <li><strong>Real-time Tracking:</strong> Follow each stage of approval live from your candidate dashboard.</li>
                   <li><strong>Dues & Levies:</strong> You can review and clear statutory dues from your personal payment desk.</li>
-                  <li><strong>Ceremony Pass & Robing:</strong> Fast-track Gate 2 entry pass and chancel pew seating are unlocked once Stage 5 ratification is sealed.</li>
+                  <li><strong>Ceremony Pass & Robing:</strong> Official admission pass and seating are unlocked once final approval is confirmed.</li>
                 </ol>
               </div>
             </div>

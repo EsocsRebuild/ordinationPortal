@@ -145,11 +145,6 @@ export function SearchableSelect({
           {selectedOption ? (
             <div className="truncate">
               <span className="text-xs sm:text-sm font-medium text-slate-100">{selectedOption.label}</span>
-              {selectedOption.subLabel && (
-                <span className="text-slate-400 text-xs ml-1.5 font-normal">
-                  ({selectedOption.subLabel})
-                </span>
-              )}
             </div>
           ) : (
             <span className="text-xs sm:text-sm text-slate-500 truncate">{placeholder}</span>

@@ -10,11 +10,13 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   twoFactorPending: boolean;
+  pendingUserSession: { user: UserSession; token: string } | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   registerCandidate: (payload: RegisterCandidatePayload, autoRedirect?: boolean) => Promise<AuthSessionResponse>;
   resetPassword: (identifier: string, newPassword: string, otp?: string) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
   verifyTwoFactor: (otp: string, rememberDevice?: boolean) => Promise<void>;
+  resendTwoFactor: (force?: boolean) => Promise<{ success: boolean; message: string; simulatedOtp?: string }>;
   cancelTwoFactor: () => void;
   switchUserRole: (role: UserRole) => Promise<void>;
   logout: () => void;
@@ -59,6 +61,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     restoreSession();
   }, []);
 
+  // Automatic inactivity session timeout (15 minutes of idle time)
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes of inactivity
+    let lastActivityTime = Date.now();
+
+    const handleUserActivity = () => {
+      lastActivityTime = Date.now();
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, handleUserActivity, { passive: true });
+    });
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      if (now - lastActivityTime >= INACTIVITY_TIMEOUT_MS) {
+        clearInterval(intervalId);
+        activityEvents.forEach((evt) => {
+          window.removeEventListener(evt, handleUserActivity);
+        });
+
+        // Automatically clear session and redirect on inactivity
+        setUser(null);
+        setToken(null);
+        setTwoFactorPending(false);
+        setPendingUserSession(null);
+        localStorage.removeItem('esocs_user_session');
+        localStorage.removeItem('esocs_auth_token');
+        router.push('/login?reason=inactivity');
+      }
+    }, 15000); // Check every 15 seconds
+
+    return () => {
+      clearInterval(intervalId);
+      activityEvents.forEach((evt) => {
+        window.removeEventListener(evt, handleUserActivity);
+      });
+    };
+  }, [user, token, router]);
+
   const getDashboardRouteForRole = (role: UserRole): string => {
     switch (role) {
       case 'candidate':
@@ -83,6 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (is2FAEnabled) {
         setPendingUserSession({ user: response.user, token: response.token });
         setTwoFactorPending(true);
+        // Automatically dispatch initial 2FA token to Mailpit and church contact
+        api.resend2FA(response.user.email, true).catch((e) => {
+          console.warn('[AuthContext] Initial 2FA dispatch warning:', e);
+        });
         return;
       }
 
@@ -155,7 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!pendingUserSession) throw new Error('No pending 2FA login session.');
     setIsLoading(true);
     try {
-      await api.verify2FA(otp, rememberDevice);
+      await api.verify2FA(otp, rememberDevice, pendingUserSession.user.email);
       setUser(pendingUserSession.user);
       setToken(pendingUserSession.token);
 
@@ -172,6 +221,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const resendTwoFactor = async (force: boolean = false) => {
+    if (!pendingUserSession) throw new Error('No pending 2FA login session.');
+    return api.resend2FA(pendingUserSession.user.email, force);
   };
 
   const cancelTwoFactor = () => {
@@ -219,11 +273,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isLoading,
         twoFactorPending,
+        pendingUserSession,
         login,
         registerCandidate,
         resetPassword,
         changePassword,
         verifyTwoFactor,
+        resendTwoFactor,
         cancelTwoFactor,
         switchUserRole,
         logout,

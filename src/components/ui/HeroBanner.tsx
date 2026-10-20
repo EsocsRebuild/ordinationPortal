@@ -29,7 +29,7 @@ export function HeroBanner() {
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-200 max-w-2xl font-sans leading-relaxed drop-shadow-sm">
-            Official portal for ecclesiastical vetting, theological examination scoring, and canonical credential issuance across all dioceses.
+            Official portal for applicant vetting, examination scoring, and ordination certificate verification across all dioceses.
           </p>
         </div>
       </div>

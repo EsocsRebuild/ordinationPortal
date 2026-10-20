@@ -10,7 +10,7 @@ interface AppLoaderProps {
 
 export function AppLoader({
   message = 'Loading ESOCS Ordination Portal...',
-  subMessage = 'Connecting to Secure Canonical Ledger • ESOCS Worldwide',
+  subMessage = 'Connecting to Secure Church Portal • ESOCS Worldwide',
   fullScreen = true,
 }: AppLoaderProps) {
   const content = (

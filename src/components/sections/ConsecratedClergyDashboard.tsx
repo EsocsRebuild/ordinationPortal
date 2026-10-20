@@ -108,15 +108,15 @@ export function ConsecratedClergyDashboard({
         {/* Top Header Card */}
         <div className="bg-white dark:bg-[#090e1c] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden transition-colors">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-3.5">
+            <div className="flex items-center gap-3.5 min-w-0">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
                 <Lock className="w-6 h-6" />
               </div>
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block">
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block truncate">
                   Ordination Access Gateway
                 </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white break-words">
                   Consecrated Clergy Record Locked
                 </h2>
               </div>
@@ -128,7 +128,7 @@ export function ConsecratedClergyDashboard({
                 size="sm"
                 onClick={onSwitchToClearanceView}
                 icon={<ChevronRight className="w-4 h-4 rotate-180" />}
-                className="text-xs font-semibold"
+                className="text-xs font-semibold shrink-0"
               >
                 Return to Clearance Deck
               </Button>
@@ -155,7 +155,7 @@ export function ConsecratedClergyDashboard({
                   <span>Cleared ✓</span>
                 </div>
                 <p className="text-emerald-700/80 dark:text-emerald-400/80 text-[11px]">
-                  5 of 5 ecclesiastical tiers approved including Holy Synod examination.
+                  5 of 5 review tiers approved including final examination.
                 </p>
               </div>
 
@@ -172,7 +172,7 @@ export function ConsecratedClergyDashboard({
                   <span>{candidate.isCheckedIn || candidate.accreditedBy ? 'Accredited ✓' : 'Awaiting Check-in'}</span>
                 </div>
                 <p className="opacity-80 text-[11px]">
-                  Physical pass scanned at Cathedral Chancel Gate (Seat: {candidate.seatNumber || 'Assigned Zone A'}).
+                  Physical pass scanned at Cathedral Chancel Gate (Seat: {candidate.seatNumber || 'Cathedral Pew'}).
                 </p>
               </div>
 
@@ -336,60 +336,60 @@ export function ConsecratedClergyDashboard({
             </div>
 
             {/* Consecrated Minister Details */}
-            <div className="space-y-2 text-center sm:text-left min-w-0">
+            <div className="space-y-2 text-center sm:text-left min-w-0 max-w-full">
               <div className="inline-flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Elevated Ecclesiastical Order Conferred</span>
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">Elevated Ministry Rank Conferred</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight break-words">
                 {candidate.fullName}
               </h1>
 
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5">
-                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">
+                <span className="px-3 py-1 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 break-words">
                   {conferredRank}
                 </span>
 
-                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <Building className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{candidate.parish}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 min-w-0">
+                  <Building className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{candidate.parish}</span>
                 </span>
 
-                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{candidate.province}</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 min-w-0">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{candidate.province}</span>
                 </span>
               </div>
             </div>
           </div>
 
           {/* Right: Consecration Quick Actions */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full lg:w-auto shrink-0 justify-center sm:justify-start">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full lg:w-auto shrink-0 justify-center sm:justify-start">
             <button
               type="button"
               onClick={() => setShowCertModal(true)}
-              className="px-4 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+              className="px-3.5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             >
-              <Scroll className="w-4 h-4" />
+              <Scroll className="w-4 h-4 shrink-0" />
               <span>Official Certificate</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowPassModal(true)}
-              className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             >
-              <QrCode className="w-4 h-4 text-amber-500" />
+              <QrCode className="w-4 h-4 text-amber-500 shrink-0" />
               <span>Clergy Pass</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowSlipModal(true)}
-              className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-2 active:scale-95 cursor-pointer"
+              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             >
-              <Receipt className="w-4 h-4 text-emerald-500" />
+              <Receipt className="w-4 h-4 text-emerald-500 shrink-0" />
               <span>Payment Slip</span>
             </button>
           </div>
@@ -448,7 +448,7 @@ export function ConsecratedClergyDashboard({
           {/* Pastoral Welcome Message Body */}
           <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 leading-relaxed">
             <p>
-              Beloved in Christ, <strong>{candidate.fullName}</strong>, by the sovereign grace of the Almighty God and the apostolic authority vested in the Holy Order, we welcome you into the exalted college of the <strong>{conferredRank}</strong> of the Eternal Sacred Order of the Cherubim & Seraphim.
+              Beloved in Christ, <strong>{candidate.fullName}</strong>, by the grace of the Almighty God and the authority of the Church, we welcome you as an ordained <strong>{conferredRank}</strong> of the Eternal Sacred Order of the Cherubim & Seraphim.
             </p>
             <p>
               You have been called to higher ministerial stewardship, sanctuary governance, and continuous intercession for the body of Christ. Let your elevation reflect unwavering humility, holy devotion, and exemplary pastoral leadership in your parish, district, and province.
@@ -547,14 +547,14 @@ export function ConsecratedClergyDashboard({
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
           
-          {/* Left 2 Cols: Conferred Canonical Rights */}
+          {/* Left 2 Cols: Conferred Ordination Rights */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white dark:bg-[#090e1c] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
                   <Flame className="w-5 h-5 text-amber-500" />
                   <h3 className="font-serif font-bold text-lg text-slate-900 dark:text-white">
-                    Conferred Ecclesiastical Authority & Ministry Rights
+                    Conferred Ministry Authority & Service Rights
                   </h3>
                 </div>
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
@@ -605,10 +605,10 @@ export function ConsecratedClergyDashboard({
                     04
                   </div>
                   <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                    Ecclesiastical Gazette Seal
+                    Official Church Register Seal
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Permanent entry into the National Holy Order Gazette Roll with verifiable QR accreditation credentials worldwide.
+                    Permanent entry into the National Church Register Roll with verifiable QR accreditation credentials worldwide.
                   </p>
                 </div>
 
@@ -677,7 +677,7 @@ export function ConsecratedClergyDashboard({
                 Official Consecration Vestment Specifications for {conferredRank}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Mandated ecclesiastical tailoring standard for all liturgical services and Holy Synod assemblies.
+                Official church tailoring standard for all liturgical services and church assemblies.
               </p>
             </div>
 
@@ -697,7 +697,7 @@ export function ConsecratedClergyDashboard({
                   {robing.vestmentColor}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Tailored floor-length cassock with pleated back, cuffs, and gold ecclesiastical piping.
+                  Tailored floor-length cassock with pleated back, cuffs, and gold piping.
                 </p>
               </div>
 
@@ -778,60 +778,60 @@ export function ConsecratedClergyDashboard({
           <div className="space-y-4 pt-2">
             
             {/* Consecrated Rank (Current) */}
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 min-w-0">
               <div className="w-10 h-10 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0 shadow-md">
                 <Crown className="w-5 h-5" />
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                     {conferredRank} (Consecrated)
                   </h4>
-                  <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400">
+                  <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400 shrink-0">
                     2026 Conferred ✓
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
+                <p className="text-xs text-slate-600 dark:text-slate-300 break-words">
                   Elevated at Mount Zion Cathedral Headquarters by His Most Eminence, The Baba Aladura. Cert No: {certNumber}.
                 </p>
               </div>
             </div>
 
             {/* Previous Rank */}
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 min-w-0">
               <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center shrink-0">
                 <Check className="w-5 h-5" />
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                     {candidate.currentRank}
                   </h4>
-                  <span className="text-xs font-mono text-slate-500">
+                  <span className="text-xs font-mono text-slate-500 shrink-0">
                     {candidate.currentRankYear} Conferred
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 break-words">
                   Confirmed order with {candidate.tenureYears || 5} years meritorious service rendered across branch and district.
                 </p>
               </div>
             </div>
 
             {/* Foundation Order */}
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 opacity-80">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 opacity-80 min-w-0">
               <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center shrink-0">
                 <BookOpen className="w-5 h-5" />
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                     Holy Baptism & Admission into Holy Order
                   </h4>
-                  <span className="text-xs font-mono text-slate-500">
+                  <span className="text-xs font-mono text-slate-500 shrink-0">
                     {candidate.dateJoinedChurch?.split('-')[0] || '1996'} Registered
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 break-words">
                   Initial enrollment into {candidate.parish}, {candidate.province}.
                 </p>
               </div>

@@ -79,7 +79,7 @@ export const HierarchyManager: React.FC<HierarchyManagerProps> = ({
         }
       }
     } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to load ecclesiastical hierarchy' });
+      setFeedback({ type: 'error', message: err.message || 'Failed to load church hierarchy' });
     } finally {
       setIsLoading(false);
     }
@@ -360,10 +360,10 @@ export const HierarchyManager: React.FC<HierarchyManagerProps> = ({
             <Badge variant="gold" size="sm" className="bg-gold-500/20 text-gold-300 border-gold-400/30">
               Live Backend Registry
             </Badge>
-            <span className="text-xs font-mono text-church-300">Autonomous Canonical Jurisdiction</span>
+            <span className="text-xs font-mono text-church-300">Official Church Jurisdiction</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-serif">
-            Ecclesiastical Structure & Hierarchy Manager
+            Church Structure & Hierarchy Manager
           </h2>
           <p className="text-xs sm:text-sm text-church-200">
             Real-time management of Provinces, Dioceses, Districts, Parish Branches, and Houses of Prayer across Nigeria & Diaspora.
@@ -429,7 +429,7 @@ export const HierarchyManager: React.FC<HierarchyManagerProps> = ({
           <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">
             {stats.totalProvinces}
           </p>
-          <span className="text-[11px] text-amber-600 font-medium">Global Canonical Seats</span>
+          <span className="text-[11px] text-amber-600 font-medium">Global Church Provinces</span>
         </div>
 
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
@@ -702,7 +702,7 @@ export const HierarchyManager: React.FC<HierarchyManagerProps> = ({
           <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl p-6 shadow-2xl space-y-4 text-slate-100">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="font-bold text-base text-white flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-amber-400" /> Add Ecclesiastical Province / Diocese
+                <MapPin className="w-4 h-4 text-amber-400" /> Add Province / Diocese
               </h3>
               <button onClick={() => setShowAddProvince(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />

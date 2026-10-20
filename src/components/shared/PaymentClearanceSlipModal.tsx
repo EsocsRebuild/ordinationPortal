@@ -33,8 +33,8 @@ export function PaymentClearanceSlipModal({
   if (!isOpen) return null;
 
   const verifyUrl = `https://ordination.esocs.church/verify/${candidate.id}`;
-  const receiptNo = candidate.receiptNumber || 'REC-2026-ESOCS-7120';
-  const totalAmount = candidate.levyBreakdown?.total || 80000;
+  const receiptNo = candidate.receiptNumber || (candidate.duesStatus === 'cleared' ? `REC-${new Date().getFullYear()}-${candidate.id.toUpperCase()}` : 'PENDING-REMITTANCE');
+  const totalAmount = candidate.levyBreakdown?.total || candidate.duesAmountPaid || 0;
 
   const handlePrint = () => {
     window.print();

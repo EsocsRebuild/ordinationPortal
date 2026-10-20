@@ -97,8 +97,8 @@ export function validateRankProgression(
   if (targetRank.level > expectedNextLevel) {
     return {
       isValid: false,
-      errorCode: 'CANONICAL_RANK_SKIPPING_PROHIBITED',
-      errorMessage: `Hierarchical skipping is prohibited. From '${currentRank.name}', the only authorized next rank is '${expectedRank?.name || 'Next Canonical Rank'}'. You cannot leap directly to '${targetRank.name}'.`,
+      errorCode: 'RANK_SKIPPING_PROHIBITED',
+      errorMessage: `Hierarchical skipping is not permitted. From '${currentRank.name}', the authorized next rank is '${expectedRank?.name || 'Next Rank'}'. You cannot skip ahead to '${targetRank.name}'.`,
     };
   }
 
@@ -210,7 +210,7 @@ export function processTierTransition(
         approverRole,
         date: today,
         status: 'rejected',
-        remarks: remarks || 'Application failed canonical clearance standards.',
+        remarks: remarks || 'Application does not meet the required clearance standards.',
       },
     };
   }
@@ -226,7 +226,7 @@ export function processTierTransition(
         approverRole,
         date: today,
         status: 'queried',
-        remarks: remarks || 'Official ecclesiastical query issued. Response required.',
+        remarks: remarks || 'Official inquiry issued. Response required.',
       },
     };
   }
@@ -242,7 +242,7 @@ export function processTierTransition(
       approverRole,
       date: today,
       status: 'approved',
-      remarks: remarks || 'Canonical requirements satisfied and verified.',
+      remarks: remarks || 'Official requirements satisfied and verified.',
     },
   };
 }
@@ -256,7 +256,7 @@ export function generateCryptographicVerification(
   targetRank: string,
   cohortYear: number = 2026
 ): { certHash: string; digitalPassPayload: string; certNumber: string } {
-  const secretKey = process.env.ESOCS_CANONICAL_SECRET || 'ESOCS_SOVEREIGN_CANONICAL_KEY_2026';
+  const secretKey = process.env.ESOCS_PORTAL_SECRET || process.env.ESOCS_CANONICAL_SECRET || 'ESOCS_PORTAL_SECRET_KEY_2026';
   const rawString = `${regNumber}::${fullName.toUpperCase()}::${targetRank.toUpperCase()}::${cohortYear}::${secretKey}`;
   const certHash = crypto.createHash('sha256').update(rawString).digest('hex');
 

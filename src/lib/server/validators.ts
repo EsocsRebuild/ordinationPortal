@@ -72,7 +72,7 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
   }
 
   if (!email || !EMAIL_REGEX.test(email)) {
-    errors.push('A valid canonical email address is required.');
+    errors.push('A valid email address is required.');
   }
 
   if (rawPhone && phoneValidation && !phoneValidation.isValid) {
@@ -80,7 +80,7 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
   }
 
   if (!province) {
-    errors.push('Ecclesiastical Province jurisdiction is required.');
+    errors.push('Province jurisdiction is required.');
   }
 
   if (!parish) {
@@ -92,14 +92,14 @@ export function validateCandidateRegistration(body: any): ValidationResult<Regis
   }
 
   if (!currentRank) {
-    errors.push('Current confirmed ecclesiastical rank is required.');
+    errors.push('Current confirmed rank is required.');
   }
 
   if (!targetRankName) {
     errors.push('Target ordination rank is required.');
   }
 
-  // Canonical hierarchy validation
+  // Official hierarchy validation
   if (currentRank && targetRankName) {
     const rankCheck = validateRankProgression(gender, currentRank, targetRankName, currentRankYear);
     if (!rankCheck.isValid && rankCheck.errorMessage) {
@@ -139,7 +139,7 @@ export function validateLoginInput(body: any): ValidationResult<{ identifier: st
   const password = typeof body?.password === 'string' ? body.password : undefined;
 
   if (!identifier) {
-    errors.push('Ecclesiastical identifier or email address is required.');
+    errors.push('Registration number or email address is required.');
   }
 
   return {

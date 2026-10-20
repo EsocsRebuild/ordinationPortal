@@ -61,7 +61,7 @@ export default function HomePage() {
   if (isInitialLoading) {
     return (
       <AppLoader
-        message="Loading Canonical Portal..."
+        message="Loading Ordination Portal..."
         subMessage="The Eternal Sacred Order of the Cherubim & Seraphim"
       />
     );
@@ -71,7 +71,7 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-amber-500/30 selection:text-amber-900 dark:selection:text-amber-200 transition-colors duration-200">
       
       {/* ========================================================================= */}
-      {/* CANONICAL HEADER (Sleek, Refined, Light & Dark Adaptable)                  */}
+      {/* OFFICIAL HEADER (Sleek, Refined, Light & Dark Adaptable)                  */}
       {/* ========================================================================= */}
       <header className="border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0a0f1d]/95 sticky top-0 z-50 transition-colors backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -85,7 +85,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 sm:gap-2.5">
             {user ? (
               <Link
-                href="/dashboard"
+                href={user.role === 'candidate' ? '/dashboard/candidate' : '/dashboard/admin'}
                 className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95 whitespace-nowrap"
               >
                 <span>Dashboard</span>
@@ -149,7 +149,7 @@ export default function HomePage() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-24 text-center flex flex-col items-center justify-center">
           
-          {/* Canonical Eyebrow Badge */}
+          {/* Eyebrow Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-400/40 dark:border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-300 font-mono text-[10px] sm:text-[11px] uppercase tracking-wider mb-5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
             <span>EST. 1925 &bull; ESOCS HOLY ORDER WORLDWIDE</span>
@@ -165,7 +165,7 @@ export default function HomePage() {
 
           {/* Concise Subtitle */}
           <p className="max-w-xl mx-auto text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed mb-8 sm:mb-10 px-2">
-            The centralized ecclesiastical management platform for clerical nominations, doctrinal vetting, and digital accreditation passes worldwide.
+            The centralized church portal for ordination nominations, screening, and official digital passes worldwide.
           </p>
 
           {/* Primary Action Buttons (Sleek, Proportional, Single-line) */}
@@ -194,7 +194,7 @@ export default function HomePage() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span className="font-medium text-slate-800 dark:text-slate-300">General Conference 2026 Session</span>
             <span className="text-slate-400 dark:text-slate-600">&bull;</span>
-            <span>Canonical Registry Active</span>
+            <span>Ordination Registry Active</span>
           </div>
         </div>
       </section>
@@ -245,7 +245,7 @@ export default function HomePage() {
                         setVerifyId(e.target.value);
                         if (verifyError) setVerifyError('');
                       }}
-                      placeholder="e.g. cand-001 or ESOCS/2026/0842"
+                      placeholder="e.g. ESOCS/ORD/2026/0481 or Candidate ID"
                       className="w-full bg-slate-50 dark:bg-[#080d1a] border border-slate-300 dark:border-slate-700 focus:border-amber-500 dark:focus:border-amber-400 rounded-xl pl-9 pr-3.5 h-11 text-xs sm:text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 font-mono transition-colors"
                     />
                   </div>
@@ -264,25 +264,6 @@ export default function HomePage() {
                     {verifyError}
                   </p>
                 )}
-              </div>
-
-              {/* Sample Quick Lookups */}
-              <div className="pt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <span className="text-[11px]">Demo Passes:</span>
-                {['cand-001', 'cand-002', 'cand-003'].map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => {
-                      setVerifyId(code);
-                      setVerifyError('');
-                      router.push(`/verify/${code}`);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-amber-400 text-amber-800 dark:text-amber-300 font-mono text-[10px] sm:text-[11px] transition-colors"
-                  >
-                    {code}
-                  </button>
-                ))}
               </div>
             </form>
           </div>
@@ -325,7 +306,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <span>SHA-256 Pass Security</span>
               <span>&bull;</span>
-              <span>Canonical Governance</span>
+              <span>Official Church Portal</span>
             </div>
           </div>
         </div>

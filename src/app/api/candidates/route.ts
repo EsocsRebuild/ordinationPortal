@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
     return createSuccessResponse(
       { candidate },
-      'Candidate profile created successfully in canonical ledger.',
+      'Candidate profile created successfully in church records.',
       201
     );
   } catch (error: any) {

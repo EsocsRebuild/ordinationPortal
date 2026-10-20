@@ -10,37 +10,50 @@ import {
   AlertCircle,
   ArrowRight,
   RefreshCw,
-  Lock,
   Clock,
-  Check,
+  CheckCircle2,
 } from 'lucide-react';
 
 export function TwoFactorModal() {
-  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor, isLoading } = useAuth();
+  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor, resendTwoFactor, pendingUserSession, isLoading } = useAuth();
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [secondsRemaining, setSecondsRemaining] = useState(300);
+  const [resendNotice, setResendNotice] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
+  const [simulatedOtp, setSimulatedOtp] = useState<string | null>(null);
+
+  // Lifespan & Cooldown timers
+  const [secondsRemaining, setSecondsRemaining] = useState(300); // 5 minutes validity
+  const [cooldown, setCooldown] = useState(60); // 60s resend cooldown
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Countdown timer
+  // Countdown timer for expiration & resend cooldown
   useEffect(() => {
     if (!twoFactorPending) return;
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
   }, [twoFactorPending]);
 
-  // Focus the first empty digit or first digit on open
+  // Reset timers and clear inputs when modal opens
   useEffect(() => {
-    if (twoFactorPending && inputRefs.current[0]) {
-      inputRefs.current[0]?.focus();
+    if (twoFactorPending) {
+      setSecondsRemaining(300);
+      setCooldown(60);
+      setDigits(['', '', '', '', '', '']);
+      setErrorMsg(null);
+      setResendNotice(null);
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
     }
   }, [twoFactorPending]);
 
   if (!twoFactorPending) return null;
+
+  const isExpired = secondsRemaining === 0;
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -97,9 +110,39 @@ export function TwoFactorModal() {
     inputRefs.current[focusTarget]?.focus();
   };
 
+  const handleResend = async () => {
+    if (cooldown > 0 && !isExpired) return;
+    setIsResending(true);
+    setErrorMsg(null);
+    setResendNotice(null);
+
+    try {
+      const res = await resendTwoFactor(isExpired);
+      setSecondsRemaining(300);
+      setCooldown(60);
+      setDigits(['', '', '', '', '', '']);
+      if (res?.simulatedOtp) {
+        setSimulatedOtp(res.simulatedOtp);
+      }
+      setResendNotice(
+        res?.message || 'A fresh 2FA authentication token has been dispatched to your email and Mailpit.'
+      );
+      inputRefs.current[0]?.focus();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to resend authentication token. Please wait.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorMsg(null);
+
+    if (isExpired) {
+      setErrorMsg('Authentication token has elapsed (expired). Click "Resend Token" to generate a new one.');
+      return;
+    }
 
     const fullOtp = digits.join('');
     if (fullOtp.length < 6) {
@@ -110,16 +153,18 @@ export function TwoFactorModal() {
     try {
       await verifyTwoFactor(fullOtp, rememberDevice);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid authentication code. Please try again.');
+      if (err.code === 'OTP_EXPIRED') {
+        setErrorMsg('Authentication token has elapsed. Please click Resend Token to obtain a new code.');
+      } else {
+        setErrorMsg(err.message || 'Invalid authentication code. Please try again.');
+      }
     }
   };
 
-  const handleDemoBypass = () => {
-    const demoCode = ['9', '4', '8', '2', '1', '0'];
-    setDigits(demoCode);
-    if (inputRefs.current[5]) {
-      inputRefs.current[5]?.focus();
-    }
+  const handleAutoFill = (code: string) => {
+    const chars = code.split('').slice(0, 6);
+    setDigits(chars);
+    inputRefs.current[5]?.focus();
   };
 
   const isComplete = digits.every((d) => d !== '');
@@ -154,8 +199,28 @@ export function TwoFactorModal() {
         <form onSubmit={handleVerify} className="p-6 sm:p-8 space-y-6">
           {errorMsg && (
             <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 rounded-2xl flex items-start gap-3 text-xs animate-in fade-in">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <div className="flex-1 font-medium">{errorMsg}</div>
+              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-600 dark:text-rose-400" />
+              <div className="flex-1 font-medium space-y-1">
+                <div>{errorMsg}</div>
+                {isExpired && (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-800 dark:text-rose-200 underline mt-1"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isResending ? 'animate-spin' : ''}`} />
+                    Resend New 2FA Token Now
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {resendNotice && (
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-800 dark:text-emerald-300 rounded-2xl flex items-start gap-3 text-xs animate-in fade-in">
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+              <div className="flex-1 font-medium">{resendNotice}</div>
             </div>
           )}
 
@@ -166,23 +231,73 @@ export function TwoFactorModal() {
             </div>
             <div className="space-y-1">
               <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
-                Verify Your Ecclesiastical Access
+                Verify Your Identity
               </h4>
               <p className="text-slate-600 dark:text-slate-300 text-xs max-w-sm mx-auto leading-relaxed">
-                Enter the 6-digit authentication token generated by your authenticator app or dispatched to your registered church contact.
+                Enter the 6-digit authentication token dispatched to <strong>{pendingUserSession?.user?.email || 'your registered church contact'}</strong> and Mailpit.
               </p>
             </div>
           </div>
 
-          {/* 6-Box PIN Inputs */}
+          {/* Simulated token convenience banner */}
+          {simulatedOtp && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-2xl text-xs flex items-center justify-between">
+              <span className="font-mono text-xs text-amber-800 dark:text-amber-300">
+                Dispatched Code: <strong className="font-bold">{simulatedOtp}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => handleAutoFill(simulatedOtp)}
+                className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline"
+              >
+                Auto-fill Code
+              </button>
+            </div>
+          )}
+
+          {/* 6-Box PIN Inputs with Expiration Countdown */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 Enter 6-Digit Security Token
               </label>
-              <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-slate-500 dark:text-slate-400">
-                <Clock className="w-3.5 h-3.5 text-amber-500" />
-                <span>{formatTime(secondsRemaining)}</span>
+
+              {/* Countdown badge & Resend button */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={isResending || (cooldown > 0 && !isExpired)}
+                  className={`inline-flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+                    isExpired
+                      ? 'text-amber-600 dark:text-amber-400 hover:underline font-bold'
+                      : cooldown > 0
+                      ? 'text-slate-400 cursor-not-allowed'
+                      : 'text-amber-600 dark:text-amber-400 hover:underline'
+                  }`}
+                >
+                  <RefreshCw className={`w-3 h-3 ${isResending ? 'animate-spin' : ''}`} />
+                  <span>
+                    {isResending
+                      ? 'Sending...'
+                      : isExpired
+                      ? 'Resend Token'
+                      : cooldown > 0
+                      ? `Resend in ${cooldown}s`
+                      : 'Resend Token'}
+                  </span>
+                </button>
+
+                <div
+                  className={`flex items-center gap-1.5 text-xs font-mono font-medium px-2.5 py-0.5 rounded-full ${
+                    isExpired
+                      ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                      : 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800'
+                  }`}
+                >
+                  <Clock className={`w-3.5 h-3.5 ${isExpired ? 'text-rose-500' : 'text-amber-500'}`} />
+                  <span>{isExpired ? 'Elapsed' : formatTime(secondsRemaining)}</span>
+                </div>
               </div>
             </div>
 
@@ -201,25 +316,21 @@ export function TwoFactorModal() {
                   onChange={(e) => handleDigitChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   className={`w-full h-14 sm:h-16 text-center font-mono text-2xl font-bold rounded-2xl border transition-all focus:outline-none ${
-                    digit
+                    isExpired
+                      ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-300'
+                      : digit
                       ? 'bg-amber-500/10 dark:bg-amber-400/10 border-amber-500 text-amber-600 dark:text-amber-400 shadow-sm'
                       : 'bg-slate-50 dark:bg-slate-950/80 border-slate-300 dark:border-slate-700/80 text-slate-900 dark:text-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/15'
                   }`}
                 />
               ))}
             </div>
-          </div>
 
-          {/* Quick Demo Helper */}
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 text-xs">
-            <span className="text-slate-500 dark:text-slate-400">Demo Verification Mode:</span>
-            <button
-              type="button"
-              onClick={handleDemoBypass}
-              className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-bold flex items-center gap-1.5 transition-colors"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Auto-fill Code (948210)
-            </button>
+            {isExpired && (
+              <p className="text-xs text-rose-600 dark:text-rose-400 text-center font-medium pt-1">
+                Your 2FA security token has elapsed. Click &ldquo;Resend Token&rdquo; above to receive a fresh authentication code.
+              </p>
+            )}
           </div>
 
           {/* Remember Device Toggle */}
@@ -232,10 +343,10 @@ export function TwoFactorModal() {
             />
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-slate-900 dark:text-white block">
-                Trust this ecclesiastical workstation for 30 days
+                Trust this device for 30 days
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                You won&apos;t be prompted for 2FA on this terminal unless you explicitly sign out or clear cookies.
+                You won&apos;t be prompted for 2FA on this device unless you explicitly sign out or reset your browser.
               </span>
             </div>
           </label>
@@ -256,11 +367,15 @@ export function TwoFactorModal() {
               size="lg"
               type="submit"
               loading={isLoading}
-              disabled={!isComplete}
+              disabled={!isComplete || isExpired}
               icon={<ArrowRight className="w-4 h-4" />}
-              className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-3.5"
+              className={`w-full sm:w-auto font-bold py-3.5 ${
+                isExpired
+                  ? 'bg-slate-400 dark:bg-slate-700 cursor-not-allowed text-slate-200'
+                  : 'bg-amber-600 hover:bg-amber-500 text-slate-950'
+              }`}
             >
-              Verify & Enter Portal
+              {isExpired ? 'Token Elapsed (Resend Above)' : 'Verify & Enter Portal'}
             </Button>
           </div>
         </form>

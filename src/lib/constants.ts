@@ -256,8 +256,8 @@ export const ESOCS_RANKS: EcclesiasticalRank[] = [
     robingCategory: 'Green',
     liturgicalColor: 'Green',
     badgeColor: 'bg-emerald-200 text-emerald-950 border-emerald-500 dark:bg-emerald-900/90 dark:text-emerald-100 font-extrabold shadow-sm',
-    theologicalRequirements: ['Supreme Head Advisory Conclave', 'Apex Sovereign Ecclesiastical Doctorate', 'Universal Synod Presidency'],
-    description: 'Supervising Apostle General bearing Emerald Green apex patriarchal regalia with gold fringe, commanding international diocesan oversight.',
+    theologicalRequirements: ['Supreme Head Advisory Council', 'Advanced Theological Leadership', 'Universal Synod Presidency'],
+    description: 'Supervising Apostle General bearing Emerald Green patriarchal regalia with gold fringe, commanding international diocesan oversight.',
     levyBreakdown: {
       branchLevy: 45000,
       districtLevy: 45000,
@@ -478,8 +478,8 @@ export const ESOCS_RANKS: EcclesiasticalRank[] = [
     robingCategory: 'Red_Gold',
     liturgicalColor: 'Crimson',
     badgeColor: 'bg-rose-200 text-rose-950 border-rose-500 dark:bg-rose-900/90 dark:text-rose-100 font-extrabold shadow-sm',
-    theologicalRequirements: ['Supreme Matriarch Council Fellowship', 'Holy Synod Advisory Board Conclave', 'Apex Philanthropic Governance'],
-    description: 'Highest matriarchal dignity, apex council member on holy ordinances, advisory to the Supreme Head.',
+    theologicalRequirements: ['Senior Matriarch Council Fellowship', 'Holy Synod Advisory Board', 'Church Philanthropic Governance'],
+    description: 'Senior matriarchal office, council member on holy ordinances, advisory to the Supreme Head.',
     levyBreakdown: {
       branchLevy: 30000,
       districtLevy: 30000,
@@ -498,14 +498,14 @@ export const ESOCS_HIERARCHY: ProvinceHierarchy[] = [
     districts: [
       {
         id: 'dist_ebute_metta',
-        name: 'Ebute Metta District (Apex Mother District)',
+        name: 'Ebute Metta District (Mother District)',
         branches: [
           {
             id: 'br_mount_zion_hq',
             name: 'Mount Zion Cathedral Branch (National Headquarters)',
             housesOfPrayer: [
               'Holy Ark Main House of Prayer',
-              'Mount Zion General Conclave Sanctuary',
+              'Mount Zion General Assembly Sanctuary',
               'St. Moses Orimolade Memorial Chapel',
               'Zion Deliverance Altar',
             ],

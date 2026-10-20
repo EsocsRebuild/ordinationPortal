@@ -226,7 +226,7 @@ body {
   animation: fadeInKeyframe 0.25s ease-out forwards;
 }
 
-/* Print stylesheets for canonical passes and certificates */
+/* Print stylesheets for official passes and certificates */
 @media print {
   body {
     background: #ffffff !important;

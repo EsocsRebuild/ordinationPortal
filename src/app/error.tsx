@@ -23,7 +23,7 @@ export default function RootError({
       </div>
       <h1 className="text-2xl font-bold mb-2">Portal Service Notice</h1>
       <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mb-8">
-        An unexpected condition occurred while loading this ecclesiastical portal view. You may attempt to reinitialize or return to the main portal index.
+        An unexpected condition occurred while loading this page. You may attempt to refresh or return to the home page.
       </p>
       <div className="flex items-center gap-3">
         <Button
@@ -32,7 +32,7 @@ export default function RootError({
           className="flex items-center gap-2"
         >
           <RotateCcw className="w-4 h-4" />
-          Reinitialize View
+          Refresh Page
         </Button>
         <Link
           href="/"
