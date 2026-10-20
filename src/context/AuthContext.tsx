@@ -16,7 +16,7 @@ interface AuthContextType {
   resetPassword: (identifier: string, newPassword: string, otp?: string) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
   verifyTwoFactor: (otp: string, rememberDevice?: boolean) => Promise<void>;
-  resendTwoFactor: (force?: boolean) => Promise<{ success: boolean; message: string; simulatedOtp?: string }>;
+  resendTwoFactor: (force?: boolean) => Promise<{ success: boolean; message: string }>;
   cancelTwoFactor: () => void;
   switchUserRole: (role: UserRole) => Promise<void>;
   logout: () => void;

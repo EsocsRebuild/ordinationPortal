@@ -79,9 +79,8 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message: isResendAction || otpResult.isResend
-          ? `A fresh 6-digit verification code has been dispatched to ${targetEmail} (check Mailpit at http://localhost:8025).`
-          : `A 6-digit verification code has been dispatched to ${targetEmail} (check Mailpit at http://localhost:8025).`,
-        simulatedOtp: otpResult.code, // Test harness convenience alongside Mailpit
+          ? `A fresh 6-digit verification code has been dispatched to ${targetEmail}.`
+          : `A 6-digit verification code has been dispatched to ${targetEmail}.`,
         expiresAt: otpResult.expiresAt,
         expiresInSeconds: otpResult.expiresInSeconds,
         cooldownSeconds: otpResult.cooldownSeconds,

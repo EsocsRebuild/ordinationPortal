@@ -35,7 +35,6 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [simulatedOtp, setSimulatedOtp] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
@@ -87,11 +86,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
       const res = await api.requestPasswordOtp(identifier.trim());
       setCountdown(res.expiresInSeconds || 600);
       setCooldown(res.cooldownSeconds || 60);
-
-      if (res.simulatedOtp) {
-        setSimulatedOtp(res.simulatedOtp);
-        setOtp(res.simulatedOtp); // Pre-fill for seamless instant testing
-      }
+      setOtp('');
       setSuccessMsg(res.message);
       setStep('verify_and_reset');
     } catch (err: any) {
@@ -111,13 +106,9 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
       const res = await api.resendPasswordOtp(identifier.trim(), isExpired);
       setCountdown(res.expiresInSeconds || 600);
       setCooldown(res.cooldownSeconds || 60);
-
-      if (res.simulatedOtp) {
-        setSimulatedOtp(res.simulatedOtp);
-        setOtp(res.simulatedOtp);
-      }
+      setOtp('');
       setResendNotice(
-        res.message || 'A fresh verification code has been dispatched to your email and Mailpit.'
+        res.message || 'A fresh verification code has been dispatched to your email.'
       );
     } catch (err: any) {
       setErrorMsg(err.message || 'Unable to resend verification code. Please wait.');
@@ -384,19 +375,6 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
                     <p className="text-[11px] text-rose-700 dark:text-rose-300 font-medium pt-0.5">
                       The prior 10-minute validity period has elapsed. Please click below to generate and resend a fresh verification code.
                     </p>
-                  ) : simulatedOtp ? (
-                    <div className="flex items-center justify-between pt-1 border-t border-emerald-200/60 dark:border-emerald-800/60">
-                      <span className="font-mono text-xs">
-                        Security Code: <strong className="text-sm font-bold text-amber-600 dark:text-amber-400">{simulatedOtp}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setOtp(simulatedOtp)}
-                        className="text-[11px] underline text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 font-semibold"
-                      >
-                        Auto-fill Code
-                      </button>
-                    </div>
                   ) : null}
                 </div>
               </div>

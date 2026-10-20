@@ -141,7 +141,6 @@ class ApiService {
   ): Promise<{
     success: boolean;
     message: string;
-    simulatedOtp?: string;
     expiresAt?: number;
     expiresInSeconds?: number;
     cooldownSeconds?: number;
@@ -233,7 +232,6 @@ class ApiService {
   async resend2FA(identifier?: string, force: boolean = false): Promise<{
     success: boolean;
     message: string;
-    simulatedOtp?: string;
     expiresAt?: number;
     expiresInSeconds?: number;
     cooldownSeconds?: number;

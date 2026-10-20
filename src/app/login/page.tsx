@@ -32,8 +32,12 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [inactivityNotice, setInactivityNotice] = useState(false);
 
-  // Check if redirected due to inactivity
+  // Clear input credentials on mount and check if redirected due to inactivity
   React.useEffect(() => {
+    setIdentifier('');
+    setPassword('');
+    setErrorMsg(null);
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('reason') === 'inactivity') {
@@ -50,17 +54,31 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!identifier.trim()) {
+    const targetId = identifier.trim();
+    const targetPassword = password.trim();
+
+    if (!targetId) {
       setErrorMsg('Please enter your Registration Number or Church Email.');
       return;
     }
 
+    if (!targetPassword) {
+      setErrorMsg('Please enter your security access key password.');
+      return;
+    }
+
+    // Immediately clear password from local form state for credential hygiene
+    setPassword('');
+
     try {
       await login({
-        identifier: identifier.trim(),
-        password: password || 'password123',
+        identifier: targetId,
+        password: targetPassword,
       });
+      // Clear identifier upon successful dispatch or session transition
+      setIdentifier('');
     } catch (err: any) {
+      setPassword('');
       setErrorMsg(err.message || 'Unable to sign in. Please verify your credentials.');
     }
   };
@@ -136,6 +154,7 @@ export default function LoginPage() {
                 <input
                   type="text"
                   required
+                  autoComplete="username"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   placeholder="e.g. ESOCS/ORD/2026/0481 or your email"
@@ -161,6 +180,8 @@ export default function LoginPage() {
                 <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your security access key"

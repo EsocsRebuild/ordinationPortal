@@ -59,7 +59,6 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message: `A fresh 6-digit verification code has been dispatched to ${targetIdentifier}.`,
-        simulatedOtp: otpResult.code,
         expiresAt: otpResult.expiresAt,
         expiresInSeconds: otpResult.expiresInSeconds,
         cooldownSeconds: otpResult.cooldownSeconds,
