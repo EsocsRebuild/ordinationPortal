@@ -53,6 +53,24 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
     return () => clearInterval(interval);
   }, [step]);
 
+  // Clean all input fields and state whenever modal opens or closes
+  useEffect(() => {
+    if (isOpen) {
+      setStep('identify');
+      setIdentifier('');
+      setOtp('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      setErrorMsg(null);
+      setSuccessMsg(null);
+      setResendNotice(null);
+      setCountdown(600);
+      setCooldown(60);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const isExpired = countdown === 0;

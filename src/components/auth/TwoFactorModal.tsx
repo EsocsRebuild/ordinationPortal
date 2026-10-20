@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export function TwoFactorModal() {
-  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor, resendTwoFactor, pendingUserSession, isLoading } = useAuth();
+  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor: authCancelTwoFactor, resendTwoFactor, pendingUserSession, isLoading } = useAuth();
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -26,6 +26,13 @@ export function TwoFactorModal() {
   const [cooldown, setCooldown] = useState(60); // 60s resend cooldown
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const cancelTwoFactor = () => {
+    setDigits(['', '', '', '', '', '']);
+    setErrorMsg(null);
+    setResendNotice(null);
+    authCancelTwoFactor();
+  };
 
   // Countdown timer for expiration & resend cooldown
   useEffect(() => {
