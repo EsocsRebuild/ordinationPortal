@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
 import { NotificationCenter } from '@/components/shared/NotificationCenter';
 import { AccountSettingsModal } from '@/components/shared/AccountSettingsModal';
+import { SignOutModal } from '@/components/shared/SignOutModal';
 import { LiveSyncStatus } from '@/components/shared/LiveSyncStatus';
 import { Tooltip } from '@/components/ui/Tooltip';
 import {
@@ -53,6 +54,7 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer
   const [isCollapsed, setIsCollapsed] = useState(false); // Desktop compact mode
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
 
   if (!user) return null;
@@ -378,18 +380,18 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
           {isCollapsed ? (
             <Tooltip content="Sign Out Session" position="right">
               <button
-                onClick={logout}
+                onClick={() => setShowSignOutModal(true)}
                 type="button"
-                className="w-full flex items-center justify-center p-2.5 rounded-xl text-rose-500 hover:text-white bg-rose-500/10 hover:bg-rose-500 transition-all"
+                className="w-full flex items-center justify-center p-2.5 rounded-xl text-rose-500 hover:text-white bg-rose-500/10 hover:bg-rose-500 transition-all cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
             </Tooltip>
           ) : (
             <button
-              onClick={logout}
+              onClick={() => setShowSignOutModal(true)}
               type="button"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 transition-all"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-white bg-rose-500/10 hover:bg-rose-500 border border-rose-500/20 transition-all cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out Session</span>
@@ -500,6 +502,14 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
         <AccountSettingsModal
           isOpen={showAccountModal}
           onClose={() => setShowAccountModal(false)}
+        />
+      )}
+
+      {/* Confirmation Sign Out Modal */}
+      {showSignOutModal && (
+        <SignOutModal
+          isOpen={showSignOutModal}
+          onClose={() => setShowSignOutModal(false)}
         />
       )}
     </div>

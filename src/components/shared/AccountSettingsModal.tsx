@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
+import { api } from '@/services/api';
+import { SignOutModal } from '@/components/shared/SignOutModal';
 import {
   User,
   Shield,
@@ -22,6 +24,7 @@ import {
   Eye,
   EyeOff,
   Smartphone,
+  AlertCircle,
 } from 'lucide-react';
 
 interface AccountSettingsModalProps {
@@ -38,8 +41,10 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
   // Form states
   const [fullName, setFullName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phone || '+234 802 334 9911');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Security password fields
   const [currentPassword, setCurrentPassword] = useState('');
@@ -49,6 +54,10 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Sign out modal prompt
+  const [showSignOutPrompt, setShowSignOutPrompt] = useState(false);
 
   // Notification toggles
   const [emailAlerts, setEmailAlerts] = useState(true);
@@ -65,13 +74,39 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
         .toUpperCase()
     : 'ES';
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2500);
+    setIsSaving(true);
+    setSaveError('');
+    setIsSaved(false);
+
+    try {
+      if (user.candidateId) {
+        await api.updateCandidate(
+          user.candidateId,
+          {
+            fullName: fullName.trim(),
+            email: email.trim(),
+            phone: phone.trim(),
+          },
+          user.name
+        );
+      }
+
+      // Update session in local storage for persistence
+      const updatedUser = { ...user, name: fullName.trim(), email: email.trim(), phone: phone.trim() };
+      localStorage.setItem('esocs_user_session', JSON.stringify(updatedUser));
+
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err: any) {
+      setSaveError(err.message || 'Failed to update profile.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleUpdatePassword = (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError('');
     setPasswordSuccess(false);
@@ -86,11 +121,19 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
       return;
     }
 
-    setPasswordSuccess(true);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setPasswordSuccess(false), 3000);
+    setIsUpdatingPassword(true);
+    try {
+      await api.changePassword(user.userId, newPassword);
+      setPasswordSuccess(true);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (err: any) {
+      setPasswordError(err.message || 'Failed to update access password.');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   return (
@@ -234,6 +277,13 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
                 </div>
               </div>
 
+              {saveError && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{saveError}</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between pt-2">
                 {isSaved && (
                   <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
@@ -244,6 +294,7 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
                   type="submit"
                   variant="gold"
                   size="sm"
+                  loading={isSaving}
                   icon={<Save className="w-3.5 h-3.5" />}
                   className="ml-auto font-bold"
                 >
@@ -435,8 +486,8 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
         <div className="bg-slate-50 dark:bg-slate-950 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={logout}
-            className="text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 inline-flex items-center gap-1.5"
+            onClick={() => setShowSignOutPrompt(true)}
+            className="text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 inline-flex items-center gap-1.5 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out Session</span>
@@ -452,6 +503,14 @@ export function AccountSettingsModal({ isOpen, onClose }: AccountSettingsModalPr
         </div>
 
       </div>
+
+      {/* Confirmation In-App Sign Out Modal */}
+      {showSignOutPrompt && (
+        <SignOutModal
+          isOpen={showSignOutPrompt}
+          onClose={() => setShowSignOutPrompt(false)}
+        />
+      )}
     </div>
   );
 }
