@@ -778,60 +778,60 @@ export function ConsecratedClergyDashboard({
           <div className="space-y-4 pt-2">
             
             {/* Consecrated Rank (Current) */}
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 min-w-0">
               <div className="w-10 h-10 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0 shadow-md">
                 <Crown className="w-5 h-5" />
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                     {conferredRank} (Consecrated)
                   </h4>
-                  <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400">
+                  <span className="text-xs font-mono font-bold text-amber-700 dark:text-amber-400 shrink-0">
                     2026 Conferred ✓
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300">
+                <p className="text-xs text-slate-600 dark:text-slate-300 break-words">
                   Elevated at Mount Zion Cathedral Headquarters by His Most Eminence, The Baba Aladura. Cert No: {certNumber}.
                 </p>
               </div>
             </div>
 
             {/* Previous Rank */}
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 min-w-0">
               <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center shrink-0">
                 <Check className="w-5 h-5" />
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                     {candidate.currentRank}
                   </h4>
-                  <span className="text-xs font-mono text-slate-500">
+                  <span className="text-xs font-mono text-slate-500 shrink-0">
                     {candidate.currentRankYear} Conferred
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 break-words">
                   Confirmed order with {candidate.tenureYears || 5} years meritorious service rendered across branch and district.
                 </p>
               </div>
             </div>
 
             {/* Foundation Order */}
-            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 opacity-80">
+            <div className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 opacity-80 min-w-0">
               <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold flex items-center justify-center shrink-0">
                 <BookOpen className="w-5 h-5" />
               </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="space-y-1 flex-1 min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-1">
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white break-words">
                     Holy Baptism & Admission into Holy Order
                   </h4>
-                  <span className="text-xs font-mono text-slate-500">
+                  <span className="text-xs font-mono text-slate-500 shrink-0">
                     {candidate.dateJoinedChurch?.split('-')[0] || '1996'} Registered
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-slate-400 break-words">
                   Initial enrollment into {candidate.parish}, {candidate.province}.
                 </p>
               </div>

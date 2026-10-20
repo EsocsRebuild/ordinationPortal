@@ -10,12 +10,20 @@ export default function NotFound() {
       <p className="text-sm text-slate-400 max-w-md mb-8">
         The requested portal resource or candidate record could not be located in the central registry.
       </p>
-      <Link
-        href="/dashboard"
-        className="px-6 py-2.5 rounded-xl bg-gold-500 text-navy-950 font-bold text-sm hover:bg-gold-400 transition-colors"
-      >
-        Return to Portal Dashboard
-      </Link>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <Link
+          href="/dashboard"
+          className="px-6 py-2.5 rounded-xl bg-gold-500 text-navy-950 font-bold text-sm hover:bg-gold-400 transition-colors shadow-sm"
+        >
+          Return to Portal Dashboard
+        </Link>
+        <Link
+          href="/"
+          className="px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm transition-colors border border-slate-700"
+        >
+          Return Home
+        </Link>
+      </div>
     </div>
   );
 }

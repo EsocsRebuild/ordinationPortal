@@ -85,7 +85,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2 sm:gap-2.5">
             {user ? (
               <Link
-                href="/dashboard"
+                href={user.role === 'candidate' ? '/dashboard/candidate' : '/dashboard/admin'}
                 className="inline-flex items-center gap-1.5 px-3.5 h-9 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm active:scale-95 whitespace-nowrap"
               >
                 <span>Dashboard</span>
