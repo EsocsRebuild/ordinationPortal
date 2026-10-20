@@ -155,7 +155,7 @@ export function ConsecratedClergyDashboard({
                   <span>Cleared ✓</span>
                 </div>
                 <p className="text-emerald-700/80 dark:text-emerald-400/80 text-[11px]">
-                  5 of 5 ecclesiastical tiers approved including Holy Synod examination.
+                  5 of 5 review tiers approved including final examination.
                 </p>
               </div>
 

@@ -14,8 +14,10 @@ import {
   Lock,
   User,
   AlertCircle,
+  Clock,
   ArrowRight,
   ArrowLeft,
+  Home,
   Eye,
   EyeOff,
 } from 'lucide-react';
@@ -28,6 +30,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [inactivityNotice, setInactivityNotice] = useState(false);
+
+  // Check if redirected due to inactivity
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('reason') === 'inactivity') {
+        setInactivityNotice(true);
+      }
+    }
+  }, []);
 
   // Modals state
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -58,18 +71,22 @@ export default function LoginPage() {
       {/* Top Bar */}
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a0f21] px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:hover:text-white mr-2">
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back to Home</span>
-          </Link>
           <EsocsLogo size={36} showText={true} />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white text-xs font-semibold transition-all shadow-xs"
+          >
+            <Home className="w-3.5 h-3.5 text-amber-500" />
+            <span>Back to Home</span>
+          </Link>
+
           <button
             type="button"
             onClick={() => setIsRegisterOpen(true)}
-            className="px-3.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 hover:border-amber-500 text-xs font-bold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-all"
+            className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:border-amber-500 text-xs font-semibold bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-all"
           >
             Apply for Ordination
           </button>
@@ -94,6 +111,13 @@ export default function LoginPage() {
               Enter your registration number or verified church email.
             </p>
           </div>
+
+          {inactivityNotice && (
+            <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs rounded-2xl flex items-center gap-2.5 shadow-xs">
+              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>You were automatically signed out due to inactivity to protect your account. Please sign in again.</span>
+            </div>
+          )}
 
           {errorMsg && (
             <div className="p-3.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs rounded-xl flex items-center gap-2.5">
@@ -169,7 +193,7 @@ export default function LoginPage() {
           </form>
 
           {/* Bottom Link */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center space-y-2">
             <p className="text-xs text-slate-500 dark:text-slate-400">
               New Candidate for 2026?{' '}
               <button
@@ -180,6 +204,14 @@ export default function LoginPage() {
                 Apply for Ordination
               </button>
             </p>
+            <div>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" /> Return to Main Website
+              </Link>
+            </div>
           </div>
 
         </div>

@@ -800,7 +800,7 @@ export function CandidateDashboard({
                   </span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-serif font-bold text-slate-900 dark:text-white">
-                  Stage {currentStageIndex} of 6: {currentStageInfo?.title || 'Ecclesiastical Vetting'}
+                  Stage {currentStageIndex} of 6: {currentStageInfo?.title || 'Screening Review'}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
@@ -886,7 +886,7 @@ export function CandidateDashboard({
                 </div>
                 <div className="space-y-0.5 min-w-0 flex-1">
                   <p className="font-bold text-slate-900 dark:text-white break-words">
-                    {stageGuidance[currentStageIndex]?.heading || 'Ecclesiastical Vetting Docket'}
+                    {stageGuidance[currentStageIndex]?.heading || 'Clearance Progress'}
                   </p>
                   <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed max-w-2xl break-words">
                     {stageGuidance[currentStageIndex]?.desc}
@@ -1200,7 +1200,7 @@ export function CandidateDashboard({
                   </h2>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                  Detailed ecclesiastical vetting records, signing officers, and ratification seals.
+                  Detailed review records, signing officers, and official confirmation seals.
                 </p>
               </div>
 
@@ -1506,7 +1506,7 @@ export function CandidateDashboard({
                           Pay ₦{outstandingLevy.toLocaleString()} Instantly Online
                         </Button>
                         <p className="text-[10px] text-center text-slate-400 truncate">
-                          Secured via Zenith Bank Ecclesiastical Gateway &bull; Instant Receipt Generation
+                          Secured via Zenith Bank Payment Gateway &bull; Instant Receipt Generation
                         </p>
                       </div>
                     </div>

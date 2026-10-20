@@ -72,7 +72,7 @@ export function SecuritySettingsModal({ isOpen, onClose }: SecuritySettingsModal
 
     try {
       await changePassword(newPassword);
-      setSuccessMsg('Your ecclesiastical account password was successfully updated.');
+      setSuccessMsg('Your account password was successfully updated.');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -338,7 +338,7 @@ export function SecuritySettingsModal({ isOpen, onClose }: SecuritySettingsModal
                     <span>Two-Factor Authentication (2FA) Protection</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Require 6-digit TOTP validation on all ecclesiastical terminal sign-in attempts.
+                    Require 6-digit verification code on all sign-in attempts.
                   </p>
                 </div>
                 <button

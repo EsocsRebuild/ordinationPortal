@@ -73,13 +73,13 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
                 Digital Ceremony Admission Pass Restricted
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed max-w-md mx-auto">
-                In strict compliance with cathedral convocation protocol, Gate 2 chancel barcode access and reserved seating allocations are released exclusively upon completion of all ecclesiastical approvals and settlement of statutory dues.
+                In accordance with ordination guidelines, ceremony admission pass barcode access and reserved seating allocations are released upon completion of all clearance reviews and settlement of ordination fees.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-left text-xs space-y-3">
               <div className="flex justify-between items-center pb-2 border-b border-slate-200 dark:border-slate-800">
-                <span className="text-slate-500">5-Tier Ecclesiastical Clearance:</span>
+                <span className="text-slate-500">5-Tier Review Clearance:</span>
                 <span className={`font-mono font-bold ${isVettingCompleted ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                   {isVettingCompleted ? 'Cleared (5/5 Approved) ✓' : `In Review (${completedTiersCount}/5 Approved) ⏳`}
                 </span>

@@ -15,7 +15,7 @@ const pathwayItems: PathwayItem[] = [
   {
     number: '1',
     title: 'Profile & Records',
-    description: 'View your ecclesiastical history and baptismal records.',
+    description: 'View your church history and membership records.',
     icon: <UserCheck className="w-4 h-4 text-church-600 dark:text-gold-400" />,
     tag: 'Stage 01',
   },

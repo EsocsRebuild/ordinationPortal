@@ -591,7 +591,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
                   Password Reset Successfully!
                 </h4>
                 <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm max-w-sm mx-auto leading-relaxed">
-                  Your ecclesiastical portal credentials have been securely updated. You may now sign in using your new credentials.
+                  Your portal password has been securely updated. You may now sign in using your new credentials.
                 </p>
               </div>
 

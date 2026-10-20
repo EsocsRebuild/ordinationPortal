@@ -35,12 +35,12 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white p-6">
         <div className="max-w-md w-full bg-slate-950 border border-rose-900/60 p-8 rounded-2xl text-center space-y-4 shadow-2xl">
-          <h2 className="text-lg font-bold text-rose-400">Restricted Ecclesiastical Jurisdiction</h2>
+          <h2 className="text-lg font-bold text-rose-400">Access Restricted</h2>
           <p className="text-xs text-slate-400">
             Your current role (<strong className="text-white">{user.roleTitle}</strong>) does not have authorization to view this section.
           </p>
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/dashboard')}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-white font-medium"
           >
             Return to Portal Home

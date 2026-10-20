@@ -231,7 +231,7 @@ export function TwoFactorModal() {
             </div>
             <div className="space-y-1">
               <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
-                Verify Your Ecclesiastical Access
+                Verify Your Identity
               </h4>
               <p className="text-slate-600 dark:text-slate-300 text-xs max-w-sm mx-auto leading-relaxed">
                 Enter the 6-digit authentication token dispatched to <strong>{pendingUserSession?.user?.email || 'your registered church contact'}</strong> and Mailpit.
@@ -343,10 +343,10 @@ export function TwoFactorModal() {
             />
             <div className="space-y-0.5">
               <span className="text-xs font-semibold text-slate-900 dark:text-white block">
-                Trust this ecclesiastical workstation for 30 days
+                Trust this device for 30 days
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
-                You won&apos;t be prompted for 2FA on this terminal unless you explicitly sign out or clear cookies.
+                You won&apos;t be prompted for 2FA on this device unless you explicitly sign out or reset your browser.
               </span>
             </div>
           </label>

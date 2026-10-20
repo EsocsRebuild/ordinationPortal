@@ -168,7 +168,7 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
               </div>
 
               <p className="font-serif text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-                With full ecclesiastical authority to minister in the sanctuary, proclaim the Word of Truth, conduct divine services, and shepherd the flock under the Constitution and Ordinances of the Holy Order.
+                With full ministerial authority to minister in the sanctuary, proclaim the Word of Truth, conduct divine services, and shepherd the flock under the Constitution and Ordinances of the Church.
               </p>
             </div>
 

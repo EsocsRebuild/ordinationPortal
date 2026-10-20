@@ -61,6 +61,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     restoreSession();
   }, []);
 
+  // Automatic inactivity session timeout (15 minutes of idle time)
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes of inactivity
+    let lastActivityTime = Date.now();
+
+    const handleUserActivity = () => {
+      lastActivityTime = Date.now();
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, handleUserActivity, { passive: true });
+    });
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      if (now - lastActivityTime >= INACTIVITY_TIMEOUT_MS) {
+        clearInterval(intervalId);
+        activityEvents.forEach((evt) => {
+          window.removeEventListener(evt, handleUserActivity);
+        });
+
+        // Automatically clear session and redirect on inactivity
+        setUser(null);
+        setToken(null);
+        setTwoFactorPending(false);
+        setPendingUserSession(null);
+        localStorage.removeItem('esocs_user_session');
+        localStorage.removeItem('esocs_auth_token');
+        router.push('/login?reason=inactivity');
+      }
+    }, 15000); // Check every 15 seconds
+
+    return () => {
+      clearInterval(intervalId);
+      activityEvents.forEach((evt) => {
+        window.removeEventListener(evt, handleUserActivity);
+      });
+    };
+  }, [user, token, router]);
+
   const getDashboardRouteForRole = (role: UserRole): string => {
     switch (role) {
       case 'candidate':

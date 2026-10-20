@@ -676,7 +676,7 @@ export function SuperAdminDashboard({
         </Card>
       )}
 
-      {/* Tab: Live Ecclesiastical Structure & Hierarchy Manager */}
+      {/* Tab: Live Church Structure & Hierarchy Manager */}
       {activeTab === 'hierarchy_manager' && (
         <HierarchyManager session={session} onHierarchyUpdated={() => {}} />
       )}
@@ -929,7 +929,7 @@ export function SuperAdminDashboard({
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
                 <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs">
                   <Shield className="w-4 h-4 text-gold-500" />
-                  5-Tier Ecclesiastical Approval Pipeline
+                  5-Tier Candidate Review & Clearance Pipeline
                 </span>
 
                 <div className="grid grid-cols-5 gap-1.5 pt-2 text-center text-[10px]">
@@ -964,12 +964,12 @@ export function SuperAdminDashboard({
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 space-y-2">
                 <span className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs">
                   <Sparkles className="w-4 h-4 text-gold-500" />
-                  Ecclesiastical Progression & Anti-Skipping Rule Check
+                  Rank Progression & Anti-Skipping Rule Check
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div>
-                    <span className="text-slate-400 block text-[11px]">Current Ecclesiastical Rank</span>
+                    <span className="text-slate-400 block text-[11px]">Current Rank</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200">{inspectingCandidate.currentRank}</span>
                     <span className="text-[10px] text-slate-400 block font-mono">
                       Ordained {inspectingCandidate.currentRankYear} ({inspectingCandidate.tenureYears || 2026 - inspectingCandidate.currentRankYear} yrs tenure)

@@ -81,7 +81,7 @@ export function ParishLeaderDashboard({
         }
       })
       .catch((err) => console.error('Failed to fetch dynamic ranks', err));
-  }, []);
+  }, [showNominateModal]);
 
   // Hierarchy state for nomination
   const [province, setProvince] = useState<string>(ESOCS_HIERARCHY[0].name);
@@ -187,7 +187,6 @@ export function ParishLeaderDashboard({
     return availableHousesOfPrayer.map((h) => ({
       value: h,
       label: h,
-      subLabel: 'Sanctuary of Prayer',
     }));
   }, [availableHousesOfPrayer]);
 
@@ -747,7 +746,7 @@ export function ParishLeaderDashboard({
                       />
 
                       <SearchableSelect
-                        label="2. Local Parish / Cathedral Branch"
+                        label="2. Parish / Branch"
                         required
                         options={branchOptions}
                         value={parish}
