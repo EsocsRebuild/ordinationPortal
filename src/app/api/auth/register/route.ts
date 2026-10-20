@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     if (!validation.isValid || !validation.sanitizedData) {
       return createErrorResponse(
-        'Canonical registration validation failed.',
+        'Registration validation failed.',
         validation.errors,
         422
       );
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       candidateId: user.candidateId,
     });
 
-    // Dispatch ecclesiastical dossier confirmation email to Mailpit
+    // Dispatch confirmation email to Mailpit
     try {
       await sendRegistrationConfirmationEmail({
         fullName: candidate.fullName,
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     return createErrorResponse(
-      error.message || 'An unexpected error occurred during canonical registration.',
+      error.message || 'An unexpected error occurred during registration.',
       [error.message || 'Registration processing failure'],
       500
     );

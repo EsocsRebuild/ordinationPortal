@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     if (!authResult) {
       return createErrorResponse(
-        'Authentication failed. Invalid ecclesiastical identifier, email, or access password.',
+        'Authentication failed. Invalid registration number, email, or password.',
         ['Invalid credentials provided.'],
         401
       );
@@ -50,12 +50,12 @@ export async function POST(request: Request) {
         user,
         candidate,
       },
-      'Ecclesiastical credentials verified successfully.',
+      'Credentials verified successfully.',
       200
     );
   } catch (error: any) {
     return createErrorResponse(
-      error.message || 'Canonical authentication service encounter an internal error.',
+      error.message || 'Authentication service encountered an internal error.',
       [error.message || 'Internal Server Error'],
       500
     );

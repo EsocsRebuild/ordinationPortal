@@ -268,7 +268,7 @@ export function SuperAdminDashboard({
           approverName: session.name,
           approverRole: session.roleTitle,
           date: dateStr,
-          comments: `Approved and endorsed by Apex Directorate (${session.roleTitle}).`,
+          comments: `Approved and endorsed by National Directorate (${session.roleTitle}).`,
         },
       },
       lastUpdated: dateStr,
@@ -326,10 +326,10 @@ export function SuperAdminDashboard({
             <Badge variant="gold" size="sm" className="bg-gold-500/20 text-gold-300 border-gold-400/30">
               Admin Main Central Secretariat
             </Badge>
-            <span className="text-xs font-mono text-church-300">5-Tier Fast-Track Vetting Cockpit</span>
+            <span className="text-xs font-mono text-church-300">5-Tier Candidate Review & Verification</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white font-serif">
-            Apex Secretariat Master Management Portal
+            Central Secretariat Administration Portal
           </h1>
           <p className="text-xs sm:text-sm text-church-200">
             {session.jurisdiction} • Total Active Registrations: <strong>{candidates.length} Candidates</strong>
@@ -626,7 +626,7 @@ export function SuperAdminDashboard({
               <span className="text-[11px] text-slate-400 truncate block">Diocese operations</span>
             </div>
             <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 min-w-0 overflow-hidden">
-              <span className="text-xs text-slate-500 font-medium truncate block">4. Apex National / Regalia</span>
+              <span className="text-xs text-slate-500 font-medium truncate block">4. National Review / Regalia</span>
               <p className="text-lg sm:text-xl font-bold text-gold-600 dark:text-gold-400 font-mono truncate">{formatCurrency(totalNationalRevenue)}</p>
               <span className="text-[11px] text-emerald-600 font-semibold truncate block">Central ordination fund</span>
             </div>
@@ -698,7 +698,7 @@ export function SuperAdminDashboard({
                 : activeTab === 'cmc_tier'
                 ? 'Tier 4: CMC National Doctrinal Exam & Scoring Deck'
                 : activeTab === 'synod_tier'
-                ? 'Tier 5: Holy Synod Ratification & Apex Consecration Deck'
+                ? 'Tier 5: Holy Synod Ratification & Final Consecration'
                 : 'Candidate Ordination Ledger & Review Board'
             }
             subtitle="Select multiple candidates for 1-click batch endorsements, levy reconciliations, and certificate issuance"

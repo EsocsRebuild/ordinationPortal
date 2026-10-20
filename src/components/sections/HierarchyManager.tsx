@@ -429,7 +429,7 @@ export const HierarchyManager: React.FC<HierarchyManagerProps> = ({
           <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono">
             {stats.totalProvinces}
           </p>
-          <span className="text-[11px] text-amber-600 font-medium">Global Canonical Seats</span>
+          <span className="text-[11px] text-amber-600 font-medium">Global Church Provinces</span>
         </div>
 
         <div className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">

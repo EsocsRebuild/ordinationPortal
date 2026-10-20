@@ -14,7 +14,7 @@ export async function GET(
 
     if (!candidate) {
       return createErrorResponse(
-        `No canonical ordination credential found matching '${id}'.`,
+        `No official ordination credential found matching '${id}'.`,
         ['RECORD_NOT_FOUND'],
         404
       );
@@ -37,12 +37,12 @@ export async function GET(
       isValid: isOfficiallyApproved,
       verificationDate: new Date().toISOString(),
       institution: 'Eternal Sacred Order of the Cherubim and Seraphim Worldwide',
-      apexAuthority: 'The Holy Synod & General Conference Secretariat',
+      authority: 'The Holy Synod & General Conference Secretariat',
     };
 
     return createSuccessResponse(
       publicVerificationRecord,
-      'Canonical record verified against the Holy Order Sovereign Ledger.',
+      'Official record verified against the Church Ordination Register.',
       200
     );
   } catch (error: any) {

@@ -38,7 +38,7 @@ const DEFAULT_CONFIGS: Record<OtpPurpose, OtpConfig> = {
 };
 
 /**
- * In-memory canonical OTP store singleton.
+ * In-memory OTP store singleton.
  * Persists across requests within the server runtime.
  */
 class OtpStoreManager {

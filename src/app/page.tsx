@@ -71,7 +71,7 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans selection:bg-amber-500/30 selection:text-amber-900 dark:selection:text-amber-200 transition-colors duration-200">
       
       {/* ========================================================================= */}
-      {/* CANONICAL HEADER (Sleek, Refined, Light & Dark Adaptable)                  */}
+      {/* OFFICIAL HEADER (Sleek, Refined, Light & Dark Adaptable)                  */}
       {/* ========================================================================= */}
       <header className="border-b border-slate-200 dark:border-slate-800/80 bg-white/95 dark:bg-[#0a0f1d]/95 sticky top-0 z-50 transition-colors backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -149,7 +149,7 @@ export default function HomePage() {
         {/* Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-24 text-center flex flex-col items-center justify-center">
           
-          {/* Canonical Eyebrow Badge */}
+          {/* Eyebrow Badge */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-400/40 dark:border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-300 font-mono text-[10px] sm:text-[11px] uppercase tracking-wider mb-5 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
             <span>EST. 1925 &bull; ESOCS HOLY ORDER WORLDWIDE</span>
@@ -165,7 +165,7 @@ export default function HomePage() {
 
           {/* Concise Subtitle */}
           <p className="max-w-xl mx-auto text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed mb-8 sm:mb-10 px-2">
-            The centralized ecclesiastical management platform for clerical nominations, doctrinal vetting, and digital accreditation passes worldwide.
+            The centralized church portal for ordination nominations, screening, and official digital passes worldwide.
           </p>
 
           {/* Primary Action Buttons (Sleek, Proportional, Single-line) */}

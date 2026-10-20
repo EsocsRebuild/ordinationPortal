@@ -102,7 +102,7 @@ export function ScreeningDashboard({
             Screening & Vetting Directorate
           </Badge>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-            National Canonical Vetting & Theological Exam Deck
+            National Candidate Screening & Theological Exam Board
           </h1>
           <p className="text-xs sm:text-sm text-amber-200/90">
             {session.jurisdiction} • Standard Cutoff: <strong>Theology ≥ 70% | Interview ≥ 75%</strong>
@@ -311,7 +311,7 @@ export function ScreeningDashboard({
               <div className="space-y-3 bg-slate-50 dark:bg-slate-950/40 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
                 <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px] flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  Prerequisite Canonical Documents Verification
+                  Required Documentation Verification
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <label className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 cursor-pointer select-none hover:border-slate-400 transition-colors">

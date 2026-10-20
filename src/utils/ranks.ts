@@ -45,8 +45,8 @@ export interface RankValidationResult {
 }
 
 /**
- * Strict canonical hierarchy validation preventing rank skipping.
- * Example: Pastor -> Next must be Evangelist. If Apostle is selected, returns isValid: false with canonical explanation.
+ * Official hierarchy validation preventing rank skipping.
+ * Example: Pastor -> Next must be Evangelist. If Apostle is selected, returns isValid: false with explanation.
  */
 export function validateRankProgression(
   currentRankName: string,
@@ -107,7 +107,7 @@ export function validateRankProgression(
     };
   }
 
-  // Canonical Order Level Comparison
+  // Rank Order Level Comparison
   if (currentRank) {
     // 1. Trying to select same or lower rank
     if (targetRank.orderLevel <= currentRank.orderLevel) {
@@ -116,7 +116,7 @@ export function validateRankProgression(
         targetRank,
         expectedNextRank,
         allowedNextRanks,
-        errorReason: `Canonical Error: "${targetRank.name}" is not an elevation from your current rank of "${currentRank.name}".`,
+        errorReason: `Hierarchy Notice: "${targetRank.name}" is not a higher rank than your current rank of "${currentRank.name}".`,
         tenureYears,
         meetsTenure: false,
       };
@@ -129,11 +129,11 @@ export function validateRankProgression(
         targetRank,
         expectedNextRank,
         allowedNextRanks,
-        errorReason: `Canonical Hierarchy Violation: As "${currentRank.name}", your canonical next rank is "${
-          expectedNextRank?.name || 'the next immediate order'
-        }". Direct ascension to "${targetRank.name}" without serving as "${
-          expectedNextRank?.name || 'intermediate rank'
-        }" is strictly prohibited by ESOCS Holy Order constitution.`,
+        errorReason: `Rank Skipping Not Permitted: As "${currentRank.name}", your required next rank is "${
+          expectedNextRank?.name || 'the next immediate rank'
+        }". Direct promotion to "${targetRank.name}" without first attaining "${
+          expectedNextRank?.name || 'the intermediate rank'
+        }" is not permitted under church guidelines.`,
         tenureYears,
         meetsTenure: false,
       };
@@ -223,7 +223,7 @@ export function getRobingSpecifications(rankId: string): {
     };
   }
 
-  // Specific canonical robing specifications for the exact ranks
+  // Specific official robing specifications for the exact ranks
   switch (rank.id) {
     case 'rank_supervising_apostle_general_green':
     case 'rank_apostle_general_green':

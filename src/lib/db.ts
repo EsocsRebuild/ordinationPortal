@@ -46,7 +46,7 @@ const DEFAULT_USERS: UserRecord[] = [
     name: 'Supervising Apostle General Prof. David A. Oladele',
     email: 'admin@esocs.church',
     role: 'super_admin',
-    roleTitle: 'Secretary General & Sovereign Apex Admin',
+    roleTitle: 'Secretary General & National Admin',
     jurisdiction: 'Central Secretariat, Mount Zion Worldwide',
     passwordHash: 'password123',
   },
@@ -92,7 +92,7 @@ let memoryDb: DatabaseSchema = {
       timestamp: '2026-09-28T14:32:00Z',
       performedBy: 'Supervising Apostle General Prof. David A. Oladele',
       action: 'SYSTEM_INITIALIZATION',
-      details: 'Sovereign database initialized for General Conference 2026 Ordination Cohort.',
+      details: 'Database initialized for General Conference 2026 Ordination Cohort.',
     },
   ],
   messages: [...INITIAL_MESSAGES],
@@ -254,7 +254,7 @@ export const db = {
           cmc: { approved: false },
           national: { approved: false },
         },
-        screeningNotes: candidateData.screeningNotes || ['Nomination registered in portal canonical ledger.'],
+        screeningNotes: candidateData.screeningNotes || ['Nomination registered in portal records.'],
       };
 
       data.candidates.unshift(newRecord);
@@ -470,7 +470,7 @@ export const db = {
           national: { approved: false },
         },
         screeningNotes: [
-          `Self-registered via ESOCS Canonical Portal. Current Rank: ${params.currentRank} (${rankYear}). Target Rank: ${params.targetRankName}.`,
+          `Self-registered via ESOCS Ordination Portal. Current Rank: ${params.currentRank} (${rankYear}). Target Rank: ${params.targetRankName}.`,
         ],
       };
 
@@ -495,7 +495,7 @@ export const db = {
         performedBy: params.fullName,
         action: 'SELF_REGISTRATION',
         candidateId,
-        details: `Candidate self-registered (${regNumber}) for rank ${params.targetRankName}. Strict canonical progression validated.`,
+        details: `Candidate self-registered (${regNumber}) for rank ${params.targetRankName}. Rank progression validated.`,
       });
 
       writeDb(data);

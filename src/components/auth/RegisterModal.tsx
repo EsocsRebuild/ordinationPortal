@@ -125,12 +125,12 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
       .catch(() => {});
   }, []);
 
-  // Canonical rank state
+  // Rank state
   const [currentRank, setCurrentRank] = useState('Pastor');
   const [currentRankYear, setCurrentRankYear] = useState(2022);
   const [targetRankName, setTargetRankName] = useState('Evangelist');
 
-  // Ecclesiastical Hierarchy state
+  // Church Hierarchy state
   const [province, setProvince] = useState<string>(() => liveHierarchy[0]?.name || 'Lagos Central Province');
   const [district, setDistrict] = useState<string>(() => {
     return liveHierarchy[0]?.districts[0]?.name || 'Ebute Metta District';
@@ -307,7 +307,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
   };
 
-  // Canonical progression validation
+  // Rank progression validation
   const validation = useMemo(() => {
     return validateRankProgression(currentRank, targetRankName, gender, currentRankYear, CURRENT_YEAR);
   }, [currentRank, targetRankName, gender, currentRankYear]);
@@ -325,7 +325,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
     }
   };
 
-  const handleApplyCanonicalRecommendation = () => {
+  const handleApplyRecommendation = () => {
     if (validation.expectedNextRank) {
       setTargetRankName(validation.expectedNextRank.name);
     }
@@ -866,7 +866,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   {validation.expectedNextRank && (
                     <button
                       type="button"
-                      onClick={handleApplyCanonicalRecommendation}
+                      onClick={handleApplyRecommendation}
                       className="text-xs text-amber-700 dark:text-amber-400 hover:text-amber-600 font-semibold flex items-center gap-1.5 transition-colors"
                     >
                       <Sparkles className="w-3.5 h-3.5" /> Auto-select Eligible: {validation.expectedNextRank.name}

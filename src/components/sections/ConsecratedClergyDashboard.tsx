@@ -339,7 +339,7 @@ export function ConsecratedClergyDashboard({
             <div className="space-y-2 text-center sm:text-left min-w-0 max-w-full">
               <div className="inline-flex items-center gap-2 text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5 shrink-0" />
-                <span className="truncate">Elevated Ecclesiastical Order Conferred</span>
+                <span className="truncate">Elevated Ministry Rank Conferred</span>
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-serif font-bold text-slate-900 dark:text-white tracking-tight break-words">
@@ -448,7 +448,7 @@ export function ConsecratedClergyDashboard({
           {/* Pastoral Welcome Message Body */}
           <div className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 leading-relaxed">
             <p>
-              Beloved in Christ, <strong>{candidate.fullName}</strong>, by the sovereign grace of the Almighty God and the apostolic authority vested in the Holy Order, we welcome you into the exalted college of the <strong>{conferredRank}</strong> of the Eternal Sacred Order of the Cherubim & Seraphim.
+              Beloved in Christ, <strong>{candidate.fullName}</strong>, by the grace of the Almighty God and the authority of the Church, we welcome you as an ordained <strong>{conferredRank}</strong> of the Eternal Sacred Order of the Cherubim & Seraphim.
             </p>
             <p>
               You have been called to higher ministerial stewardship, sanctuary governance, and continuous intercession for the body of Christ. Let your elevation reflect unwavering humility, holy devotion, and exemplary pastoral leadership in your parish, district, and province.
@@ -547,14 +547,14 @@ export function ConsecratedClergyDashboard({
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-200">
           
-          {/* Left 2 Cols: Conferred Canonical Rights */}
+          {/* Left 2 Cols: Conferred Ordination Rights */}
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white dark:bg-[#090e1c] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2.5">
                   <Flame className="w-5 h-5 text-amber-500" />
                   <h3 className="font-serif font-bold text-lg text-slate-900 dark:text-white">
-                    Conferred Ecclesiastical Authority & Ministry Rights
+                    Conferred Ministry Authority & Service Rights
                   </h3>
                 </div>
                 <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg">
@@ -605,10 +605,10 @@ export function ConsecratedClergyDashboard({
                     04
                   </div>
                   <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                    Ecclesiastical Gazette Seal
+                    Official Church Register Seal
                   </h4>
                   <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Permanent entry into the National Holy Order Gazette Roll with verifiable QR accreditation credentials worldwide.
+                    Permanent entry into the National Church Register Roll with verifiable QR accreditation credentials worldwide.
                   </p>
                 </div>
 
@@ -677,7 +677,7 @@ export function ConsecratedClergyDashboard({
                 Official Consecration Vestment Specifications for {conferredRank}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                Mandated ecclesiastical tailoring standard for all liturgical services and Holy Synod assemblies.
+                Official church tailoring standard for all liturgical services and church assemblies.
               </p>
             </div>
 
@@ -697,7 +697,7 @@ export function ConsecratedClergyDashboard({
                   {robing.vestmentColor}
                 </h4>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Tailored floor-length cassock with pleated back, cuffs, and gold ecclesiastical piping.
+                  Tailored floor-length cassock with pleated back, cuffs, and gold piping.
                 </p>
               </div>
 

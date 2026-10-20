@@ -18,14 +18,14 @@ export function RobingVisualizer() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <Badge variant="gold" size="sm">Canonical Standards</Badge>
+            <Badge variant="gold" size="sm">Official Standards</Badge>
             <span className="text-xs font-mono text-slate-500">Holy Order Regalia</span>
           </div>
           <h3 className="font-serif text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Sacred Robes & Canonical Vestment Inspector
+            Sacred Robes & Vestments Guide
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Inspect canonical vestments, brocade trims, mitres, and liturgical stoles for every sacred rank.
+            Inspect official vestments, brocade trims, caps, and liturgical stoles for every rank.
           </p>
         </div>
       </div>
@@ -79,7 +79,7 @@ export function RobingVisualizer() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800">
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
-                Canonical Robe & Brocade
+                Official Robe & Brocade
               </span>
               <p className="font-semibold text-slate-900 dark:text-slate-100 leading-relaxed">
                 {robing.vestmentColor}

@@ -49,7 +49,7 @@ const AVAILABLE_ROLE_PERSONAS: UserSession[] = [
     name: 'Supervising Apostle General Prof. David A. Oladele',
     email: 'admin@esocs.church',
     role: 'super_admin',
-    roleTitle: 'Secretary General & Sovereign Apex Admin',
+    roleTitle: 'Secretary General & National Admin',
     jurisdiction: 'Central Secretariat, Mount Zion Worldwide',
   },
 ];

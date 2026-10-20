@@ -24,7 +24,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     badgeLabel: 'Branch Leader',
     badgeClass: 'bg-indigo-900/10 text-indigo-800 border-indigo-200 dark:bg-indigo-950 dark:text-indigo-300 dark:border-indigo-800',
     allowedViews: ['all'],
-    description: 'Executive ecclesiastical management.',
+    description: 'Parish and branch administration.',
   },
   screening_officer: {
     role: 'screening_officer',
@@ -40,7 +40,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     badgeLabel: 'Holy Synod Elder',
     badgeClass: 'bg-purple-900/10 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800',
     allowedViews: ['all'],
-    description: 'Supreme council ratification and decrees.',
+    description: 'Synod review and final approvals.',
   },
   super_admin: {
     role: 'super_admin',
@@ -48,7 +48,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     badgeLabel: 'Super Admin',
     badgeClass: 'bg-rose-900/10 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800',
     allowedViews: ['all'],
-    description: 'Full system sovereignty and master roster administration.',
+    description: 'Full system and master roster administration.',
   },
 };
 

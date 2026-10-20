@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     );
 
     const targetEmail = matched?.email || (identifier.includes('@') ? identifier.trim() : 'candidate@esocs.test');
-    const targetName = matched?.fullName || 'Ecclesiastical Member';
+    const targetName = matched?.fullName || 'Church Member';
 
     // 1. Check status of active OTP
     if (action === 'status') {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
         success: true,
         message: isResendAction || otpResult.isResend
           ? `A fresh 6-digit verification code has been dispatched to ${targetEmail} (check Mailpit at http://localhost:8025).`
-          : `A 6-digit canonical verification code has been dispatched to ${targetEmail} (check Mailpit at http://localhost:8025).`,
+          : `A 6-digit verification code has been dispatched to ${targetEmail} (check Mailpit at http://localhost:8025).`,
         simulatedOtp: otpResult.code, // Test harness convenience alongside Mailpit
         expiresAt: otpResult.expiresAt,
         expiresInSeconds: otpResult.expiresInSeconds,

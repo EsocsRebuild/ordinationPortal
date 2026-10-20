@@ -507,10 +507,10 @@ export function ParishLeaderDashboard({
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-                      Initiate Ecclesiastical Nomination
+                      Nominate Candidate for Ordination
                     </h3>
                     <p className="text-xs text-amber-400/90 font-medium mt-0.5">
-                      Parish Rector Directorate • Canonical Vetting Intake
+                      Parish Pastor Review • Candidate Intake
                     </p>
                   </div>
                 </div>
@@ -529,8 +529,8 @@ export function ParishLeaderDashboard({
               {/* Step Tracker */}
               <div className="mt-6 grid grid-cols-2 gap-4">
                 {[
-                  { num: 1, title: 'Identity & Territorial Lineage' },
-                  { num: 2, title: 'Canonical Order & Attestation' },
+                  { num: 1, title: 'Identity & Branch Details' },
+                  { num: 2, title: 'Rank Progression & Attestation' },
                 ].map((step) => {
                   const isCompleted = nominateStep > step.num;
                   const isCurrent = nominateStep === step.num;
@@ -722,13 +722,13 @@ export function ParishLeaderDashboard({
                     </div>
                   </div>
 
-                  {/* 4. Ecclesiastical Hierarchy */}
+                  {/* 4. Church Location */}
                   <div className="space-y-3 pt-2">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-800/90">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-amber-400 shadow-sm shadow-amber-400" />
                         <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">
-                          Ecclesiastical Territorial Jurisdiction
+                          Church Jurisdiction & Location
                         </span>
                       </div>
                       <span className="text-[11px] text-slate-400 font-medium">Searchable Directory</span>
@@ -736,7 +736,7 @@ export function ParishLeaderDashboard({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <SearchableSelect
-                        label="1. Ecclesiastical Province / Diocese"
+                        label="1. Province / Diocese"
                         required
                         options={provinceOptions}
                         value={province}
@@ -808,7 +808,7 @@ export function ParishLeaderDashboard({
                         }
                         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                         if (!formData.email.trim() || !emailRegex.test(formData.email.trim())) {
-                          alert('Please enter a valid ecclesiastical or personal email address.');
+                          alert('Please enter a valid email address.');
                           return;
                         }
                         if (!formData.phone.trim()) {
@@ -831,7 +831,7 @@ export function ParishLeaderDashboard({
                       }}
                       className="px-7 py-3.5 rounded-2xl text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center gap-2"
                     >
-                      <span>Continue to Canonical Elevation</span>
+                      <span>Continue to Next Step</span>
                       <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
@@ -896,7 +896,7 @@ export function ParishLeaderDashboard({
                   {targetRank && (
                     <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between text-xs sm:text-sm">
                       <div className="space-y-0.5">
-                        <span className="text-slate-400 block text-xs">Canonical Assessment & Robing Tier</span>
+                        <span className="text-slate-400 block text-xs">Vestment & Fee Tier</span>
                         <span className="font-bold text-white text-sm sm:text-base">{targetRank.name}</span>
                       </div>
                       <div className="text-right">
@@ -911,7 +911,7 @@ export function ParishLeaderDashboard({
                   {/* Testimonial Note */}
                   <div className="space-y-2">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                      Parish Rector Attestation & Character Reference <span className="text-amber-400">*</span>
+                      Parish Pastor Attestation & Character Reference <span className="text-amber-400">*</span>
                     </label>
                     <textarea
                       rows={3}
