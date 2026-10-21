@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import {
   X,
   ShieldCheck,
-  Smartphone,
   AlertCircle,
   ArrowRight,
   RefreshCw,
@@ -15,19 +14,25 @@ import {
 } from 'lucide-react';
 
 export function TwoFactorModal() {
-  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor, resendTwoFactor, pendingUserSession, isLoading } = useAuth();
+  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor: authCancelTwoFactor, resendTwoFactor, pendingUserSession, isLoading } = useAuth();
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [resendNotice, setResendNotice] = useState<string | null>(null);
   const [isResending, setIsResending] = useState(false);
-  const [simulatedOtp, setSimulatedOtp] = useState<string | null>(null);
 
   // Lifespan & Cooldown timers
   const [secondsRemaining, setSecondsRemaining] = useState(300); // 5 minutes validity
   const [cooldown, setCooldown] = useState(60); // 60s resend cooldown
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const cancelTwoFactor = () => {
+    setDigits(['', '', '', '', '', '']);
+    setErrorMsg(null);
+    setResendNotice(null);
+    authCancelTwoFactor();
+  };
 
   // Countdown timer for expiration & resend cooldown
   useEffect(() => {
@@ -121,11 +126,8 @@ export function TwoFactorModal() {
       setSecondsRemaining(300);
       setCooldown(60);
       setDigits(['', '', '', '', '', '']);
-      if (res?.simulatedOtp) {
-        setSimulatedOtp(res.simulatedOtp);
-      }
       setResendNotice(
-        res?.message || 'A fresh 2FA authentication token has been dispatched to your email and Mailpit.'
+        res?.message || 'A fresh 2FA authentication token has been dispatched to your email.'
       );
       inputRefs.current[0]?.focus();
     } catch (err: any) {
@@ -161,12 +163,6 @@ export function TwoFactorModal() {
     }
   };
 
-  const handleAutoFill = (code: string) => {
-    const chars = code.split('').slice(0, 6);
-    setDigits(chars);
-    inputRefs.current[5]?.focus();
-  };
-
   const isComplete = digits.every((d) => d !== '');
 
   return (
@@ -183,7 +179,7 @@ export function TwoFactorModal() {
                 Two-Factor Verification (2FA)
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Apostolic multi-factor credential authentication
+                Secure multi-factor account authentication
               </p>
             </div>
           </div>
@@ -224,36 +220,15 @@ export function TwoFactorModal() {
             </div>
           )}
 
-          {/* Info Card */}
-          <div className="text-center space-y-3 py-2">
-            <div className="w-14 h-14 mx-auto rounded-3xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-inner">
-              <Smartphone className="w-7 h-7" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
-                Verify Your Identity
-              </h4>
-              <p className="text-slate-600 dark:text-slate-300 text-xs max-w-sm mx-auto leading-relaxed">
-                Enter the 6-digit authentication token dispatched to <strong>{pendingUserSession?.user?.email || 'your registered church contact'}</strong> and Mailpit.
-              </p>
-            </div>
+          {/* Info Header */}
+          <div className="text-center space-y-1.5 py-1">
+            <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+              Verify Your Identity
+            </h4>
+            <p className="text-slate-600 dark:text-slate-300 text-xs max-w-sm mx-auto leading-relaxed">
+              Enter the 6-digit verification code sent to <strong>{pendingUserSession?.user?.email || 'your registered church contact'}</strong>.
+            </p>
           </div>
-
-          {/* Simulated token convenience banner */}
-          {simulatedOtp && (
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-2xl text-xs flex items-center justify-between">
-              <span className="font-mono text-xs text-amber-800 dark:text-amber-300">
-                Dispatched Code: <strong className="font-bold">{simulatedOtp}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => handleAutoFill(simulatedOtp)}
-                className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 hover:underline"
-              >
-                Auto-fill Code
-              </button>
-            </div>
-          )}
 
           {/* 6-Box PIN Inputs with Expiration Countdown */}
           <div className="space-y-3">

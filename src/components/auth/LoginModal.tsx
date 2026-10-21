@@ -36,24 +36,54 @@ export function LoginModal({
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Reset form inputs whenever modal opens or closes
+  React.useEffect(() => {
+    if (isOpen) {
+      setIdentifier('');
+      setPassword('');
+      setShowPassword(false);
+      setErrorMsg(null);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIdentifier('');
+    setPassword('');
+    setShowPassword(false);
+    setErrorMsg(null);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!identifier.trim()) {
+    const targetId = identifier.trim();
+    const targetPassword = password.trim();
+
+    if (!targetId) {
       setErrorMsg('Please enter your Registration Number or Church Email.');
       return;
     }
 
+    if (!targetPassword) {
+      setErrorMsg('Please enter your security access key password.');
+      return;
+    }
+
+    // Immediately clear password
+    setPassword('');
+
     try {
       await login({
-        identifier: identifier.trim(),
-        password: password || 'password123',
+        identifier: targetId,
+        password: targetPassword,
       });
-      onClose();
+      handleClose();
     } catch (err: any) {
+      setPassword('');
       setErrorMsg(err.message || 'Unable to sign in. Please check your credentials.');
     }
   };
@@ -80,7 +110,7 @@ export function LoginModal({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
@@ -123,7 +153,7 @@ export function LoginModal({
                   <button
                     type="button"
                     onClick={() => {
-                      onClose();
+                      handleClose();
                       onOpenForgot();
                     }}
                     className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-semibold"

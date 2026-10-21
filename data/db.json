@@ -22,10 +22,10 @@
       "district": "Lagos Central District",
       "parish": "Mount Zion Cathedral",
       "branchPriestName": "Parish Presiding Officer",
-      "stage": "district_review",
-      "currentVettingTier": "district",
+      "stage": "provincial_review",
+      "currentVettingTier": "province",
       "submissionDate": "2026-10-19",
-      "lastUpdated": "2026-10-19",
+      "lastUpdated": "2026-10-20",
       "attendanceRecordPercentage": 96,
       "conductRating": "exemplary",
       "duesStatus": "cleared",
@@ -43,12 +43,18 @@
           "approverName": "Senior Apostle J. K. Babalola (Parish Rector)",
           "comments": "Faithful in tithing, exemplary moral rectitude, endorsed for Rabbi promotion.",
           "date": "2026-10-19T21:20:00Z"
+        },
+        "district": {
+          "approved": true,
+          "date": "2026-10-20T18:59:29.914Z",
+          "approverName": "Admin Directorate (HQ)",
+          "comments": "All credentials submitted is approved"
         }
       },
       "screeningNotes": [
         "Self-registered via ESOCS Ordination Portal. Current Rank: Leader (2020). Target Rank: Rabbi."
       ],
-      "actorName": "Pastor Michael Chukwuma",
+      "actorName": "Admin Directorate (HQ)",
       "receiptNumber": "REC-2026-ESOCS-9941",
       "paymentMethod": "Zenith Bank Church Direct Remittance"
     },
@@ -176,6 +182,54 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "log-1792524003039-298",
+      "timestamp": "2026-10-20T19:20:03.039Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
+    {
+      "id": "log-1792523920259-95",
+      "timestamp": "2026-10-20T19:18:40.259Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
+    {
+      "id": "log-1792523555485-567",
+      "timestamp": "2026-10-20T19:12:35.485Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
+    {
+      "id": "log-1792522834705-740",
+      "timestamp": "2026-10-20T19:00:34.705Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
+    {
+      "id": "log-1792522770009",
+      "timestamp": "2026-10-20T18:59:30.009Z",
+      "performedBy": "Admin Directorate (HQ)",
+      "action": "UPDATE_CANDIDATE",
+      "candidateId": "cand-002",
+      "details": "Candidate record updated: stage=provincial_review, tier=province, dues=cleared."
+    },
+    {
+      "id": "log-1792522502134-92",
+      "timestamp": "2026-10-20T18:55:02.134Z",
+      "performedBy": "peter chima tester",
+      "action": "USER_LOGIN",
+      "candidateId": "cand-006",
+      "details": "Successful login by candidate (peter4tech@gmail.com)."
+    },
     {
       "id": "log-1792484964261-343",
       "timestamp": "2026-10-20T08:29:24.261Z",

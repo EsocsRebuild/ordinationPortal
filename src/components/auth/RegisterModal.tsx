@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { EsocsLogo } from '@/components/ui/EsocsLogo';
@@ -153,59 +153,49 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [enable2FA, setEnable2FA] = useState(true);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
 
-  // Draft recovery on mount
-  useEffect(() => {
-    if (isOpen && typeof window !== 'undefined') {
+  // Form reset function to guarantee clean inputs whenever closed and reopened
+  const resetForm = useCallback(() => {
+    setCurrentStep(1);
+    setFirstName('');
+    setMiddleName('');
+    setLastName('');
+    setPreferredName('');
+    setEmail('');
+    setPhone('');
+    setPhoneValidation(null);
+    setGender('male');
+    setCurrentRank('Pastor');
+    setCurrentRankYear(2022);
+    setTargetRankName('Evangelist');
+    setCustomHouseOfPrayer('');
+    setIsCustomHouse(false);
+    setPassportPhotoUrl(null);
+    setPassword('');
+    setConfirmPassword('');
+    setShowPassword(false);
+    setEnable2FA(true);
+    setSubmitError(null);
+    setEnrolledCandidate(null);
+    setCopiedRef(false);
+    if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('esocs_reg_draft');
-        if (saved) {
-          const draft = JSON.parse(saved);
-          if (draft.firstName) setFirstName(draft.firstName);
-          if (draft.middleName) setMiddleName(draft.middleName);
-          if (draft.lastName) setLastName(draft.lastName);
-          if (draft.preferredName) setPreferredName(draft.preferredName);
-          if (draft.email) setEmail(draft.email);
-          if (draft.phone) setPhone(draft.phone);
-          if (draft.gender) setGender(draft.gender);
-          if (draft.currentRank) setCurrentRank(draft.currentRank);
-          if (draft.currentRankYear) setCurrentRankYear(draft.currentRankYear);
-          if (draft.targetRankName) setTargetRankName(draft.targetRankName);
-          if (draft.province) setProvince(draft.province);
-          if (draft.district) setDistrict(draft.district);
-          if (draft.parish) setParish(draft.parish);
-          if (draft.houseOfPrayer) setHouseOfPrayer(draft.houseOfPrayer);
-          setHasRestoredDraft(true);
-        }
+        localStorage.removeItem('esocs_reg_draft');
       } catch (e) {}
     }
-  }, [isOpen]);
+  }, []);
 
-  // Auto-save draft on changes
+  // Clean all fields whenever modal opens or closes
   useEffect(() => {
-    if (typeof window !== 'undefined' && (firstName || lastName || email || phone)) {
-      try {
-        const draft = {
-          firstName,
-          middleName,
-          lastName,
-          preferredName,
-          email,
-          phone,
-          gender,
-          currentRank,
-          currentRankYear,
-          targetRankName,
-          province,
-          district,
-          parish,
-          houseOfPrayer,
-        };
-        localStorage.setItem('esocs_reg_draft', JSON.stringify(draft));
-      } catch (e) {}
+    if (isOpen) {
+      resetForm();
     }
-  }, [firstName, middleName, lastName, preferredName, email, phone, gender, currentRank, currentRankYear, targetRankName, province, district, parish, houseOfPrayer]);
+  }, [isOpen, resetForm]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   // Filter available ranks by gender dynamically
   const availableRanks = useMemo(() => {
@@ -484,7 +474,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
             </div>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all border border-slate-200 dark:border-slate-700/40"
             >
               <X className="w-5 h-5" />
@@ -1148,7 +1138,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
               ) : (
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="px-5 py-3 rounded-2xl text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-all"
                 >
                   Cancel
