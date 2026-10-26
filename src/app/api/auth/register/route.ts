@@ -69,8 +69,9 @@ export async function POST(request: Request) {
     });
 
     // Dispatch confirmation email to Mailpit
+    let emailResult: { success: boolean; messageId?: string; error?: string } = { success: false };
     try {
-      await sendRegistrationConfirmationEmail({
+      emailResult = await sendRegistrationConfirmationEmail({
         fullName: candidate.fullName,
         email: candidate.email,
         regNumber: candidate.regNumber,
@@ -80,8 +81,14 @@ export async function POST(request: Request) {
         district: candidate.district,
         province: candidate.province,
       });
-    } catch (emailErr) {
-      console.warn('[Register] Failed to dispatch registration confirmation to Mailpit:', emailErr);
+      if (emailResult.success) {
+        console.log(`[Register] ✅ Welcome email delivered to Mailpit for ${candidate.email} (Message ID: ${emailResult.messageId})`);
+      } else {
+        console.warn(`[Register] ⚠️ Mailpit delivery could not connect for ${candidate.email}: ${emailResult.error}`);
+      }
+    } catch (emailErr: any) {
+      emailResult = { success: false, error: emailErr.message, messageId: undefined };
+      console.warn('[Register] Failed to dispatch registration confirmation to Mailpit:', emailErr.message);
     }
 
     return createSuccessResponse(
@@ -89,6 +96,8 @@ export async function POST(request: Request) {
         token,
         user,
         candidate,
+        emailDelivered: emailResult.success,
+        emailError: emailResult.error,
       },
       'Candidate ordination application submitted and enrolled in Branch Review Queue.',
       201
