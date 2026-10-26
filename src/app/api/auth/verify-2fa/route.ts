@@ -45,19 +45,38 @@ export async function POST(request: Request) {
         throw err;
       }
 
-      // Dispatch 2FA email directly to Mailpit
+      // Dispatch 2FA email directly to Mailpit across candidate hosts
+      let emailResult;
       try {
-        await sendTwoFactorOtpEmail({
+        emailResult = await sendTwoFactorOtpEmail({
           email: targetIdentifier,
           otp: otpResult.code,
           isResend,
         });
-      } catch (err) {
-        console.warn('[Verify2FA] Failed to dispatch 2FA OTP to Mailpit:', err);
+      } catch (err: any) {
+        emailResult = { success: false, error: err.message };
       }
 
+      if (!emailResult.success) {
+        console.error(`[Verify2FA] ❌ Mailpit delivery failed for ${targetIdentifier}: ${emailResult.error}`);
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'EMAIL_DELIVERY_FAILED',
+            message: `Unable to dispatch verification email via Mailpit: ${emailResult.error || 'Connection failed'}. Please ensure Mailpit is running on port 8025/1025.`,
+            error: emailResult.error,
+            expiresAt: otpResult.expiresAt,
+            expiresInSeconds: otpResult.expiresInSeconds,
+            cooldownSeconds: otpResult.cooldownSeconds,
+          },
+          { status: 502 }
+        );
+      }
+
+      console.log(`[Verify2FA] ✅ 2FA OTP code delivered to Mailpit for ${targetIdentifier} (Message ID: ${emailResult.messageId})`);
       return NextResponse.json({
         success: true,
+        emailDelivered: true,
         message: `A fresh 6-digit verification code has been dispatched to ${targetIdentifier}.`,
         expiresAt: otpResult.expiresAt,
         expiresInSeconds: otpResult.expiresInSeconds,

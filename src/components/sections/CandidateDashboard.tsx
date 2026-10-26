@@ -97,6 +97,32 @@ export function CandidateDashboard({
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Live real-time update banner notification
+  const [liveUpdateAlert, setLiveUpdateAlert] = useState<{
+    title: string;
+    description: string;
+    timestamp: string;
+  } | null>(null);
+
+  useEffect(() => {
+    return realtimeClient.subscribe((event) => {
+      if (
+        (event.type === 'TIER_APPROVED' || event.type === 'CANDIDATE_UPDATED') &&
+        event.payload &&
+        (event.payload.id === candidate.id || event.payload.candidateId === candidate.id)
+      ) {
+        setLiveUpdateAlert({
+          title: 'Ordination Record Updated in Real-Time',
+          description: event.payload.status
+            ? `Your status changed to: ${String(event.payload.status).replace(/_/g, ' ')}`
+            : 'A review stage clearance was just ratified by the secretariat.',
+          timestamp: new Date().toLocaleTimeString(),
+        });
+        setTimeout(() => setLiveUpdateAlert(null), 8000);
+      }
+    });
+  }, [candidate.id]);
+
   useEffect(() => {
     setCurrentTab(activeTab);
   }, [activeTab]);
@@ -481,6 +507,29 @@ export function CandidateDashboard({
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-300">
       
+      {/* Real-time automated update notification banner */}
+      {liveUpdateAlert && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-amber-500/10 to-transparent border border-emerald-500/30 text-emerald-900 dark:text-emerald-200 flex items-center justify-between gap-4 shadow-lg backdrop-blur-md animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Live Real-Time Update</span>
+                <span className="text-[10px] text-slate-500 font-mono">{liveUpdateAlert.timestamp}</span>
+              </div>
+              <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate mt-0.5">{liveUpdateAlert.description}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLiveUpdateAlert(null)}
+            className="p-1.5 rounded-lg hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs shrink-0"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 1. CANDIDATE PROFILE HERO CARD (MODERN, RESPONSIVE, APP-LIKE)             */}
       {/* ========================================================================= */}
@@ -1281,25 +1330,41 @@ export function CandidateDashboard({
 
                     {isExpanded && (
                       <div className="px-4 pb-5 sm:px-6 sm:pb-6 pt-2 border-t border-slate-200 dark:border-slate-800/80 bg-white/70 dark:bg-slate-950/40 text-xs space-y-4 animate-in fade-in duration-200 overflow-hidden">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Reviewing Board</span>
-                            <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.authority}</span>
+                        {!step.isCompleted && !step.isCurrent ? (
+                          <div className="p-4 rounded-xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 flex items-center gap-3.5 my-1">
+                            <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                              <Lock className="w-5 h-5" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="font-bold text-slate-900 dark:text-slate-100 text-xs">Review Stage Sequential Lock</p>
+                              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                This review tier is queued and will automatically unlock as soon as the preceding authority completes their endorsement.
+                              </p>
+                            </div>
                           </div>
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Signing Officer</span>
-                            <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.officer}</span>
-                          </div>
-                          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date Confirmed</span>
-                            <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 text-xs break-words">{step.date}</span>
-                          </div>
-                        </div>
+                        ) : (
+                          <>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Reviewing Board</span>
+                                <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.authority}</span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Signing Officer</span>
+                                <span className="font-semibold text-slate-900 dark:text-white text-xs break-words">{step.officer}</span>
+                              </div>
+                              <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date Confirmed</span>
+                                <span className="font-mono font-semibold text-amber-700 dark:text-amber-400 text-xs break-words">{step.date}</span>
+                              </div>
+                            </div>
 
-                        <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300 break-words leading-relaxed overflow-hidden">
-                          <span className="font-bold text-amber-800 dark:text-amber-300 mr-1.5">Official Review Remarks:</span>
-                          {step.comments}
-                        </div>
+                            <div className="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-slate-700 dark:text-slate-300 break-words leading-relaxed overflow-hidden">
+                              <span className="font-bold text-amber-800 dark:text-amber-300 mr-1.5">Official Review Remarks:</span>
+                              {step.comments}
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>

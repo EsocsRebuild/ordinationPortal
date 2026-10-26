@@ -64,20 +64,39 @@ export async function POST(request: Request) {
         throw err;
       }
 
-      // Dispatch directly to Mailpit
+      // Dispatch directly to Mailpit across candidate hosts
+      let emailResult;
       try {
-        await sendPasswordResetOtpEmail({
+        emailResult = await sendPasswordResetOtpEmail({
           email: targetEmail,
           name: targetName,
           otp: otpResult.code,
           isResend: isResendAction || otpResult.isResend,
         });
-      } catch (err) {
-        console.warn('[ForgotPassword] Failed to dispatch OTP to Mailpit:', err);
+      } catch (err: any) {
+        emailResult = { success: false, error: err.message };
       }
 
+      if (!emailResult.success) {
+        console.error(`[ForgotPassword] ❌ Mailpit delivery failed for ${targetEmail}: ${emailResult.error}`);
+        return NextResponse.json(
+          {
+            success: false,
+            code: 'EMAIL_DELIVERY_FAILED',
+            message: `Unable to dispatch password reset code via Mailpit: ${emailResult.error || 'Connection failed'}. Please ensure Mailpit is running on port 8025/1025.`,
+            error: emailResult.error,
+            expiresAt: otpResult.expiresAt,
+            expiresInSeconds: otpResult.expiresInSeconds,
+            cooldownSeconds: otpResult.cooldownSeconds,
+          },
+          { status: 502 }
+        );
+      }
+
+      console.log(`[ForgotPassword] ✅ Password reset OTP delivered to Mailpit for ${targetEmail} (Message ID: ${emailResult.messageId})`);
       return NextResponse.json({
         success: true,
+        emailDelivered: true,
         message: isResendAction || otpResult.isResend
           ? `A fresh 6-digit verification code has been dispatched to ${targetEmail}.`
           : `A 6-digit verification code has been dispatched to ${targetEmail}.`,

@@ -54,9 +54,10 @@ export async function PATCH(
     }
 
     // 1. Dispatch Payment Receipt Email to Mailpit if dues were newly cleared
+    const emailDeliveryLog: Array<{ type: string; recipient: string; success: boolean; messageId?: string; error?: string }> = [];
     if (updates.duesStatus === 'cleared' && existing?.duesStatus !== 'cleared') {
       try {
-        await sendPaymentReceiptEmail({
+        const mailResult = await sendPaymentReceiptEmail({
           fullName: candidate.fullName,
           email: candidate.email,
           regNumber: candidate.regNumber,
@@ -66,8 +67,15 @@ export async function PATCH(
           targetRankName: candidate.targetRankName,
           paymentMethod: updates.paymentMethod || 'Zenith Bank Church Direct Remittance / Online Gateway',
         });
-      } catch (err) {
-        console.warn('[Candidates] Failed to dispatch payment receipt email:', err);
+        emailDeliveryLog.push({ type: 'payment_receipt', recipient: candidate.email, ...mailResult });
+        if (mailResult.success) {
+          console.log(`[Candidates] ✅ Payment receipt email delivered to Mailpit for ${candidate.email} (ID: ${mailResult.messageId})`);
+        } else {
+          console.warn(`[Candidates] ⚠️ Payment receipt email could not connect to Mailpit: ${mailResult.error}`);
+        }
+      } catch (err: any) {
+        emailDeliveryLog.push({ type: 'payment_receipt', recipient: candidate.email, success: false, error: err.message });
+        console.warn('[Candidates] Failed to dispatch payment receipt email:', err.message);
       }
     }
 
@@ -87,7 +95,7 @@ export async function PATCH(
           const approver = (updates.tierApprovals as any)[t.key]?.approverName || 'Ordination Review Board';
           const comments = (updates.tierApprovals as any)[t.key]?.comments;
           try {
-            await sendVettingApprovalEmail({
+            const approvalMail = await sendVettingApprovalEmail({
               fullName: candidate.fullName,
               email: candidate.email,
               regNumber: candidate.regNumber,
@@ -96,15 +104,22 @@ export async function PATCH(
               nextStageTitle: t.next,
               comments,
             });
-          } catch (err) {
-            console.warn('[Candidates] Failed to dispatch vetting approval email:', err);
+            emailDeliveryLog.push({ type: `vetting_${t.key}`, recipient: candidate.email, ...approvalMail });
+            if (approvalMail.success) {
+              console.log(`[Candidates] ✅ Vetting approval email delivered to Mailpit for ${candidate.email} (ID: ${approvalMail.messageId})`);
+            } else {
+              console.warn(`[Candidates] ⚠️ Vetting approval email could not connect to Mailpit: ${approvalMail.error}`);
+            }
+          } catch (err: any) {
+            emailDeliveryLog.push({ type: `vetting_${t.key}`, recipient: candidate.email, success: false, error: err.message });
+            console.warn('[Candidates] Failed to dispatch vetting approval email:', err.message);
           }
         }
       }
     }
 
     return createSuccessResponse(
-      { candidate },
+      { candidate, emailDeliveryLog },
       'Candidate profile updated successfully.',
       200
     );

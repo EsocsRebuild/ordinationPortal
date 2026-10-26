@@ -14,7 +14,15 @@ import {
 } from 'lucide-react';
 
 export function TwoFactorModal() {
-  const { twoFactorPending, verifyTwoFactor, cancelTwoFactor: authCancelTwoFactor, resendTwoFactor, pendingUserSession, isLoading } = useAuth();
+  const {
+    twoFactorPending,
+    verifyTwoFactor,
+    cancelTwoFactor: authCancelTwoFactor,
+    resendTwoFactor,
+    pendingUserSession,
+    twoFactorInitialError,
+    isLoading,
+  } = useAuth();
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -44,17 +52,22 @@ export function TwoFactorModal() {
     return () => clearInterval(interval);
   }, [twoFactorPending]);
 
-  // Reset timers and clear inputs when modal opens
+  // Reset timers, clear inputs, and surface initial dispatch status when modal opens
   useEffect(() => {
     if (twoFactorPending) {
       setSecondsRemaining(300);
       setCooldown(60);
       setDigits(['', '', '', '', '', '']);
-      setErrorMsg(null);
-      setResendNotice(null);
+      if (twoFactorInitialError) {
+        setErrorMsg(twoFactorInitialError);
+        setResendNotice(null);
+      } else {
+        setErrorMsg(null);
+        setResendNotice('A fresh 6-digit verification code has been dispatched to your email.');
+      }
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
     }
-  }, [twoFactorPending]);
+  }, [twoFactorPending, twoFactorInitialError]);
 
   if (!twoFactorPending) return null;
 

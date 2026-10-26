@@ -10,6 +10,7 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   twoFactorPending: boolean;
+  twoFactorInitialError: string | null;
   pendingUserSession: { user: UserSession; token: string } | null;
   login: (credentials: LoginCredentials) => Promise<void>;
   registerCandidate: (payload: RegisterCandidatePayload, autoRedirect?: boolean) => Promise<AuthSessionResponse>;
@@ -29,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [twoFactorPending, setTwoFactorPending] = useState<boolean>(false);
+  const [twoFactorInitialError, setTwoFactorInitialError] = useState<string | null>(null);
   const [pendingUserSession, setPendingUserSession] = useState<{ user: UserSession; token: string } | null>(null);
   const router = useRouter();
 
@@ -128,11 +130,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (is2FAEnabled) {
         setPendingUserSession({ user: response.user, token: response.token });
         setTwoFactorPending(true);
+        setTwoFactorInitialError(null);
         // Automatically dispatch initial 2FA token to registered contact
         try {
           await api.resend2FA(response.user.email, true);
-        } catch (e) {
-          console.warn('[AuthContext] Initial 2FA dispatch warning:', e);
+        } catch (e: any) {
+          console.error('[AuthContext] ❌ Initial 2FA dispatch failure:', e);
+          setTwoFactorInitialError(e.message || 'Unable to dispatch verification code via email.');
         }
         return;
       }
@@ -233,6 +237,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const cancelTwoFactor = () => {
     setTwoFactorPending(false);
     setPendingUserSession(null);
+    setTwoFactorInitialError(null);
   };
 
   const switchUserRole = async (role: UserRole) => {
@@ -275,6 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         isLoading,
         twoFactorPending,
+        twoFactorInitialError,
         pendingUserSession,
         login,
         registerCandidate,
