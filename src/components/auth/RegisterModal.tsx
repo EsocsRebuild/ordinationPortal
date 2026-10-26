@@ -16,6 +16,7 @@ import { PhoneValidationResult } from '@/utils/phoneValidation';
 import { SearchableSelect } from '@/components/ui/SearchableSelect';
 import { InternationalPhoneInput } from '@/components/ui/InternationalPhoneInput';
 import { api } from '@/services/api';
+import { realtimeClient } from '@/services/realtime';
 import {
   X,
   User,
@@ -127,6 +128,21 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
       .catch(() => {});
   }, [isOpen]);
 
+  // Listen for realtime Admin hierarchy updates so candidate form is always fresh
+  useEffect(() => {
+    return realtimeClient.subscribe((event) => {
+      if (event.type === 'HIERARCHY_UPDATED') {
+        api.getHierarchy()
+          .then((res) => {
+            if (res && Array.isArray(res.hierarchy) && res.hierarchy.length > 0) {
+              setLiveHierarchy(res.hierarchy);
+            }
+          })
+          .catch(() => {});
+      }
+    });
+  }, []);
+
   // Rank state
   const [currentRank, setCurrentRank] = useState('Pastor');
   const [currentRankYear, setCurrentRankYear] = useState(2022);
@@ -146,6 +162,22 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
   const [customHouseOfPrayer, setCustomHouseOfPrayer] = useState('');
   const [isCustomHouse, setIsCustomHouse] = useState(false);
   const [passportPhotoUrl, setPassportPhotoUrl] = useState<string | null>(null);
+
+  // Synchronize selection if live hierarchy arrives from Admin Directorate
+  useEffect(() => {
+    if (liveHierarchy && liveHierarchy.length > 0) {
+      const provMatch = liveHierarchy.find((p) => p.name === province);
+      if (!provMatch) {
+        const firstProv = liveHierarchy[0];
+        setProvince(firstProv.name);
+        const firstDist = firstProv.districts[0];
+        setDistrict(firstDist?.name || '');
+        const firstBranch = firstDist?.branches[0];
+        setParish(firstBranch?.name || '');
+        setHouseOfPrayer(firstBranch?.housesOfPrayer?.[0] || 'Main House of Prayer');
+      }
+    }
+  }, [liveHierarchy, province]);
 
   // Security state
   const [password, setPassword] = useState('');

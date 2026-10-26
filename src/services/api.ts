@@ -476,6 +476,29 @@ class ApiService {
     }
     return data.data || data;
   }
+
+  // Dynamic Form Configuration
+  async getFormConfig(): Promise<{ config: any; hierarchy: any[]; ranks: any[] }> {
+    const res = await fetch('/api/form-config', {
+      headers: this.getHeaders(),
+    });
+    if (!res.ok) throw new Error('Failed to fetch form configuration');
+    const data = await res.json();
+    return data.data || data;
+  }
+
+  async saveFormConfig(payload: { config: any; performedBy?: string }): Promise<any> {
+    const res = await fetch('/api/form-config', {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to update form configuration');
+    }
+    return data.data || data;
+  }
 }
 
 export const api = new ApiService();
