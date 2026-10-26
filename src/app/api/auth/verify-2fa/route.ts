@@ -45,15 +45,21 @@ export async function POST(request: Request) {
         throw err;
       }
 
-      // Dispatch 2FA email directly to Mailpit
+      // Dispatch 2FA email directly to Mailpit across candidate hosts
       try {
-        await sendTwoFactorOtpEmail({
+        const emailResult = await sendTwoFactorOtpEmail({
           email: targetIdentifier,
           otp: otpResult.code,
           isResend,
         });
-      } catch (err) {
-        console.warn('[Verify2FA] Failed to dispatch 2FA OTP to Mailpit:', err);
+
+        if (emailResult.success) {
+          console.log(`[Verify2FA] ✉️ 2FA OTP code ${otpResult.code} successfully delivered to Mailpit for ${targetIdentifier} (Message ID: ${emailResult.messageId})`);
+        } else {
+          console.warn(`[Verify2FA] ⚠️ Mailpit dispatch could not connect: ${emailResult.error}. Code generated: ${otpResult.code}`);
+        }
+      } catch (err: any) {
+        console.warn('[Verify2FA] Failed to dispatch 2FA OTP to Mailpit:', err.message);
       }
 
       return NextResponse.json({

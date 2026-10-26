@@ -22,8 +22,20 @@ const DEFAULT_FROM: EmailRecipient = {
 };
 
 function getCandidateHosts(): string[] {
-  if (process.env.MAILPIT_HTTP_HOST) return [process.env.MAILPIT_HTTP_HOST];
-  return ['127.0.0.1', 'localhost', 'host.docker.internal', 'mailpit', '172.17.0.1'];
+  const customHost = process.env.MAILPIT_HTTP_HOST || process.env.MAILPIT_HOST;
+  const candidates = [
+    customHost,
+    'localhost',
+    '127.0.0.1',
+    'mailpit',
+    'host.docker.internal',
+    '172.17.0.1',
+    '172.18.0.1',
+    '172.19.0.1',
+    '172.20.0.1',
+  ].filter(Boolean) as string[];
+
+  return Array.from(new Set(candidates));
 }
 
 const MAILPIT_HTTP_PORT = parseInt(process.env.MAILPIT_HTTP_PORT || '8025', 10);
@@ -46,7 +58,42 @@ export function getChurchLogoBase64(): string {
 }
 
 /**
- * Sends an email via Mailpit HTTP API (port 8025) with graceful fallback to SMTP (port 1025)
+ * Persists an outbox copy of dispatched emails to local storage for inspection and resilience
+ */
+function recordOutboxEmail(options: SendEmailOptions, status: 'delivered' | 'failed', error?: string, messageId?: string) {
+  try {
+    const outboxDir = path.join(process.cwd(), 'data');
+    if (!fs.existsSync(outboxDir)) {
+      fs.mkdirSync(outboxDir, { recursive: true });
+    }
+    const outboxPath = path.join(outboxDir, 'mailpit_outbox.json');
+    let outbox: any[] = [];
+    if (fs.existsSync(outboxPath)) {
+      try {
+        outbox = JSON.parse(fs.readFileSync(outboxPath, 'utf8'));
+      } catch {
+        outbox = [];
+      }
+    }
+    outbox.unshift({
+      id: messageId || `outbox-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      to: options.to,
+      subject: options.subject,
+      status,
+      error,
+      preview: options.text?.slice(0, 200) || '',
+    });
+    // Keep last 100 entries
+    if (outbox.length > 100) outbox = outbox.slice(0, 100);
+    fs.writeFileSync(outboxPath, JSON.stringify(outbox, null, 2), 'utf8');
+  } catch (e) {
+    // Non-blocking
+  }
+}
+
+/**
+ * Sends an email via Mailpit HTTP API (port 8025) with graceful fallback to SMTP (port 1025) across all candidate environments
  */
 export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const recipients = Array.isArray(options.to) ? options.to : [options.to];
@@ -61,9 +108,11 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
     Text: options.text || options.html.replace(/<[^>]+>/g, ''),
   });
 
+  console.log(`[EmailService] Dispatching "${options.subject}" to ${recipients.map((r) => r.email).join(', ')}... Candidates:`, hosts);
+
   // 1. Try Mailpit HTTP REST API across available host aliases (/api/v1/send)
   for (const rawHost of hosts) {
-    const host = rawHost === 'localhost' ? '127.0.0.1' : rawHost;
+    const host = rawHost;
     try {
       const result = await new Promise<{ success: boolean; messageId?: string }>((resolve, reject) => {
         const req = http.request(
@@ -76,7 +125,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
               'Content-Type': 'application/json',
               'Content-Length': Buffer.byteLength(payload),
             },
-            timeout: 3000,
+            timeout: 2000,
           },
           (res) => {
             let body = '';
@@ -87,7 +136,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
                   const parsed = JSON.parse(body);
                   resolve({ success: true, messageId: parsed.ID });
                 } catch {
-                  resolve({ success: true });
+                  resolve({ success: true, messageId: `mailpit-${Date.now()}` });
                 }
               } else {
                 reject(new Error(`Mailpit HTTP status ${res.statusCode}: ${body}`));
@@ -97,91 +146,104 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
         );
 
         req.on('timeout', () => {
-          req.destroy(new Error(`Mailpit HTTP request to ${host} timed out`));
+          req.destroy(new Error(`Mailpit HTTP request to ${host}:${MAILPIT_HTTP_PORT} timed out`));
         });
         req.on('error', (err) => reject(err));
         req.write(payload);
         req.end();
       });
 
+      console.log(`[EmailService] ✅ Successfully delivered to Mailpit via HTTP on ${host}:${MAILPIT_HTTP_PORT} (ID: ${result.messageId})`);
+      recordOutboxEmail(options, 'delivered', undefined, result.messageId);
       return result;
-    } catch {
-      // Try next candidate host
+    } catch (err: any) {
+      console.warn(`[EmailService] HTTP candidate ${host}:${MAILPIT_HTTP_PORT} failed:`, err.message);
     }
   }
 
-  // 2. Fallback to direct SMTP via net.Socket (port 1025)
-  try {
-    const plainText = options.text || options.html.replace(/<[^>]+>/g, '');
-    const boundary = `====_NextPart_${Date.now()}_====`;
-    const toHeader = recipients.map((r) => (r.name ? `"${r.name}" <${r.email}>` : r.email)).join(', ');
+  // 2. Fallback to direct SMTP across available host aliases (port 1025)
+  console.log(`[EmailService] HTTP delivery unsuccessful across all hosts. Attempting SMTP fallback...`);
+  const plainText = options.text || options.html.replace(/<[^>]+>/g, '');
+  const boundary = `====_NextPart_${Date.now()}_====`;
+  const toHeader = recipients.map((r) => (r.name ? `"${r.name}" <${r.email}>` : r.email)).join(', ');
 
-    const rawMime = [
-      `From: "${from.name}" <${from.email}>`,
-      `To: ${toHeader}`,
-      `Subject: ${options.subject}`,
-      `Date: ${new Date().toUTCString()}`,
-      `MIME-Version: 1.0`,
-      `Content-Type: multipart/alternative; boundary="${boundary}"`,
-      '',
-      `--${boundary}`,
-      `Content-Type: text/plain; charset=UTF-8`,
-      `Content-Transfer-Encoding: 7bit`,
-      '',
-      plainText,
-      '',
-      `--${boundary}`,
-      `Content-Type: text/html; charset=UTF-8`,
-      `Content-Transfer-Encoding: 7bit`,
-      '',
-      options.html,
-      '',
-      `--${boundary}--`,
-      '',
-    ].join('\r\n');
+  const rawMime = [
+    `From: "${from.name}" <${from.email}>`,
+    `To: ${toHeader}`,
+    `Subject: ${options.subject}`,
+    `Date: ${new Date().toUTCString()}`,
+    `MIME-Version: 1.0`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    `Content-Type: text/plain; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+    '',
+    plainText,
+    '',
+    `--${boundary}`,
+    `Content-Type: text/html; charset=UTF-8`,
+    `Content-Transfer-Encoding: 7bit`,
+    '',
+    options.html,
+    '',
+    `--${boundary}--`,
+    '',
+  ].join('\r\n');
 
-    const smtpHost = process.env.MAILPIT_SMTP_HOST || (hosts[0] === 'localhost' ? '127.0.0.1' : hosts[0]) || '127.0.0.1';
-    const smtpResult = await new Promise<{ success: boolean; messageId?: string }>((resolve, reject) => {
-      const socket = net.createConnection({ host: smtpHost, port: MAILPIT_SMTP_PORT }, () => {
-        let step = 0;
-        socket.on('data', (data) => {
-          const resStr = data.toString();
-          if (step === 0 && resStr.startsWith('220')) {
-            step = 1;
-            socket.write('EHLO localhost\r\n');
-          } else if (step === 1 && resStr.startsWith('250')) {
-            step = 2;
-            socket.write(`MAIL FROM:<${from.email}>\r\n`);
-          } else if (step === 2 && resStr.startsWith('250')) {
-            step = 3;
-            socket.write(`RCPT TO:<${recipients[0].email}>\r\n`);
-          } else if (step === 3 && resStr.startsWith('250')) {
-            step = 4;
-            socket.write('DATA\r\n');
-          } else if (step === 4 && resStr.startsWith('354')) {
-            step = 5;
-            socket.write(`${rawMime}\r\n.\r\n`);
-          } else if (step === 5 && resStr.startsWith('250')) {
-            socket.end('QUIT\r\n');
-            resolve({ success: true, messageId: `smtp-${Date.now()}` });
-          } else if (resStr.startsWith('4') || resStr.startsWith('5')) {
-            socket.end();
-            reject(new Error(`SMTP error: ${resStr.trim()}`));
-          }
+  let lastSmtpError: string | null = null;
+  for (const rawHost of hosts) {
+    const smtpHost = rawHost;
+    try {
+      const smtpResult = await new Promise<{ success: boolean; messageId?: string }>((resolve, reject) => {
+        const socket = net.createConnection({ host: smtpHost, port: MAILPIT_SMTP_PORT }, () => {
+          let step = 0;
+          socket.on('data', (data) => {
+            const resStr = data.toString();
+            if (step === 0 && resStr.startsWith('220')) {
+              step = 1;
+              socket.write('EHLO localhost\r\n');
+            } else if (step === 1 && resStr.startsWith('250')) {
+              step = 2;
+              socket.write(`MAIL FROM:<${from.email}>\r\n`);
+            } else if (step === 2 && resStr.startsWith('250')) {
+              step = 3;
+              socket.write(`RCPT TO:<${recipients[0].email}>\r\n`);
+            } else if (step === 3 && resStr.startsWith('250')) {
+              step = 4;
+              socket.write('DATA\r\n');
+            } else if (step === 4 && resStr.startsWith('354')) {
+              step = 5;
+              socket.write(`${rawMime}\r\n.\r\n`);
+            } else if (step === 5 && resStr.startsWith('250')) {
+              socket.end('QUIT\r\n');
+              resolve({ success: true, messageId: `smtp-${Date.now()}` });
+            } else if (resStr.startsWith('4') || resStr.startsWith('5')) {
+              socket.end();
+              reject(new Error(`SMTP error: ${resStr.trim()}`));
+            }
+          });
         });
+
+        socket.setTimeout(2500, () => {
+          socket.destroy(new Error(`SMTP socket to ${smtpHost}:${MAILPIT_SMTP_PORT} timed out`));
+        });
+        socket.on('error', (err) => reject(err));
       });
 
-      socket.setTimeout(5000, () => {
-        socket.destroy(new Error('SMTP socket timed out'));
-      });
-      socket.on('error', (err) => reject(err));
-    });
-
-    return smtpResult;
-  } catch (smtpError: any) {
-    console.error('[EmailService] Mailpit SMTP fallback also failed:', smtpError.message);
-    return { success: false, error: smtpError.message };
+      console.log(`[EmailService] ✅ Successfully delivered to Mailpit via SMTP on ${smtpHost}:${MAILPIT_SMTP_PORT}`);
+      recordOutboxEmail(options, 'delivered', undefined, smtpResult.messageId);
+      return smtpResult;
+    } catch (err: any) {
+      lastSmtpError = err.message;
+      console.warn(`[EmailService] SMTP candidate ${smtpHost}:${MAILPIT_SMTP_PORT} failed:`, err.message);
+    }
   }
+
+  const finalError = lastSmtpError || 'All Mailpit HTTP and SMTP connection attempts failed';
+  console.error(`[EmailService] ❌ Could not deliver to Mailpit. Recording in local outbox:`, finalError);
+  recordOutboxEmail(options, 'failed', finalError);
+  return { success: false, error: finalError };
 }
 
 /**
