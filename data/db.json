@@ -59,6 +59,64 @@
       "paymentMethod": "Zenith Bank Church Direct Remittance"
     },
     {
+      "id": "cand-007",
+      "regNumber": "ESOCS/ORD/2026/7821",
+      "fullName": "Senior Apostle Daniel W. Briggs",
+      "email": "daniel.briggs@esocs.test",
+      "phone": "+234 803 777 9922",
+      "gender": "male",
+      "dateOfBirth": "1984-06-12",
+      "occupation": "Provincial Secretary / Civil Engineer",
+      "maritalStatus": "married",
+      "dateJoinedChurch": "2008-03-14",
+      "baptismDate": "2008-09-20",
+      "currentRank": "Senior Leader",
+      "currentRankYear": 2019,
+      "tenureYears": 7,
+      "tenureValid": true,
+      "targetRankId": "rank_apostle",
+      "targetRankName": "Apostle",
+      "province": "Diobu Province",
+      "district": "Diobu District",
+      "parish": "Diobu Central Cathedral (Provincial Seat)",
+      "branchPriestName": "Special Senior Apostle T. J. George",
+      "stage": "district_review",
+      "currentVettingTier": "district",
+      "submissionDate": "2026-10-21",
+      "lastUpdated": "2026-10-22",
+      "attendanceRecordPercentage": 98,
+      "conductRating": "exemplary",
+      "duesStatus": "cleared",
+      "duesAmountPaid": 65000,
+      "levyBreakdown": {
+        "branchLevy": 12000,
+        "districtLevy": 12000,
+        "provincialLevy": 16000,
+        "nationalFee": 85000,
+        "total": 125000
+      },
+      "tierApprovals": {
+        "branch": {
+          "approved": true,
+          "approverName": "Special Senior Apostle T. J. George (Diobu Rector)",
+          "comments": "Faithful in all provincial duties, highly recommended for elevation to Apostle.",
+          "date": "2026-10-21T10:00:00Z"
+        },
+        "district": {
+          "approved": true,
+          "approverName": "District Superintendent (Diobu District)",
+          "comments": "Cleared through District Character and Vetting Committee.",
+          "date": "2026-10-22T14:30:00Z"
+        }
+      },
+      "screeningNotes": [
+        "Nominated from Diobu Central Cathedral. Current Rank: Senior Leader. Endorsed for Holy Apostle Elevation."
+      ],
+      "actorName": "Diobu Provincial Secretariat",
+      "receiptNumber": "REC-2026-DIOBU-4412",
+      "paymentMethod": "Access Bank Direct Provincial Remittance"
+    },
+    {
       "id": "cand-006",
       "regNumber": "ESOCS/ORD/2026/6416",
       "fullName": "peter chima tester",
