@@ -44,8 +44,12 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
           </div>
 
           <div className="p-8 text-center space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
-              <Shield className="w-8 h-8" />
+            <div className="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto p-3 shadow-md">
+              <img
+                src="/brand/esocs-crest.png"
+                alt="ESOCS Crest"
+                className="w-full h-full object-contain"
+              />
             </div>
 
             <div className="space-y-2">
@@ -150,9 +154,13 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
         {/* High-Resolution Certificate Canvas */}
         <div className="p-6 md:p-10 bg-gradient-to-b from-[#FFFDF7] to-[#FDFBF4] dark:from-slate-950 dark:to-slate-900 print:p-0" id="printable-certificate">
           <div className="relative border-8 border-double border-[#C5A059] p-8 md:p-12 rounded-lg bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
-            {/* Watermark Crest Background */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
-              <Shield className="w-[500px] h-[500px] text-slate-900 dark:text-white" />
+            {/* Watermark Crest Background with Official ESOCS Crest */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.04] dark:opacity-[0.06] pointer-events-none select-none">
+              <img
+                src="/brand/esocs-crest.png"
+                alt="ESOCS Crest Watermark"
+                className="w-80 h-80 sm:w-[480px] sm:h-[480px] object-contain"
+              />
             </div>
 
             {/* Corner Filigrees */}
@@ -163,8 +171,12 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
 
             {/* Certificate Header */}
             <div className="text-center space-y-2 relative z-10">
-              <div className="inline-flex items-center justify-center p-3 bg-church-900 text-gold-400 rounded-full mb-1 shadow-md">
-                <Shield className="w-8 h-8" />
+              <div className="flex items-center justify-center mb-2">
+                <img
+                  src="/brand/esocs-crest.png"
+                  alt="ESOCS Holy Order Crest"
+                  className="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-md mx-auto"
+                />
               </div>
               <h1 className="font-serif text-xl sm:text-3xl font-bold tracking-tight text-[#0B132B] dark:text-slate-100 uppercase">
                 The Eternal Sacred Order of the Cherubim and Seraphim
@@ -220,12 +232,16 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
               {/* Central Golden Seal & QR Code */}
               <div className="flex flex-col items-center justify-center">
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full border-4 border-[#C5A059] bg-[#FAF6EE] dark:bg-slate-800 flex flex-col items-center justify-center p-2 text-center shadow-inner">
-                    <Shield className="w-6 h-6 text-[#B45309]" />
-                    <span className="text-[7px] font-bold uppercase tracking-tighter text-[#854D0E] dark:text-gold-300 mt-1">
+                  <div className="w-24 h-24 rounded-full border-4 border-[#C5A059] bg-gradient-to-br from-[#FFFDF7] via-[#FAF6EE] to-[#EBDCB7] dark:from-slate-800 dark:to-slate-900 flex flex-col items-center justify-center p-2 text-center shadow-md relative">
+                    <img
+                      src="/brand/esocs-crest.png"
+                      alt="Holy Order Crest"
+                      className="w-9 h-9 object-contain drop-shadow-xs"
+                    />
+                    <span className="text-[7px] font-bold uppercase tracking-tighter text-[#854D0E] dark:text-gold-300 mt-0.5">
                       HOLY ORDER SEAL
                     </span>
-                    <span className="text-[6px] text-slate-600 dark:text-slate-400">1925 • 2026</span>
+                    <span className="text-[6px] text-slate-600 dark:text-slate-400 font-mono">1925 &bull; 2026</span>
                   </div>
                 </div>
                 <div className="mt-3">

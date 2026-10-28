@@ -101,16 +101,14 @@ function CandidateDashboardContent() {
   const isConsecrated = viewMode === 'consecrated';
 
   const sectionTitles: Record<string, string> = {
-    overview: 'My Overview & Records',
-    clearance: 'Ordination Clearance',
-    payments: 'Payment & Fee Receipts',
-    pass: 'Ceremony Pass & Seating',
-    support: 'Support & Help Desk',
+    overview: isConsecrated ? 'Consecrated Minister Record' : 'My Overview & Records',
+    clearance: 'Ordination Clearance Progression',
+    payments: 'Statutory Fee Clearance',
+    pass: isConsecrated ? 'Ministerial Credential' : 'Ceremony Pass & Seating',
+    support: 'Synod Secretariat Desk',
   };
 
-  const currentSectionTitle = isConsecrated
-    ? 'Consecrated Minister Record'
-    : sectionTitles[tabParam] || 'My Overview & Records';
+  const currentSectionTitle = sectionTitles[tabParam] || (isConsecrated ? 'Consecrated Minister Record' : 'My Overview & Records');
 
   return (
     <AuthGuard allowedRoles={['candidate', 'super_admin']}>

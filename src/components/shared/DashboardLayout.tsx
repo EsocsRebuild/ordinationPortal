@@ -35,6 +35,7 @@ import {
   Sparkles,
   Receipt,
   MessageSquare,
+  ShieldCheck,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -119,10 +120,10 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
           },
           {
             id: 'pass',
-            title: 'Accreditation Pass & Pew',
+            title: 'Ministerial Credential',
             href: '/dashboard/candidate?tab=pass',
-            icon: QrCode,
-            badge: 'Ready',
+            icon: ShieldCheck,
+            badge: 'Active ✓',
             isActive: effectiveTab === 'pass',
           },
           {

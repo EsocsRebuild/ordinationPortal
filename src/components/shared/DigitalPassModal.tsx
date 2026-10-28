@@ -6,7 +6,7 @@ import { QrCodeSvg } from '@/components/ui/QrCodeSvg';
 import { Button } from '@/components/ui/Button';
 import { getRobingSpecifications } from '@/utils/ranks';
 import { formatDate } from '@/utils/formatters';
-import { Shield, Printer, X, CheckCircle2, User, Calendar, MapPin, Sparkles, Building, Lock, Check } from 'lucide-react';
+import { Shield, Printer, X, CheckCircle2, User, Calendar, MapPin, Sparkles, Building, Lock, Check, Crown, Award, ShieldCheck } from 'lucide-react';
 
 interface DigitalPassModalProps {
   candidate: CandidateProfile;
@@ -31,15 +31,17 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
 
   const robing = getRobingSpecifications(candidate.targetRankId);
   const verifyUrl = `https://ordination.esocs.church/verify/${candidate.id}`;
+  const isOrdained = candidate.stage === 'ordained';
 
   // Formatted date
-  const rawDate = candidate.ordinationDate || candidate.dateOrdained;
+  const rawDate = candidate.dateOrdained || candidate.ordinationDate;
   const ceremonyDateFormatted = rawDate && !rawDate.includes('T')
     ? rawDate
     : 'Saturday, November 14, 2026';
 
   const assignedSeat = candidate.seatNumber || 'Zone A — Chancel Nave Pew 14';
   const presidingOfficiant = candidate.robingOfficer || 'His Most Eminence, The Baba Aladura & Prelate';
+  const certNumber = candidate.certificateNumber || `CERT-2026-${candidate.targetRankId.replace('rank_', '').toUpperCase().slice(0, 8)}-6416`;
 
   const handlePrint = () => {
     window.print();
@@ -162,21 +164,23 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
         <div className="bg-slate-900 text-white px-5 sm:px-6 py-3.5 flex items-center justify-between border-b border-slate-800 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-400">
-              <Shield className="w-5 h-5" />
+              {isOrdained ? <Crown className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-white tracking-wide font-['Raleway']">
-                Official Ordination Admission Pass
+                {isOrdained ? 'Official Ministerial Credential' : 'Official Ordination Admission Pass'}
               </h2>
               <p className="text-[11px] text-amber-400 font-medium">
-                Holy Order General Conference 2026 &bull; Mount Zion Sanctuary
+                {isOrdained
+                  ? 'Holy Synod Consecrated Clergy Roster • Central Secretariat Worldwide'
+                  : 'Holy Order General Conference 2026 • Mount Zion Sanctuary'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
             <span className="text-[11px] font-mono font-bold px-2.5 py-1 bg-slate-800 border border-amber-400/40 rounded-lg text-amber-300">
-              {candidate.regNumber}
+              {isOrdained ? certNumber : candidate.regNumber}
             </span>
             <button
               onClick={onClose}
@@ -188,7 +192,7 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
         </div>
 
         {/* ========================================================================= */}
-        {/* PRINTABLE PASS CARD (BEAUTIFULLY FORMATTED FOR ON-SCREEN & PHYSICAL PRINT)*/}
+        {/* PRINTABLE PASS / CREDENTIAL CARD (FOR ON-SCREEN & PHYSICAL PRINT)         */}
         {/* ========================================================================= */}
         <div className="p-5 sm:p-7 max-h-[78vh] overflow-y-auto" id="printable-pass">
           <div className="border-2 border-amber-600/70 rounded-2xl p-5 sm:p-6 bg-gradient-to-b from-amber-50/40 via-white to-amber-50/30 dark:from-slate-900 dark:via-[#090e1c] dark:to-slate-900/90 shadow-sm relative overflow-hidden text-slate-900 dark:text-slate-100">
@@ -211,7 +215,9 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
                     The Eternal Sacred Order of the Cherubim & Seraphim
                   </span>
                   <h3 className="text-base sm:text-lg font-bold font-serif text-slate-900 dark:text-white leading-tight">
-                    Annual General Conference & Ordination Convocation 2026
+                    {isOrdained
+                      ? 'Annual General Conference & Ministerial Consecration Record'
+                      : 'Annual General Conference & Ordination Convocation 2026'}
                   </h3>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium">
                     National Headquarters Cathedral &bull; Mount Zion, Ebute Metta, Lagos
@@ -220,16 +226,30 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
               </div>
 
               <div className="flex flex-col items-center sm:items-end shrink-0">
-                <span className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-xs">
-                  Official Gate Pass
-                </span>
-                <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-1">
-                  Gate 2 Access
-                </span>
+                {isOrdained ? (
+                  <>
+                    <span className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-xs flex items-center gap-1.5">
+                      <Crown className="w-3.5 h-3.5" />
+                      <span>Consecrated Clergy</span>
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" /> Active Synod Roster
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider shadow-xs">
+                      Official Gate Pass
+                    </span>
+                    <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 mt-1">
+                      Gate 2 Access
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Candidate Identity Dossier */}
+            {/* Candidate / Minister Identity Dossier */}
             <div className="py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center sm:items-start gap-5">
               
               {/* Photo & QR Strip */}
@@ -244,11 +264,13 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
                   ) : (
                     <div className="flex flex-col items-center text-slate-400">
                       <User className="w-8 h-8 text-amber-500" />
-                      <span className="text-[9px] font-mono font-bold text-amber-500 mt-1">ACCREDITED</span>
+                      <span className="text-[9px] font-mono font-bold text-amber-500 mt-1">
+                        {isOrdained ? 'ORDAINED' : 'ACCREDITED'}
+                      </span>
                     </div>
                   )}
                   <div className="absolute bottom-0 inset-x-0 bg-amber-500 text-slate-950 font-bold text-[9px] text-center py-0.5 uppercase tracking-wider">
-                    Candidate
+                    {isOrdained ? 'Consecrated' : 'Candidate'}
                   </div>
                 </div>
 
@@ -257,11 +279,11 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
                 </div>
               </div>
 
-              {/* Candidate Metadata Details */}
+              {/* Minister / Candidate Metadata Details */}
               <div className="space-y-2.5 flex-1 text-center sm:text-left min-w-0">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
-                    Candidate Legal & Ecclesiastical Name
+                    {isOrdained ? 'Consecrated Minister Legal & Ecclesiastical Name' : 'Candidate Legal & Ecclesiastical Name'}
                   </span>
                   <h2 className="text-xl sm:text-2xl font-serif font-extrabold text-slate-900 dark:text-white leading-tight break-words">
                     {candidate.fullName}
@@ -269,15 +291,27 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
                 </div>
 
                 {/* Rank Elevation Card */}
-                <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-2 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs">
-                  <span className="text-slate-600 dark:text-slate-400">
-                    Current: <strong className="text-slate-900 dark:text-white">{candidate.currentRank}</strong>
-                  </span>
-                  <span className="text-amber-500 font-bold">&rarr;</span>
-                  <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold border border-amber-500/40">
-                    Ordaining To: {candidate.targetRankName}
-                  </span>
-                </div>
+                {isOrdained ? (
+                  <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-2 p-2 rounded-xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/30 text-xs">
+                    <span className="flex items-center gap-1.5 font-bold text-amber-900 dark:text-amber-300">
+                      <Crown className="w-4 h-4 text-amber-500" />
+                      <span>Consecrated Sacred Order:</span>
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-lg bg-amber-500 text-slate-950 font-extrabold uppercase tracking-wide">
+                      {candidate.targetRankName}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex flex-wrap items-center justify-center sm:justify-start gap-2 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs">
+                    <span className="text-slate-600 dark:text-slate-400">
+                      Current: <strong className="text-slate-900 dark:text-white">{candidate.currentRank}</strong>
+                    </span>
+                    <span className="text-amber-500 font-bold">&rarr;</span>
+                    <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/20 text-amber-900 dark:text-amber-300 font-bold border border-amber-500/40">
+                      Ordaining To: {candidate.targetRankName}
+                    </span>
+                  </div>
+                )}
 
                 {/* Canonical Jurisdiction */}
                 <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400">
@@ -299,39 +333,45 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
                 <div className="pt-1 flex items-center justify-center sm:justify-start gap-2 text-xs">
                   <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-500/30 inline-flex items-center gap-1.5 text-[11px]">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    Canonically Cleared & Ratified by Holy Synod
+                    {isOrdained
+                      ? 'Duly Consecrated & Invested by Holy Synod'
+                      : 'Canonically Cleared & Ratified by Holy Synod'}
                   </span>
                 </div>
               </div>
 
             </div>
 
-            {/* Sanctuary Convocation Logistics (4 Grid Blocks) */}
+            {/* Sanctuary Convocation / Consecration Logistics (4 Grid Blocks) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 py-4 border-b border-slate-200 dark:border-slate-800 text-xs">
               
               <div className="p-3 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-center sm:text-left">
                 <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 block mb-0.5">
-                  Convocation Date
+                  {isOrdained ? 'Date of Consecration' : 'Convocation Date'}
                 </span>
                 <p className="font-bold text-slate-900 dark:text-white text-xs leading-tight">
                   {ceremonyDateFormatted}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-0.5">07:30 AM Processional</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {isOrdained ? 'Solemn Consecration' : '07:30 AM Processional'}
+                </p>
               </div>
 
               <div className="p-3 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-center sm:text-left">
                 <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 block mb-0.5">
-                  Chancel Gate & Pew
+                  {isOrdained ? 'Canonical Roll & Cert' : 'Chancel Gate & Pew'}
                 </span>
                 <p className="font-bold text-slate-900 dark:text-white text-xs leading-tight">
-                  {assignedSeat}
+                  {isOrdained ? certNumber : assignedSeat}
                 </p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">Gate 2 Admitted</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                  {isOrdained ? 'Permanent Synod Roll' : 'Gate 2 Admitted'}
+                </p>
               </div>
 
               <div className="p-3 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-center sm:text-left">
                 <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 block mb-0.5">
-                  Cathedral Venue
+                  {isOrdained ? 'Consecration Cathedral' : 'Cathedral Venue'}
                 </span>
                 <p className="font-bold text-slate-900 dark:text-white text-xs leading-tight truncate">
                   Mount Zion Cathedral
@@ -341,12 +381,14 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
 
               <div className="p-3 bg-white dark:bg-slate-900/90 rounded-xl border border-slate-200 dark:border-slate-800 text-center sm:text-left">
                 <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 block mb-0.5">
-                  Presiding Minister
+                  {isOrdained ? 'Consecrating Prelate' : 'Presiding Minister'}
                 </span>
                 <p className="font-bold text-slate-900 dark:text-white text-xs leading-tight truncate">
                   {presidingOfficiant}
                 </p>
-                <p className="text-[10px] text-slate-500 mt-0.5">Grand Consecrator</p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  {isOrdained ? 'Prelate & Supreme Head' : 'Grand Consecrator'}
+                </p>
               </div>
 
             </div>
@@ -354,31 +396,43 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
             {/* Liturgical Vestment & Robing Standard */}
             <div className="py-3.5 border-b border-slate-200 dark:border-slate-800 text-xs space-y-1.5">
               <span className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 block tracking-wider">
-                Sanctuary Robing & Liturgical Standard
+                {isOrdained ? 'Authorized Sacred Vestment & Liturgical Dignity' : 'Sanctuary Robing & Liturgical Standard'}
               </span>
               <div className="p-2.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
                 <strong className="text-amber-800 dark:text-amber-300 font-bold">Vestment Robe:</strong> {robing.vestmentColor} &bull;{' '}
                 <strong className="text-amber-800 dark:text-amber-300 font-bold">Liturgical Stole:</strong> {robing.stoleType} &bull;{' '}
-                <strong className="text-amber-800 dark:text-amber-300 font-bold">Protocol:</strong> Unshod Holy Sanctuary Entry &bull; Consecration Hymnal Required.
+                {isOrdained ? (
+                  <>
+                    <strong className="text-amber-800 dark:text-amber-300 font-bold">Ministerial Authority:</strong> Canonically Authorized Sanctuary Officiant in all parishes and dioceses worldwide.
+                  </>
+                ) : (
+                  <>
+                    <strong className="text-amber-800 dark:text-amber-300 font-bold">Protocol:</strong> Unshod Holy Sanctuary Entry &bull; Consecration Hymnal Required.
+                  </>
+                )}
               </div>
             </div>
 
             {/* Official Attestation & Signatures Strip */}
             <div className="pt-4 flex items-center justify-between gap-4 text-xs">
               <div className="text-left">
-                <span className="text-[10px] text-slate-400 block">Candidate Signature & Date</span>
+                <span className="text-[10px] text-slate-400 block">
+                  {isOrdained ? 'General Secretary & Central Seal' : 'Candidate Signature & Date'}
+                </span>
                 <div className="w-36 sm:w-44 border-b border-slate-400 dark:border-slate-600 mt-3 pt-1">
                   <span className="font-serif italic text-slate-700 dark:text-slate-300 text-xs">
-                    {candidate.fullName}
+                    {isOrdained ? 'S. O. Amodu, SSA' : candidate.fullName}
                   </span>
                 </div>
               </div>
 
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 block">Grand Registrar & Secretariat Seal</span>
+                <span className="text-[10px] text-slate-400 block">
+                  {isOrdained ? 'Patriarchal Signature & Altar Seal' : 'Grand Registrar & Secretariat Seal'}
+                </span>
                 <div className="w-36 sm:w-48 border-b border-slate-400 dark:border-slate-600 mt-3 pt-1 flex items-center justify-end gap-1">
                   <span className="font-serif text-[11px] font-bold text-amber-800 dark:text-amber-400">
-                    Dr. A. O. Oladipo, Reg.
+                    {isOrdained ? 'Baba Aladura, Prelate' : 'Dr. A. O. Oladipo, Reg.'}
                   </span>
                   <CheckCircle2 className="w-3 h-3 text-emerald-500 inline" />
                 </div>
@@ -388,7 +442,7 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
             {/* Bottom Security Monospace Trace */}
             <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[9px] font-mono text-slate-400">
               <span>SECURITY HASH: SHA256-ORD-2026-{candidate.regNumber.replace(/[^a-zA-Z0-9]/g, '')}</span>
-              <span>NON-TRANSFERABLE &bull; SACRED SANCTUARY USE ONLY</span>
+              <span>{isOrdained ? 'HOLY SYNOD ECCLESIASTICAL ROSTER' : 'NON-TRANSFERABLE • SACRED SANCTUARY USE ONLY'}</span>
             </div>
 
           </div>
@@ -397,7 +451,9 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
         {/* Footer Actions (Hidden in Print) */}
         <div className="bg-slate-50 dark:bg-slate-950 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 print:hidden">
           <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hidden sm:inline">
-            Issued for Holy Order Session 2026 &bull; Present at Cathedral Check-in
+            {isOrdained
+              ? 'Official Ministerial Credential • Registered with Central Secretariat Worldwide'
+              : 'Issued for Holy Order Session 2026 • Present at Cathedral Check-in'}
           </span>
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <Button
@@ -415,7 +471,7 @@ export function DigitalPassModal({ candidate, isOpen = true, onClose }: DigitalP
               onClick={handlePrint}
               className="flex-1 sm:flex-none font-bold shadow-md cursor-pointer"
             >
-              Print Pass / Save PDF
+              {isOrdained ? 'Print Credential / Save PDF' : 'Print Pass / Save PDF'}
             </Button>
           </div>
         </div>

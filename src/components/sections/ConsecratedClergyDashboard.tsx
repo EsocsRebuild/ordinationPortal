@@ -212,8 +212,8 @@ export function ConsecratedClergyDashboard({
               onClick={() => setShowPassModal(true)}
               className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             >
-              <QrCode className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>Clergy Pass</span>
+              <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Ministerial Credential</span>
             </button>
 
             <button

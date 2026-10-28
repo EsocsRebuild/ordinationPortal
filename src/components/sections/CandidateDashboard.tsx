@@ -857,11 +857,11 @@ export function CandidateDashboard({
                 <Button
                   variant="gold"
                   size="md"
-                  icon={<QrCode className="w-4 h-4 shrink-0" />}
+                  icon={isOrdained ? <ShieldCheck className="w-4 h-4 shrink-0" /> : <QrCode className="w-4 h-4 shrink-0" />}
                   onClick={() => setShowPassModal(true)}
                   className="w-full justify-center shadow-md font-bold text-xs min-h-[44px] py-2.5 px-3 leading-tight"
                 >
-                  <span className="truncate">Digital Ceremony Pass</span>
+                  <span className="truncate">{isOrdained ? 'Ministerial Credential' : 'Digital Ceremony Pass'}</span>
                 </Button>
               </Tooltip>
             ) : (
