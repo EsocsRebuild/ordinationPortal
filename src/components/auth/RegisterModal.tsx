@@ -1135,7 +1135,7 @@ export function RegisterModal({ isOpen, onClose }: RegisterModalProps) {
                   <span>Next Steps:</span>
                 </div>
                 <ol className="list-decimal list-inside space-y-1.5 text-slate-600 dark:text-slate-400">
-                  <li><strong>Parish Pastor Review:</strong> Your parish leadership will verify church attendance and records.</li>
+                  <li><strong>Branch Level Clearance:</strong> Your branch level leadership and secretariat will verify local records, attendance, and canonical standing.</li>
                   <li><strong>Real-time Tracking:</strong> Follow each stage of approval live from your candidate dashboard.</li>
                   <li><strong>Dues & Levies:</strong> You can review and clear statutory dues from your personal payment desk.</li>
                   <li><strong>Ceremony Pass & Robing:</strong> Official admission pass and seating are unlocked once final approval is confirmed.</li>

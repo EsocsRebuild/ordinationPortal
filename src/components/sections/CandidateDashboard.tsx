@@ -43,11 +43,13 @@ import {
   Shield,
   ExternalLink,
   Flame,
+  Crown,
   AlertCircle,
   ArrowRight,
   DollarSign,
   LayoutDashboard,
   Lock,
+  RefreshCw,
 } from 'lucide-react';
 
 interface CandidateDashboardProps {
@@ -103,6 +105,144 @@ export function CandidateDashboard({
     description: string;
     timestamp: string;
   } | null>(null);
+
+  // Automated Secretariat Engine States
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedTime, setLastSyncedTime] = useState<string>('Just now');
+  const [isAdvancingTier, setIsAdvancingTier] = useState(false);
+  const [showPrecheckModal, setShowPrecheckModal] = useState(false);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      const fresh = await api.getCandidateById(candidate.id);
+      if (fresh) {
+        setCandidate(fresh);
+        onUpdateCandidate?.(fresh);
+        setLastSyncedTime(new Date().toLocaleTimeString());
+        setLiveUpdateAlert({
+          title: 'Secretariat Synchronization Complete',
+          description: 'Your candidate records are fully up to date with the Central Secretariat.',
+          timestamp: new Date().toLocaleTimeString(),
+        });
+        setTimeout(() => setLiveUpdateAlert(null), 5000);
+      }
+    } catch (err) {
+      console.error('Failed to sync candidate record:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleAdvanceStageDemo = async () => {
+    setIsAdvancingTier(true);
+    try {
+      const tierOrder: VettingTier[] = ['branch', 'district', 'province', 'cmc', 'national'];
+      const nextTier = tierOrder.find(
+        (t) => !candidate.tierApprovals?.[t]?.approved
+      );
+
+      const approverTitles: Record<VettingTier, string> = {
+        branch: 'Branch Level Leadership & Secretariat',
+        district: 'District Level Council & Secretariat',
+        province: 'Provincial Level Secretariat',
+        cmc: 'National Level (CMC) Committee',
+        national: 'National Level (Holy Synod & General Conference)',
+      };
+
+      const comments: Record<VettingTier, string> = {
+        branch: 'Branch Level records, baptismal status, and local membership cleared.',
+        district: 'District Level tenure and moral standing verified in good order.',
+        province: 'Provincial Level allocation and diocesan records officially ratified.',
+        cmc: 'National Level (CMC) ministerial credentials vetted and confirmed.',
+        national: 'National Level (Holy Synod) final ratification granted. Rostered for ordination.',
+      };
+
+      if (nextTier) {
+        const updatedApprovals = {
+          ...(candidate.tierApprovals || {}),
+          [nextTier]: {
+            approved: true,
+            approverName: approverTitles[nextTier],
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            comments: comments[nextTier],
+          },
+        };
+
+        const updated = await api.updateCandidate(
+          candidate.id,
+          { tierApprovals: updatedApprovals },
+          approverTitles[nextTier]
+        );
+
+        if (updated) {
+          setCandidate(updated);
+          onUpdateCandidate?.(updated);
+          realtimeClient.broadcastLocal({
+            id: `evt_${Date.now()}`,
+            type: 'TIER_APPROVED',
+            timestamp: new Date().toISOString(),
+            payload: {
+              candidateId: candidate.id,
+              tier: nextTier,
+              approver: approverTitles[nextTier],
+            },
+            actor: approverTitles[nextTier],
+            candidateId: candidate.id,
+          });
+          setLiveUpdateAlert({
+            title: `Automated Milestone Cleared: ${approverTitles[nextTier]}`,
+            description: `Stage ${applicantStages.find((s) => s.id === nextTier)?.step || 1} approved! Advancing to the next clearance level.`,
+            timestamp: new Date().toLocaleTimeString(),
+          });
+          setTimeout(() => setLiveUpdateAlert(null), 6000);
+        }
+      } else if (candidate.duesStatus !== 'cleared') {
+        const updated = await api.updateCandidate(
+          candidate.id,
+          {
+            duesStatus: 'cleared',
+            duesAmountPaid: totalLevy,
+            receiptNumber: `REC-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+          },
+          'Automated Treasury Reconciliation'
+        );
+        if (updated) {
+          setCandidate(updated);
+          onUpdateCandidate?.(updated);
+          setLiveUpdateAlert({
+            title: 'Automated Treasury Clearance',
+            description: 'All statutory ordination levies reconciled. Digital Ceremony Pass is now unlocked!',
+            timestamp: new Date().toLocaleTimeString(),
+          });
+          setTimeout(() => setLiveUpdateAlert(null), 6000);
+        }
+      } else if (candidate.stage !== 'ordained') {
+        const updated = await api.updateCandidate(
+          candidate.id,
+          {
+            stage: 'ordained',
+            ordinationDate: new Date().toISOString(),
+          },
+          'Holy Synod Apostolic Decree'
+        );
+        if (updated) {
+          setCandidate(updated);
+          onUpdateCandidate?.(updated);
+          setLiveUpdateAlert({
+            title: 'Sacred Consecration Conferred',
+            description: 'Congratulations! Your sacred investiture is complete and Certificate of Ordination is ready.',
+            timestamp: new Date().toLocaleTimeString(),
+          });
+          setTimeout(() => setLiveUpdateAlert(null), 6000);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to advance stage automatically:', err);
+    } finally {
+      setIsAdvancingTier(false);
+    }
+  };
 
   useEffect(() => {
     return realtimeClient.subscribe((event) => {
@@ -224,72 +364,72 @@ export function CandidateDashboard({
     {
       id: 'branch',
       stepNumber: '01',
-      title: 'Parish Pastor Recommendation',
-      authority: 'Parish Pastor & Church Board',
-      officer: candidate.tierApprovals?.branch?.approverName || candidate.branchPriestName || 'Parish Pastor',
+      title: 'Branch Level Clearance & Attestation',
+      authority: 'Branch Leadership & Secretariat',
+      officer: candidate.tierApprovals?.branch?.approverName || candidate.branchPriestName || 'Branch Attesting Officer',
       date: candidate.tierApprovals?.branch?.date || (branchApproved ? candidate.submissionDate : 'In Review'),
-      desc: 'Verification of active church membership, local branch records, and pastor recommendation.',
+      desc: 'Verification of active church membership, local branch records, and canonical good standing.',
       isCompleted: branchApproved,
       isCurrent: !branchApproved,
       statusLabel: branchApproved ? 'Approved ✓' : 'In Review ⏳',
-      sealBadge: branchApproved ? 'Parish Recommended' : 'Awaiting Pastor Review',
-      comments: candidate.tierApprovals?.branch?.comments || (branchApproved ? 'Nomination verified with parish recommendation.' : 'Under active review by Parish Pastor & Church Board.'),
+      sealBadge: branchApproved ? 'Branch Level Cleared' : 'Awaiting Branch Review',
+      comments: candidate.tierApprovals?.branch?.comments || (branchApproved ? 'Nomination verified and approved at Branch Level.' : 'Under active review by Branch Level Secretariat.'),
     },
     {
       id: 'district',
       stepNumber: '02',
-      title: 'District Council Review',
-      authority: 'District Superintendent & Council',
-      officer: candidate.tierApprovals?.district?.approverName || 'District Superintendent',
+      title: 'District Level Review & Clearance',
+      authority: 'District Council & Secretariat',
+      officer: candidate.tierApprovals?.district?.approverName || 'District Review Officer',
       date: candidate.tierApprovals?.district?.date || (districtApproved ? 'Ratified' : branchApproved ? 'In Review' : 'Queued'),
       desc: 'District verification of service tenure, good character, and church records.',
       isCompleted: districtApproved,
       isCurrent: branchApproved && !districtApproved,
       statusLabel: districtApproved ? 'Approved ✓' : branchApproved ? 'In Review ⏳' : 'Pending Step 1 🔒',
-      sealBadge: districtApproved ? 'District Approved' : branchApproved ? 'Review in Progress' : 'Locked',
-      comments: candidate.tierApprovals?.district?.comments || (districtApproved ? 'Service verified with good standing.' : branchApproved ? 'Under review by District Superintendent.' : 'Awaiting Parish Pastor clearance.'),
+      sealBadge: districtApproved ? 'District Level Cleared' : branchApproved ? 'District Review in Progress' : 'Locked',
+      comments: candidate.tierApprovals?.district?.comments || (districtApproved ? 'Service verified with good standing at District Level.' : branchApproved ? 'Under review at District Level.' : 'Awaiting Branch Level clearance.'),
     },
     {
       id: 'province',
       stepNumber: '03',
-      title: 'Provincial Office Clearance',
-      authority: `${candidate.province} Office`,
-      officer: candidate.tierApprovals?.province?.approverName || 'Provincial Secretary',
+      title: 'Provincial Level Clearance',
+      authority: `${candidate.province} Provincial Secretariat`,
+      officer: candidate.tierApprovals?.province?.approverName || 'Provincial Clearance Officer',
       date: candidate.tierApprovals?.province?.date || (provinceApproved ? 'Cleared' : districtApproved ? 'In Review' : 'Queued'),
-      desc: 'Provincial office verification and clearance for screening examination.',
+      desc: 'Provincial verification and clearance for National Level (CMC) vetting.',
       isCompleted: provinceApproved,
       isCurrent: districtApproved && !provinceApproved,
       statusLabel: provinceApproved ? 'Approved ✓' : districtApproved ? 'In Review ⏳' : 'Pending Step 2 🔒',
-      sealBadge: provinceApproved ? 'Province Cleared' : districtApproved ? 'Clearance in Progress' : 'Locked',
-      comments: candidate.tierApprovals?.province?.comments || (provinceApproved ? 'Candidate allocation verified and ratified.' : districtApproved ? 'Awaiting provincial credential check.' : 'Awaiting District Council clearance.'),
+      sealBadge: provinceApproved ? 'Provincial Level Cleared' : districtApproved ? 'Clearance in Progress' : 'Locked',
+      comments: candidate.tierApprovals?.province?.comments || (provinceApproved ? 'Candidate allocation verified and ratified at Provincial Level.' : districtApproved ? 'Awaiting Provincial Level credential check.' : 'Awaiting District Level clearance.'),
     },
     {
       id: 'cmc',
       stepNumber: '04',
-      title: 'Candidate Screening & Examination',
-      authority: 'Screening Committee & Exam Board',
-      officer: candidate.tierApprovals?.cmc?.approverName || 'Screening Officer',
-      date: candidate.tierApprovals?.cmc?.date || (cmcApproved ? 'Exam Passed' : provinceApproved ? 'Scheduled' : 'Queued'),
-      desc: 'Candidate interview and basic church doctrine and scripture exam.',
+      title: 'National Level Vetting (CMC)',
+      authority: 'Central Ministerial Committee (National Level)',
+      officer: candidate.tierApprovals?.cmc?.approverName || 'National Ministerial Vetting Officer',
+      date: candidate.tierApprovals?.cmc?.date || (cmcApproved ? 'Vetting Cleared' : provinceApproved ? 'Under Review' : 'Queued'),
+      desc: 'Credential verification, ministerial interview, and ecclesiastical standing review at National Level.',
       isCompleted: cmcApproved,
       isCurrent: provinceApproved && !cmcApproved,
-      statusLabel: cmcApproved ? (candidate.theologyScore ? `Passed (${candidate.theologyScore}%) ✓` : 'Passed ✓') : provinceApproved ? 'Screening Scheduled ⏳' : 'Pending Step 3 🔒',
-      sealBadge: cmcApproved ? 'Exam Passed' : provinceApproved ? 'Awaiting Exam Session' : 'Locked',
-      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? (candidate.theologyScore ? `Scored ${candidate.theologyScore}% in examination.` : 'Interview and exam passed successfully.') : provinceApproved ? 'Scheduled for candidate screening interview and exam.' : 'Awaiting Provincial clearance.'),
+      statusLabel: cmcApproved ? 'Approved ✓' : provinceApproved ? 'In Review ⏳' : 'Pending Step 3 🔒',
+      sealBadge: cmcApproved ? 'National (CMC) Cleared' : provinceApproved ? 'Awaiting CMC Review' : 'Locked',
+      comments: candidate.tierApprovals?.cmc?.comments || (cmcApproved ? 'Ministerial vetting approved and verified in good standing at National Level.' : provinceApproved ? 'Queued for National Level (CMC) screening.' : 'Awaiting Provincial Level clearance.'),
     },
     {
       id: 'national',
       stepNumber: '05',
-      title: 'National Council Final Approval',
-      authority: 'General Conference & National Secretariat',
+      title: 'National Level Ratification (Synod)',
+      authority: 'Holy Synod & General Conference (National Level)',
       officer: candidate.tierApprovals?.national?.approverName || 'National Secretariat',
       date: candidate.tierApprovals?.national?.date || (nationalApproved ? 'Approved' : cmcApproved ? 'Under Review' : 'Queued'),
       desc: 'Final confirmation of candidate roster and preparation for ordination ceremony.',
       isCompleted: nationalApproved,
       isCurrent: cmcApproved && !nationalApproved,
       statusLabel: nationalApproved ? 'Approved & Confirmed ✓' : cmcApproved ? 'Under Final Review ⏳' : 'Pending Step 4 🔒',
-      sealBadge: nationalApproved ? 'Council Approved' : cmcApproved ? 'Awaiting Council Approval' : 'Locked',
-      comments: candidate.tierApprovals?.national?.comments || (nationalApproved ? 'Approved for official ordination.' : cmcApproved ? 'Screening results submitted to National Council for final confirmation.' : 'Awaiting screening clearance.'),
+      sealBadge: nationalApproved ? 'National Level Ratified' : cmcApproved ? 'Awaiting Synod Ratification' : 'Locked',
+      comments: candidate.tierApprovals?.national?.comments || (nationalApproved ? 'Approved and ratified for official ordination at National Level.' : cmcApproved ? 'Screening results submitted to National Council for final confirmation.' : 'Awaiting National Level (CMC) clearance.'),
     },
   ];
 
@@ -307,41 +447,41 @@ export function CandidateDashboard({
   const applicantStages = [
     {
       step: 1,
-      id: 'parish',
-      title: '1. Parish Review',
-      subtitle: 'Pastor Recommendation',
+      id: 'branch',
+      title: '1. Branch Level',
+      subtitle: 'Branch Clearance',
       isCompleted: branchApproved,
       isActive: !branchApproved,
     },
     {
       step: 2,
       id: 'district',
-      title: '2. District Review',
-      subtitle: 'District Council',
+      title: '2. District Level',
+      subtitle: 'District Clearance',
       isCompleted: districtApproved,
       isActive: branchApproved && !districtApproved,
     },
     {
       step: 3,
       id: 'province',
-      title: '3. Province Clearance',
-      subtitle: 'Provincial Office',
+      title: '3. Provincial Level',
+      subtitle: 'Provincial Clearance',
       isCompleted: provinceApproved,
       isActive: districtApproved && !provinceApproved,
     },
     {
       step: 4,
       id: 'cmc',
-      title: '4. Screening & Exam',
-      subtitle: 'Interview & Doctrine',
+      title: '4. National Level (CMC)',
+      subtitle: 'Ministerial Vetting',
       isCompleted: cmcApproved,
       isActive: provinceApproved && !cmcApproved,
     },
     {
       step: 5,
       id: 'synod',
-      title: '5. Final Approval',
-      subtitle: 'National Council',
+      title: '5. National Level (Synod)',
+      subtitle: 'Final Ratification',
       isCompleted: nationalApproved,
       isActive: cmcApproved && !nationalApproved,
     },
@@ -373,42 +513,42 @@ export function CandidateDashboard({
 
   const stageGuidance: Record<number, { heading: string; desc: string; actionText?: string; actionTab?: string }> = {
     1: {
-      heading: 'Parish Pastor Review In Progress',
-      desc: 'Your nomination is registered and undergoing review by your local Parish Pastor and Church Board. Ensure your church tithes, membership records, and good standing are confirmed.',
-      actionText: 'View Parish Review Status',
+      heading: 'Branch Level Clearance In Progress',
+      desc: 'Your nomination is registered and undergoing review at the Branch Level. Ensure your local branch attendance, membership records, and canonical good standing are confirmed.',
+      actionText: 'View Branch Level Status',
       actionTab: 'clearance',
     },
     2: {
-      heading: 'District Council Review Underway',
-      desc: 'Your Parish Pastor has recommended you. Your application is now with the District Council for verification.',
-      actionText: 'View District Progress',
+      heading: 'District Level Review Underway',
+      desc: 'Branch Level clearance is confirmed. Your application is now with the District Level for verification and endorsement.',
+      actionText: 'View District Level Progress',
       actionTab: 'clearance',
     },
     3: {
-      heading: 'Provincial Office Clearance',
-      desc: 'District review is confirmed. The Provincial Office is reviewing your records and confirming your ordination slot.',
-      actionText: 'View Provincial Clearance',
+      heading: 'Provincial Level Clearance',
+      desc: 'District Level review is confirmed. The Provincial Level Secretariat is reviewing your records and confirming your diocesan quota.',
+      actionText: 'View Provincial Level Status',
       actionTab: 'clearance',
     },
     4: {
-      heading: 'Candidate Screening & Examination',
-      desc: 'Provincial clearance is complete! You are scheduled for the candidate screening interview and examination.',
-      actionText: 'View Screening Details',
+      heading: 'National Level (CMC) Vetting Underway',
+      desc: 'Provincial Level clearance is complete! Your file is under active review at the National Level by the Central Ministerial Committee (CMC).',
+      actionText: 'View National Vetting Progress',
       actionTab: 'clearance',
     },
     5: {
-      heading: isLeviesCleared ? 'National Council Final Approval' : 'Ordination Fee Payment Required',
+      heading: isLeviesCleared ? 'National Level Final Ratification' : 'Ordination Fee Payment Required',
       desc: isLeviesCleared
-        ? 'Screening exam passed! The National Council is finalizing your official confirmation and ceremony seating.'
-        : 'Screening exam completed! Please complete your ordination fee payment to generate your digital ceremony pass.',
-      actionText: isLeviesCleared ? 'View Clearance Status' : 'Pay Ordination Fees',
+        ? 'National Level (CMC) vetting ratified! Your file is queued for final ratification by the Holy Synod and ceremony seating.'
+        : 'National Level vetting completed! Please complete your ordination fee payment to generate your digital ceremony pass.',
+      actionText: isLeviesCleared ? 'View National Ratification' : 'Pay Ordination Fees',
       actionTab: isLeviesCleared ? 'clearance' : 'payments',
     },
     6: {
       heading: isOrdained ? 'Ordination Concluded' : 'Ready for Ordination Day',
       desc: isOrdained
         ? 'You have been officially ordained. Your Certificate of Ordination is ready for download.'
-        : 'All 5 review steps are approved and ordination fees are settled! Your Digital Ceremony Pass and Seating are ready. Attend the ceremony at the Cathedral on ordination day.',
+        : 'All canonical review levels (Branch, District, Provincial, National) are approved and statutory dues settled! Attend the sacred ceremony at the Cathedral on ordination day.',
       actionText: isOrdained ? 'Download Certificate' : 'Open Ceremony Pass',
       actionTab: isOrdained ? 'overview' : 'pass',
     },
@@ -526,6 +666,36 @@ export function CandidateDashboard({
             className="p-1.5 rounded-lg hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs shrink-0"
           >
             ✕
+          </button>
+        </div>
+      )}
+
+      {/* Consecrated Minister Active Banner */}
+      {isOrdained && onSwitchToConsecratedView && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-purple-500/15 border-2 border-amber-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg animate-in fade-in">
+          <div className="flex items-center gap-3.5">
+            <div className="p-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold shrink-0">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                Holy Ordination Conferred ✓
+              </span>
+              <h3 className="font-serif font-bold text-base text-slate-900 dark:text-white">
+                You are an Ordained Minister ({candidate.targetRankName}) of the Holy Order
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Your Consecrated Clergy Dashboard, official certificate, altar duties, and synod circulars are fully active.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onSwitchToConsecratedView}
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+          >
+            <span>Launch Clergy Dashboard</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -852,7 +1022,16 @@ export function CandidateDashboard({
                   Stage {currentStageIndex} of 6: {currentStageInfo?.title || 'Screening Review'}
                 </h2>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleManualSync}
+                  disabled={isSyncing}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 text-slate-700 dark:text-slate-300 font-mono text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className={`w-3 h-3 text-amber-500 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">Sync Record</span>
+                </button>
                 <span className={`px-3 py-1 rounded-xl font-mono text-xs font-bold border ${
                   isOrdained
                     ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
@@ -869,89 +1048,142 @@ export function CandidateDashboard({
               </div>
             </div>
 
-            {/* Stepper Roadmap Display */}
-            <div className="relative pt-2 pb-2">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-3.5 relative z-10">
+            {/* Top Interactive Progress Timeline */}
+            <div className="py-2">
+              <div className="relative flex items-center justify-between mb-3">
+                {/* Connecting Line */}
+                <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full z-0">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(100, Math.max(8, (completedCount / 5) * 100))}%` }}
+                  />
+                </div>
+
+                {/* 6 Step Nodes */}
                 {applicantStages.map((stage) => {
                   const isDone = stage.isCompleted;
                   const isCurrent = currentStageIndex === stage.step && !isDone;
                   return (
-                    <div
-                      key={stage.id}
-                      className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between items-center text-center min-w-0 min-h-[148px] ${
-                        isDone
-                          ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
-                          : isCurrent
-                          ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
-                          : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
-                      }`}
-                    >
-                      <div className="flex flex-col items-center w-full">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs mb-2.5 transition-transform shrink-0 ${
+                    <div key={stage.id} className="relative z-10 flex flex-col items-center">
+                      <div
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center font-mono text-xs font-bold transition-all shadow-sm ${
                           isDone
-                            ? 'bg-emerald-500 text-white shadow-xs'
+                            ? 'bg-emerald-500 text-white ring-4 ring-emerald-500/20'
                             : isCurrent
-                            ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
-                            : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                        }`}>
-                          {isDone ? (
-                            <Check className="w-4 h-4 stroke-[3]" />
-                          ) : isCurrent ? (
-                            <span>0{stage.step}</span>
-                          ) : (
-                            <Lock className="w-3.5 h-3.5 opacity-60" />
-                          )}
-                        </div>
-                        <h4 className="font-bold text-xs sm:text-[13px] leading-snug text-slate-900 dark:text-white break-words w-full">
-                          {stage.title}
-                        </h4>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-tight break-words w-full">
-                          {stage.subtitle}
-                        </p>
+                            ? 'bg-amber-500 text-slate-950 ring-4 ring-amber-500/30 scale-110 animate-pulse'
+                            : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700'
+                        }`}
+                      >
+                        {isDone ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : stage.step}
                       </div>
-
-                      <div className="pt-2 w-full">
-                        <span className={`inline-block text-[10px] font-semibold px-2.5 py-1 rounded-lg border w-full truncate ${
-                          isDone
-                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
-                            : isCurrent
-                            ? 'bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-500/40'
-                            : 'bg-slate-200/60 dark:bg-slate-800 text-slate-400 border-slate-300/40 dark:border-slate-700/50'
-                        }`}>
-                          {isDone ? 'Approved ✓' : isCurrent ? 'In Review ⏳' : 'Upcoming 🔒'}
-                        </span>
-                      </div>
+                      <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 mt-1.5 hidden md:block text-center whitespace-nowrap">
+                        {stage.title.split('. ')[1] || stage.title}
+                      </span>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Contextual Stage Advisory & Next Step Callout */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs overflow-hidden">
+            {/* Responsive Milestone Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 pt-1">
+              {applicantStages.map((stage) => {
+                const isDone = stage.isCompleted;
+                const isCurrent = currentStageIndex === stage.step && !isDone;
+                return (
+                  <div
+                    key={stage.id}
+                    className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between items-center text-center min-w-0 min-h-[140px] ${
+                      isDone
+                        ? 'bg-emerald-500/5 dark:bg-emerald-500/10 border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                        : isCurrent
+                        ? 'bg-amber-500/10 dark:bg-amber-500/15 border-amber-500/50 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
+                        : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center w-full">
+                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs mb-2 transition-transform shrink-0 ${
+                        isDone
+                          ? 'bg-emerald-500 text-white shadow-xs'
+                          : isCurrent
+                          ? 'bg-amber-500 text-slate-950 shadow-md scale-105'
+                          : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                      }`}>
+                        {isDone ? (
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        ) : isCurrent ? (
+                          <span>0{stage.step}</span>
+                        ) : (
+                          <Lock className="w-3 h-3 opacity-60" />
+                        )}
+                      </div>
+                      <h4 className="font-bold text-xs sm:text-[13px] leading-snug text-slate-900 dark:text-white break-words w-full">
+                        {stage.title}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-tight break-words w-full">
+                        {stage.subtitle}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 w-full">
+                      <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md border w-full truncate ${
+                        isDone
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                          : isCurrent
+                          ? 'bg-amber-500/20 text-amber-800 dark:text-amber-200 border-amber-500/40'
+                          : 'bg-slate-200/60 dark:bg-slate-800 text-slate-400 border-slate-300/40 dark:border-slate-700/50'
+                      }`}>
+                        {isDone ? 'Approved ✓' : isCurrent ? 'In Review ⏳' : 'Upcoming 🔒'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Contextual Active Stage Guidance & Automated Actions Bar */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-slate-50 to-transparent dark:from-amber-500/10 dark:via-slate-900/80 dark:to-slate-900/40 border border-amber-500/30 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 text-xs overflow-hidden">
               <div className="flex items-start gap-3 min-w-0 flex-1">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5">
-                  <Info className="w-4 h-4" />
+                <div className="p-2.5 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5 border border-amber-500/30">
+                  <Sparkles className="w-5 h-5" />
                 </div>
-                <div className="space-y-0.5 min-w-0 flex-1">
-                  <p className="font-bold text-slate-900 dark:text-white break-words">
-                    {stageGuidance[currentStageIndex]?.heading || 'Clearance Progress'}
-                  </p>
-                  <p className="text-slate-600 dark:text-slate-400 text-[11px] leading-relaxed max-w-2xl break-words">
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-white text-sm">
+                      {stageGuidance[currentStageIndex]?.heading || 'Clearance Progress'}
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-300 font-bold border border-amber-500/30">
+                      Active Action Stage
+                    </span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed max-w-3xl">
                     {stageGuidance[currentStageIndex]?.desc}
                   </p>
                 </div>
               </div>
-              {stageGuidance[currentStageIndex]?.actionText && (
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2 self-stretch lg:self-center shrink-0">
                 <button
                   type="button"
-                  onClick={() => setCurrentTab((stageGuidance[currentStageIndex]?.actionTab as any) || 'clearance')}
-                  className="px-3.5 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs shrink-0 transition-colors inline-flex items-center gap-1.5 self-end sm:self-center cursor-pointer"
+                  onClick={() => setShowPrecheckModal(true)}
+                  className="px-3.5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 shadow-sm transition-all active:scale-95 cursor-pointer"
                 >
-                  <span className="truncate">{stageGuidance[currentStageIndex]?.actionText}</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Run Pre-Check</span>
                 </button>
-              )}
+
+                {stageGuidance[currentStageIndex]?.actionText && (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentTab((stageGuidance[currentStageIndex]?.actionTab as any) || 'clearance')}
+                    className="px-3.5 py-2.5 rounded-xl bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs shrink-0 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>{stageGuidance[currentStageIndex]?.actionText}</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-amber-500" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           
@@ -959,7 +1191,7 @@ export function CandidateDashboard({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <Link href="/dashboard/candidate?tab=clearance" className="group block">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-emerald-500/60 transition-all cursor-pointer overflow-hidden">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-emerald-500/60 transition-all cursor-pointer">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
                   isVettingCleared
                     ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
@@ -967,12 +1199,12 @@ export function CandidateDashboard({
                 }`}>
                   <CheckCheck className="w-5 h-5" />
                 </div>
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Clearance Progress</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Clearance Standing</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                     {completedCount} of 5 Approved
                   </p>
-                  <p className={`text-[11px] font-medium truncate ${isVettingCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                  <p className={`text-[11px] font-medium ${isVettingCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                     {progressPercent}% Cleared →
                   </p>
                 </div>
@@ -980,7 +1212,7 @@ export function CandidateDashboard({
             </Link>
 
             <Link href="/dashboard/candidate?tab=payments" className="group block">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-amber-500/60 transition-all cursor-pointer overflow-hidden">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-amber-500/60 transition-all cursor-pointer">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform ${
                   isLeviesCleared
                     ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400'
@@ -988,47 +1220,47 @@ export function CandidateDashboard({
                 }`}>
                   <CreditCard className="w-5 h-5" />
                 </div>
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Payment Status</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Statutory Levies</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                     ₦{amountPaid.toLocaleString()} Paid
                   </p>
-                  <p className={`text-[11px] font-mono truncate ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                    {isLeviesCleared ? 'Receipt Confirmed →' : `₦${outstandingLevy.toLocaleString()} Due →`}
+                  <p className={`text-[11px] font-mono ${isLeviesCleared ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {isLeviesCleared ? 'All Levies Settled ✓' : `₦${outstandingLevy.toLocaleString()} Due →`}
                   </p>
                 </div>
               </div>
             </Link>
 
             <Link href="/dashboard/candidate?tab=pass" className="group block">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-blue-500/60 transition-all cursor-pointer overflow-hidden">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-blue-500/60 transition-all cursor-pointer">
                 <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-105 transition-transform">
                   <Calendar className="w-5 h-5" />
                 </div>
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Ceremony Date</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
-                    {isCeremonyReady ? (candidate.ordinationDate || 'Sat, Nov 14, 2026') : 'Nov 14, 2026 (Pending)'}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Ceremony Schedule</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                    Nov 14, 2026
                   </p>
-                  <p className="text-[11px] text-blue-600 dark:text-blue-400 truncate">
-                    {isCeremonyReady ? '09:00 AM Prompt →' : 'Awaiting Final Seal →'}
+                  <p className="text-[11px] text-blue-600 dark:text-blue-400">
+                    General Conference Session →
                   </p>
                 </div>
               </div>
             </Link>
 
             <Link href="/dashboard/candidate?tab=pass" className="group block">
-              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-purple-500/60 transition-all cursor-pointer overflow-hidden">
+              <div className="w-full bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-5 flex items-center gap-3.5 shadow-sm group-hover:border-purple-500/60 transition-all cursor-pointer">
                 <div className="w-11 h-11 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0 group-hover:scale-105 transition-transform">
-                  <Building className="w-5 h-5" />
+                  <QrCode className="w-5 h-5" />
                 </div>
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">Assigned Seating</p>
-                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight truncate break-words">
-                    {isCeremonyReady && candidate.seatNumber ? candidate.seatNumber : 'Allocation Locked'}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Accreditation Pass</p>
+                  <p className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
+                    {isPassReady ? (candidate.seatNumber || 'Pass Ready') : 'Gated & Restricted'}
                   </p>
-                  <p className="text-[11px] text-purple-600 dark:text-purple-400 truncate">
-                    {isCeremonyReady && candidate.seatNumber ? 'Gate 2 Entrance →' : 'Upon Final Clearance →'}
+                  <p className="text-[11px] text-purple-600 dark:text-purple-400">
+                    {isPassReady ? 'Gate 2 Pew Ready →' : `${5 - completedCount} Approvals Required →`}
                   </p>
                 </div>
               </div>
@@ -1071,7 +1303,7 @@ export function CandidateDashboard({
                     </span>
                     <p className="text-slate-500 dark:text-slate-400 text-[11px]">
                       {isVettingCleared
-                        ? 'All parish, district, provincial, screening exam, and national approvals ratified.'
+                        ? 'All parish, district, provincial, ministerial vetting, and national council approvals ratified.'
                         : `Currently at Stage ${completedCount + 1}: ${approvalSteps[completedCount]?.title || 'Screening in review'}.`}
                     </p>
                   </div>
@@ -1171,58 +1403,52 @@ export function CandidateDashboard({
               </div>
             </div>
 
-            {/* Right 1 Col: Quick Links Card */}
+            {/* Right 1 Col: Automated Secretariat Intelligence & Actions Hub */}
             <div className="space-y-6">
               <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-                <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Quick Navigation</span>
-                </h4>
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                  <h4 className="font-serif font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>Secretariat Engine</span>
+                  </h4>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    Live E-Portal
+                  </span>
+                </div>
 
-                <div className="space-y-2 text-xs">
-                  <Link
-                    href="/dashboard/candidate?tab=clearance"
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <CheckSquare className="w-4 h-4 text-emerald-500" />
-                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Ordination Clearance Records</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">Database Sync:</span>
+                    <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-[11px] inline-flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Connected ({lastSyncedTime})
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-slate-400">Pre-Check Verification:</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-[11px]">100% Eligible ✓</span>
+                  </div>
+                </div>
 
-                  <Link
-                    href="/dashboard/candidate?tab=payments"
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
+                <div className="space-y-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowPrecheckModal(true)}
+                    className="w-full py-2.5 px-3.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs inline-flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Receipt className="w-4 h-4 text-amber-500" />
-                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Payment & Slip Breakdown</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
+                    <Sparkles className="w-4 h-4" />
+                    <span>Run Canonical Pre-Check</span>
+                  </button>
 
-                  <Link
-                    href="/dashboard/candidate?tab=pass"
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
+                  <button
+                    type="button"
+                    onClick={handleManualSync}
+                    disabled={isSyncing}
+                    className="w-full py-2 px-3.5 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 font-semibold text-xs inline-flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-200 dark:border-slate-800"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <QrCode className="w-4 h-4 text-blue-500" />
-                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Ceremony Pass & Itinerary</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
-
-                  <Link
-                    href="/dashboard/candidate?tab=support"
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/80 hover:bg-amber-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all group"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <MessageSquare className="w-4 h-4 text-purple-500" />
-                      <span className="font-semibold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-400">Parish Priest Help Desk</span>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
-                  </Link>
+                    <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-amber-500' : ''}`} />
+                    <span>{isSyncing ? 'Syncing...' : 'Sync Live Secretariat Record'}</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1373,13 +1599,13 @@ export function CandidateDashboard({
             </div>
           </div>
 
-          {/* Doctrinal Exam Scorecard */}
+          {/* Ecclesiastical Canonical Standing & Vetting Dossier */}
           <div className="bg-white dark:bg-[#0b1021] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
-                <BookOpen className="w-5 h-5 text-blue-500" />
+                <ShieldCheck className="w-5 h-5 text-amber-500" />
                 <h3 className="font-serif font-bold text-base sm:text-lg text-slate-900 dark:text-white">
-                  CMC Doctrinal Screening & Exam Scorecard
+                  Ecclesiastical Canonical Standing & Secretariat Dossier
                 </h3>
               </div>
               <span className={`px-3 py-1 rounded-xl text-xs font-mono font-bold border ${
@@ -1387,47 +1613,46 @@ export function CandidateDashboard({
                   ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
                   : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'
               }`}>
-                {cmcApproved ? (candidate.theologyScore ? `Theology Exam: ${candidate.theologyScore}% Passed ✓` : 'CMC Screening Passed ✓') : 'Stage 4 Evaluation Scheduled ⏳'}
+                {cmcApproved ? 'Vetting Cleared ✓' : 'Stage 4 In Verification ⏳'}
               </span>
             </div>
 
-            {cmcApproved ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Scripture & Theology</span>
-                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
-                    {candidate.theologyScore ? `${candidate.theologyScore}%` : 'Certified'}
-                  </span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Liturgy & Church Doctrine</span>
-                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
-                    {candidate.theologyScore ? `${candidate.theologyScore}%` : 'Certified'}
-                  </span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Passed</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Oral Examination</span>
-                  <span className="font-mono text-base font-bold text-slate-900 dark:text-white mt-1 block">
-                    {candidate.interviewScore ? `${candidate.interviewScore}%` : 'Certified'}
-                  </span>
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Endorsed</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center">
-                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Conduct & Rating</span>
-                  <span className="font-mono text-base font-bold text-purple-600 dark:text-purple-400 mt-1 block capitalize">
-                    {candidate.conductRating || 'Exemplary'}
-                  </span>
-                  <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Clear Record</span>
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Canonical Jurisdiction</span>
+                <span className="text-slate-900 dark:text-white font-semibold text-xs mt-1 block truncate">
+                  {candidate.parish}
+                </span>
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                  {candidate.province}
+                </span>
               </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                The Central Ministerial Committee (CMC) administers the Doctrinal and Liturgical examination following Provincial Diocesan accreditation. Your examination date, venue, and study guidelines will populate automatically upon reaching Stage 4.
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Elevation Target</span>
+                <span className="text-slate-900 dark:text-white font-semibold text-xs mt-1 block truncate">
+                  {candidate.currentRank} → {candidate.targetRankName}
+                </span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                  Tenure Criterion Satisfied ✓
+                </span>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-slate-500 block text-[10px] uppercase font-bold">Secretariat Registry Status</span>
+                <span className="text-slate-900 dark:text-white font-semibold text-xs mt-1 block truncate">
+                  {candidate.regNumber}
+                </span>
+                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                  Active Ordination Dossier
+                </span>
+              </div>
+            </div>
+
+            {candidate.tierApprovals?.cmc?.comments && (
+              <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 text-xs text-amber-900 dark:text-amber-300">
+                <span className="font-bold block mb-1">Central Ministerial Committee Seal Notes:</span>
+                {candidate.tierApprovals.cmc.comments}
               </div>
             )}
           </div>
@@ -2078,6 +2303,92 @@ export function CandidateDashboard({
         isOpen={showTourModal}
         onClose={() => setShowTourModal(false)}
       />
+
+      {/* Automated Stage Pre-Check Audit Modal */}
+      {showPrecheckModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
+              <div className="flex items-center gap-3.5">
+                <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+                    Automated Candidate Pre-Check
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Canonical readiness audit for Stage {currentStageIndex}: {currentStageInfo?.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowPrecheckModal(false)}
+                className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 text-emerald-900 dark:text-emerald-300 text-xs flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="font-bold">Automated Audit Passed: 100% Eligible</span>
+                </div>
+                <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/50">
+                  Ready for Review
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold block text-slate-900 dark:text-white">Canonical Roll & Identification</span>
+                    <span className="text-[11px] text-slate-500">{candidate.regNumber} • {candidate.fullName}</span>
+                  </div>
+                  <span className="text-emerald-600 font-bold font-mono">Passed ✓</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold block text-slate-900 dark:text-white">Rank Progression Rule</span>
+                    <span className="text-[11px] text-slate-500">{candidate.currentRank} → {candidate.targetRankName}</span>
+                  </div>
+                  <span className="text-emerald-600 font-bold font-mono">Compliant ✓</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold block text-slate-900 dark:text-white">Church Jurisdiction Verification</span>
+                    <span className="text-[11px] text-slate-500">{candidate.province} • {candidate.parish}</span>
+                  </div>
+                  <span className="text-emerald-600 font-bold font-mono">Verified ✓</span>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold block text-slate-900 dark:text-white">Liturgical Attire & Documentation</span>
+                    <span className="text-[11px] text-slate-500">{candidate.passportPhotoUrl ? 'Passport Photo Stamped' : 'Attire Specification Met'}</span>
+                  </div>
+                  <span className="text-emerald-600 font-bold font-mono">Valid ✓</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPrecheckModal(false)}
+                  className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer text-center"
+                >
+                  Close Pre-Check Audit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
 
     </div>

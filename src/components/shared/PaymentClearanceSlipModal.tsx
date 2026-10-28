@@ -42,10 +42,43 @@ export function PaymentClearanceSlipModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      
+      {/* Global Print Isolation Stylesheet */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-receipt, #printable-receipt * {
+            visibility: visible !important;
+          }
+          #printable-receipt {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+            background: white !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+            border: 2px solid #b45309 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            display: block !important;
+          }
+          @page {
+            size: portrait;
+            margin: 8mm;
+          }
+        }
+      `}</style>
+
       <div className="relative w-full max-w-2xl bg-white dark:bg-[#090e1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-4 text-slate-900 dark:text-slate-100">
         
         {/* Top Header Bar */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 print:hidden">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400">
               <Receipt className="w-5 h-5" />
@@ -227,7 +260,7 @@ export function PaymentClearanceSlipModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="bg-slate-50 dark:bg-slate-950 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+        <div className="bg-slate-50 dark:bg-slate-950 px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 print:hidden">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-mono hidden sm:inline">
             Official Financial Document &bull; Valid for Accreditation
           </span>

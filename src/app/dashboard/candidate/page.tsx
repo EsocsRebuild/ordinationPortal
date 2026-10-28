@@ -32,8 +32,10 @@ function CandidateDashboardContent() {
           const candidateData = await api.getCandidateById(user.candidateId);
           if (candidateData) {
             setCandidate(candidateData);
-            if (candidateData.stage === 'ordained') {
+            if (candidateData.stage === 'ordained' && tabParam !== 'clearance') {
               setViewMode('consecrated');
+            } else if (tabParam === 'clearance') {
+              setViewMode('clearance');
             }
             return;
           }
@@ -44,8 +46,10 @@ function CandidateDashboardContent() {
           const candidates = await api.getCandidates({ email: user.email });
           if (candidates && candidates.length > 0) {
             setCandidate(candidates[0]);
-            if (candidates[0].stage === 'ordained') {
+            if (candidates[0].stage === 'ordained' && tabParam !== 'clearance') {
               setViewMode('consecrated');
+            } else if (tabParam === 'clearance') {
+              setViewMode('clearance');
             }
             return;
           }
@@ -118,6 +122,7 @@ function CandidateDashboardContent() {
         {isConsecrated ? (
           <ConsecratedClergyDashboard
             candidate={candidate}
+            initialTab={tabParam}
             onUpdateCandidate={(updated) => setCandidate(updated)}
             onSwitchToClearanceView={() => setViewMode('clearance')}
           />

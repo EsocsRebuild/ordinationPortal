@@ -419,11 +419,11 @@ export async function sendRegistrationConfirmationEmail(candidate: {
 
     <p>Dear <strong>${candidate.fullName}</strong>,</p>
     <p>Calvary greetings in the Holy and Precious Name of our Lord Jesus Christ.</p>
-    <p>Your ordination nomination and credentials have been successfully enrolled in the Church Ordination Register. Your dossier is now active under <strong>Stage 1: Parish Review</strong>.</p>
+    <p>Your ordination nomination and credentials have been successfully enrolled in the Church Ordination Register. Your dossier is now active under <strong>Stage 1: Branch Level Clearance</strong>.</p>
     
     <div class="card-box" style="border-left: 4px solid #d97706;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <span class="badge badge-amber">Stage 1 of 6: Parish Review</span>
+        <span class="badge badge-amber">Stage 1 of 6: Branch Level Review</span>
       </div>
       <table class="table-details">
         <tr>
@@ -450,7 +450,7 @@ export async function sendRegistrationConfirmationEmail(candidate: {
     </div>
 
     <p style="font-size: 13px; color: #475569;">
-      <strong>Next Steps:</strong> Your Parish Leader and branch council will review your ministerial records and submit their recommendation. You can track your clearance status live on your candidate dashboard.
+      <strong>Next Steps:</strong> Your Branch Level leadership and secretariat will review your ministerial records and submit clearance. You can track your clearance status live on your candidate dashboard.
     </p>
 
     <div style="text-align: center; margin-top: 24px;">

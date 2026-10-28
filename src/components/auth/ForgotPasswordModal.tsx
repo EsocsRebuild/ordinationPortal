@@ -190,12 +190,20 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-300">
+      {/* Background ambient lighting */}
+      <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[500px] h-[500px] bg-amber-500/10 dark:bg-amber-400/8 rounded-full blur-[120px] transform -translate-y-12" />
+      </div>
+
+      <div className="relative w-full max-w-lg card-luxury card-luxury-top-glow rounded-3xl overflow-hidden transition-all text-slate-900 dark:text-slate-100 my-6 shadow-2xl">
+        {/* Top ambient highlight glow line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/80 to-transparent" />
+
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#070b18]/60 backdrop-blur-md">
           <div className="flex items-center gap-3.5">
-            <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+            <div className="p-3 rounded-2xl bg-amber-500/10 dark:bg-amber-400/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
               <KeyRound className="w-6 h-6" />
             </div>
             <div>
@@ -209,7 +217,7 @@ export function ForgotPasswordModal({ isOpen, onClose, onSuccessLogin }: ForgotP
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            className="p-2.5 rounded-xl hover:bg-slate-200/80 dark:hover:bg-slate-800/80 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all active:scale-95"
           >
             <X className="w-5 h-5" />
           </button>

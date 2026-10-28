@@ -44,203 +44,35 @@ import {
 
 interface ConsecratedClergyDashboardProps {
   candidate: CandidateProfile;
+  initialTab?: string;
   onSwitchToClearanceView?: () => void;
   onUpdateCandidate?: (updated: CandidateProfile) => void;
 }
 
 export function ConsecratedClergyDashboard({
   candidate: initialCandidate,
+  initialTab,
   onSwitchToClearanceView,
   onUpdateCandidate,
 }: ConsecratedClergyDashboardProps) {
   const [candidate, setCandidate] = useState<CandidateProfile>(initialCandidate);
-  const [showPassModal, setShowPassModal] = useState(false);
-  const [showCertModal, setShowCertModal] = useState(false);
-  const [showSlipModal, setShowSlipModal] = useState(false);
+  const [showPassModal, setShowPassModal] = useState(initialTab === 'pass');
+  const [showCertModal, setShowCertModal] = useState(initialTab === 'certificate');
+  const [showSlipModal, setShowSlipModal] = useState(initialTab === 'payments');
   const [activeTab, setActiveTab] = useState<'overview' | 'vestments' | 'timeline' | 'synod'>('overview');
   const [isConfirmingOrdination, setIsConfirmingOrdination] = useState(false);
   const [showEmailNotice, setShowEmailNotice] = useState(false);
 
-  // Gating rule: User must be ordained AND accredited/checked-in
-  const isOrdainedAndAccredited = candidate.stage === 'ordained' && (candidate.isCheckedIn || !!candidate.accreditedBy || !!candidate.seatNumber);
+  React.useEffect(() => {
+    if (initialTab === 'pass') setShowPassModal(true);
+    if (initialTab === 'certificate') setShowCertModal(true);
+    if (initialTab === 'payments') setShowSlipModal(true);
+  }, [initialTab]);
 
   const robing = getRobingSpecifications(candidate.targetRankId);
-  const certNumber = candidate.certificateNumber || `CERT-2026-${candidate.targetRankId.replace('rank_', '').toUpperCase()}-0219`;
-  const ordinationDate = candidate.dateOrdained || 'November 14, 2026';
+  const certNumber = candidate.certificateNumber || `CERT-2026-${candidate.targetRankId.replace('rank_', '').toUpperCase()}-6416`;
+  const ordinationDate = candidate.dateOrdained || candidate.ordinationDate || 'Saturday, November 14, 2026';
   const conferredRank = candidate.targetRankName;
-
-  // Super Admin Action to confirm ordination and accreditation
-  const handleSuperAdminConfirmOrdination = async () => {
-    setIsConfirmingOrdination(true);
-    try {
-      const generatedCert = `CERT-2026-SYNOD-${Math.floor(1000 + Math.random() * 9000)}`;
-      const updated = await api.updateCandidate(
-        candidate.id,
-        {
-          stage: 'ordained',
-          isCheckedIn: true,
-          accreditedBy: 'Prof. David A. Oladele (Super Admin)',
-          certificateNumber: generatedCert,
-          dateOrdained: 'November 14, 2026',
-        },
-        'Prof. David A. Oladele (Super Admin)'
-      );
-
-      if (updated) {
-        setCandidate(updated);
-        onUpdateCandidate?.(updated);
-        setShowEmailNotice(true);
-      }
-    } catch (err) {
-      console.error('Failed to confirm ordination:', err);
-    } finally {
-      setIsConfirmingOrdination(false);
-    }
-  };
-
-  // ===========================================================================
-  // GATED STATE: If NOT YET Ordained & Accredited
-  // ===========================================================================
-  if (!isOrdainedAndAccredited) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-300">
-        
-        {/* Top Header Card */}
-        <div className="bg-white dark:bg-[#090e1c] border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden transition-colors">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
-                <Lock className="w-6 h-6" />
-              </div>
-              <div className="min-w-0">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 block truncate">
-                  Ordination Access Gateway
-                </span>
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-slate-900 dark:text-white break-words">
-                  Consecrated Clergy Record Locked
-                </h2>
-              </div>
-            </div>
-
-            {onSwitchToClearanceView && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onSwitchToClearanceView}
-                icon={<ChevronRight className="w-4 h-4 rotate-180" />}
-                className="text-xs font-semibold shrink-0"
-              >
-                Return to Clearance Deck
-              </Button>
-            )}
-          </div>
-
-          <div className="py-6 space-y-6">
-            <div className="p-4 rounded-2xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-              <p className="font-semibold text-slate-900 dark:text-white mb-1">
-                Official Ordination Records & Gazette Seal Access Criteria:
-              </p>
-              This permanent clergy records dashboard unlocks automatically once your physical attendance is accredited at Mount Zion Cathedral and the Sacred Consecration Rites are confirmed by the Super Admin Secretariat.
-            </div>
-
-            {/* 4-Step Accreditation & Consecration Progression Tracker */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-              
-              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80 space-y-1.5">
-                <div className="flex items-center justify-between font-bold text-emerald-800 dark:text-emerald-300">
-                  <span className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    1. Vetting & Doctrinal Clearances
-                  </span>
-                  <span>Cleared ✓</span>
-                </div>
-                <p className="text-emerald-700/80 dark:text-emerald-400/80 text-[11px]">
-                  5 of 5 review tiers approved including final examination.
-                </p>
-              </div>
-
-              <div className={`p-4 rounded-2xl border space-y-1.5 ${
-                candidate.isCheckedIn || candidate.accreditedBy
-                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/80 text-emerald-800 dark:text-emerald-300'
-                  : 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/80 text-amber-800 dark:text-amber-300'
-              }`}>
-                <div className="flex items-center justify-between font-bold">
-                  <span className="flex items-center gap-2">
-                    {candidate.isCheckedIn || candidate.accreditedBy ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Clock className="w-4 h-4 text-amber-500" />}
-                    2. Cathedral Accreditation Check-In
-                  </span>
-                  <span>{candidate.isCheckedIn || candidate.accreditedBy ? 'Accredited ✓' : 'Awaiting Check-in'}</span>
-                </div>
-                <p className="opacity-80 text-[11px]">
-                  Physical pass scanned at Cathedral Chancel Gate (Seat: {candidate.seatNumber || 'Cathedral Pew'}).
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 text-slate-700 dark:text-slate-300">
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white">
-                  <span className="flex items-center gap-2">
-                    <Crown className="w-4 h-4 text-amber-500" />
-                    3. Consecration Rites by Baba Aladura
-                  </span>
-                  <span className="text-amber-600 dark:text-amber-400">Nov 14, 2026</span>
-                </div>
-                <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Laying of hands and ordination into the {candidate.targetRankName} order.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 text-slate-700 dark:text-slate-300">
-                <div className="flex items-center justify-between font-bold text-slate-900 dark:text-white">
-                  <span className="flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-blue-500" />
-                    4. Super Admin Gazette & Email Dispatch
-                  </span>
-                  <span className="text-slate-500">Pending Rites</span>
-                </div>
-                <p className="text-slate-500 dark:text-slate-400 text-[11px]">
-                  Official gazetting, digital certificate generation, and email confirmation dispatch.
-                </p>
-              </div>
-
-            </div>
-
-            {/* Super Admin / Reviewer Simulation Action Box */}
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-purple-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <span className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldAlert className="w-4 h-4 text-amber-500" />
-                  Super Admin Consecration Confirmation
-                </span>
-                <p className="text-xs text-slate-600 dark:text-slate-300 max-w-lg">
-                  Click below to simulate the Super Admin signing off on {candidate.fullName}&apos;s consecration, issuing the gazetted seal, sending the confirmation email, and unlocking the Consecrated Clergy Dashboard.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                disabled={isConfirmingOrdination}
-                onClick={handleSuperAdminConfirmOrdination}
-                className="px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all shrink-0 active:scale-95 flex items-center gap-2"
-              >
-                {isConfirmingOrdination ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                    <span>Signing Gazette...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>Confirm Consecration (Admin)</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    );
-  }
 
   // ===========================================================================
   // UNLOCKED STATE: CONSECRATED CLERGY RECORD DASHBOARD

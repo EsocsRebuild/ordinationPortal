@@ -104,48 +104,92 @@ export function DashboardLayout({ children, activeSectionTitle, currentTab, cand
     ? `/verify/${user.candidateId}`
     : '/#verify-pass';
 
+  const isOrdainedClergy = candidate?.stage === 'ordained';
+
   const navItems = isCandidate
-    ? [
-        {
-          id: 'overview',
-          title: 'My Overview & Records',
-          href: '/dashboard/candidate?tab=overview',
-          icon: LayoutDashboard,
-          badge: 'Home',
-          isActive: effectiveTab === 'overview',
-        },
-        {
-          id: 'clearance',
-          title: 'Ordination Clearance',
-          href: '/dashboard/candidate?tab=clearance',
-          icon: CheckSquare,
-          badge: `${completedTiersCount}/5`,
-          isActive: effectiveTab === 'clearance',
-        },
-        {
-          id: 'payments',
-          title: 'Payment & Fee Receipts',
-          href: '/dashboard/candidate?tab=payments',
-          icon: Receipt,
-          badge: paymentBadge,
-          isActive: effectiveTab === 'payments',
-        },
-        {
-          id: 'pass',
-          title: 'Ceremony Pass & Seating',
-          href: '/dashboard/candidate?tab=pass',
-          icon: QrCode,
-          badge: passBadge,
-          isActive: effectiveTab === 'pass',
-        },
-        {
-          id: 'support',
-          title: 'Support & Help Desk',
-          href: '/dashboard/candidate?tab=support',
-          icon: MessageSquare,
-          isActive: effectiveTab === 'support',
-        },
-      ]
+    ? isOrdainedClergy
+      ? [
+          {
+            id: 'overview',
+            title: 'Consecrated Clergy Hub',
+            href: '/dashboard/candidate?tab=overview',
+            icon: LayoutDashboard,
+            badge: 'Clergy',
+            isActive: effectiveTab === 'overview',
+          },
+          {
+            id: 'pass',
+            title: 'Accreditation Pass & Pew',
+            href: '/dashboard/candidate?tab=pass',
+            icon: QrCode,
+            badge: 'Ready',
+            isActive: effectiveTab === 'pass',
+          },
+          {
+            id: 'clearance',
+            title: 'Ordination Clearance History',
+            href: '/dashboard/candidate?tab=clearance',
+            icon: CheckSquare,
+            badge: '5/5 ✓',
+            isActive: effectiveTab === 'clearance',
+          },
+          {
+            id: 'payments',
+            title: 'Statutory Fee Clearance',
+            href: '/dashboard/candidate?tab=payments',
+            icon: Receipt,
+            badge: 'Cleared ✓',
+            isActive: effectiveTab === 'payments',
+          },
+          {
+            id: 'support',
+            title: 'Synod Secretariat Desk',
+            href: '/dashboard/candidate?tab=support',
+            icon: MessageSquare,
+            isActive: effectiveTab === 'support',
+          },
+        ]
+      : [
+          {
+            id: 'overview',
+            title: 'My Overview & Records',
+            href: '/dashboard/candidate?tab=overview',
+            icon: LayoutDashboard,
+            badge: 'Home',
+            isActive: effectiveTab === 'overview',
+          },
+          {
+            id: 'clearance',
+            title: 'Ordination Clearance',
+            href: '/dashboard/candidate?tab=clearance',
+            icon: CheckSquare,
+            badge: `${completedTiersCount}/5`,
+            isActive: effectiveTab === 'clearance',
+          },
+          {
+            id: 'payments',
+            title: 'Payment & Fee Receipts',
+            href: '/dashboard/candidate?tab=payments',
+            icon: Receipt,
+            badge: paymentBadge,
+            isActive: effectiveTab === 'payments',
+          },
+          {
+            id: 'pass',
+            title: 'Ceremony Pass & Seating',
+            href: '/dashboard/candidate?tab=pass',
+            icon: QrCode,
+            badge: passBadge,
+            isActive: effectiveTab === 'pass',
+          },
+          {
+            id: 'support',
+            title: 'Support & Help Desk',
+            href: '/dashboard/candidate?tab=support',
+            icon: MessageSquare,
+            isActive: effectiveTab === 'support',
+          },
+        ]
     : [
         {
           id: 'master',

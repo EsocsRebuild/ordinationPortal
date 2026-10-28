@@ -13,7 +13,7 @@ interface RoleSwitcherProps {
 const AVAILABLE_ROLE_PERSONAS: UserSession[] = [
   {
     userId: 'user-cand-006',
-    name: 'Peter Chima Tester',
+    name: 'Bro. Peter Chima',
     email: 'peter4tech@gmail.com',
     role: 'candidate',
     roleTitle: 'Ordinand Candidate (Ascending to Aladura)',

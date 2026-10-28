@@ -92,9 +92,42 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      
+      {/* Global Print Isolation Stylesheet */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-certificate, #printable-certificate * {
+            visibility: visible !important;
+          }
+          #printable-certificate {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 10mm !important;
+            background: white !important;
+            color: #0b132b !important;
+            box-shadow: none !important;
+            border: 4px double #b45309 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            display: block !important;
+          }
+          @page {
+            size: landscape;
+            margin: 8mm;
+          }
+        }
+      `}</style>
+
       <div className="relative w-full max-w-4xl bg-white dark:bg-slate-950 rounded-2xl shadow-2xl border border-gold-400/40 overflow-hidden my-6">
         {/* Modal Bar */}
-        <div className="bg-slate-900 text-white px-6 py-3.5 flex items-center justify-between border-b border-slate-800">
+        <div className="bg-slate-900 text-white px-6 py-3.5 flex items-center justify-between border-b border-slate-800 print:hidden">
           <div className="flex items-center gap-2.5">
             <Shield className="w-5 h-5 text-gold-400" />
             <span className="text-sm font-semibold tracking-wide text-slate-200">
@@ -102,12 +135,12 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" icon={<Printer className="w-4 h-4" />} onClick={handlePrint} className="text-white border-slate-700 hover:bg-slate-800">
+            <Button variant="outline" size="sm" icon={<Printer className="w-4 h-4" />} onClick={handlePrint} className="text-white border-slate-700 hover:bg-slate-800 cursor-pointer">
               Print Official Certificate
             </Button>
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -115,7 +148,7 @@ export function CertificateModal({ candidate, isOpen = true, onClose }: Certific
         </div>
 
         {/* High-Resolution Certificate Canvas */}
-        <div className="p-6 md:p-10 bg-gradient-to-b from-[#FFFDF7] to-[#FDFBF4] dark:from-slate-950 dark:to-slate-900 print:p-0">
+        <div className="p-6 md:p-10 bg-gradient-to-b from-[#FFFDF7] to-[#FDFBF4] dark:from-slate-950 dark:to-slate-900 print:p-0" id="printable-certificate">
           <div className="relative border-8 border-double border-[#C5A059] p-8 md:p-12 rounded-lg bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
             {/* Watermark Crest Background */}
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] dark:opacity-[0.05] pointer-events-none">

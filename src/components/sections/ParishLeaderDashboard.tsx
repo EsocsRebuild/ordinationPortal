@@ -509,7 +509,7 @@ export function ParishLeaderDashboard({
                       Nominate Candidate for Ordination
                     </h3>
                     <p className="text-xs text-amber-400/90 font-medium mt-0.5">
-                      Parish Pastor Review • Candidate Intake
+                      Branch Level Review • Candidate Intake
                     </p>
                   </div>
                 </div>
@@ -910,7 +910,7 @@ export function ParishLeaderDashboard({
                   {/* Testimonial Note */}
                   <div className="space-y-2">
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                      Parish Pastor Attestation & Character Reference <span className="text-amber-400">*</span>
+                      Branch Level Attestation & Character Reference <span className="text-amber-400">*</span>
                     </label>
                     <textarea
                       rows={3}

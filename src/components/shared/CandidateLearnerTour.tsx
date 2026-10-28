@@ -42,7 +42,7 @@ const TOUR_STEPS = [
     icon: ShieldCheck,
     color: 'from-emerald-500 to-emerald-600',
     description:
-      'Track your progress through all 5 levels of church administration: Step 1 (Parish Priest), Step 2 (District Leader), Step 3 (Provincial Diocese), Step 4 (Screening Exam), and Step 5 (Church Council Seal).',
+      'Track your progress through all 5 canonical levels: Step 1 (Branch Level), Step 2 (District Level), Step 3 (Provincial Level), Step 4 (National Level - CMC), and Step 5 (National Level - Holy Synod).',
     tip: 'All 5 steps are cleared automatically when verified by the presiding church authorities.',
   },
   {
